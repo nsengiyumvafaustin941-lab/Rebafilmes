@@ -106,7 +106,9 @@ export const translations = {
     acc_logged_in_as: 'Winjiye nka',
     terms_accept_pre: "Nemeye ",
     terms_accept_link: "Amategeko n'Amabwiriza n'Ibanga ry'Imyirondoro",
-    see_all: 'Reba Yose'
+    see_all: 'Reba Yose',
+    movie_trailer: 'Teyila',
+    watch_trailer: 'Reba Teyila'
   },
   fr: {
     nav_home: 'Accueil',
@@ -215,7 +217,9 @@ export const translations = {
     acc_logged_in_as: 'Connecté en tant que',
     terms_accept_pre: "J'accepte les ",
     terms_accept_link: "conditions d'utilisation et la politique de confidentialité",
-    see_all: 'Voir tout'
+    see_all: 'Voir tout',
+    movie_trailer: 'Bande-annonce',
+    watch_trailer: 'Voir la bande-annonce'
   },
   en: {
     nav_home: 'Home',
@@ -324,7 +328,9 @@ export const translations = {
     acc_logged_in_as: 'Logged in as',
     terms_accept_pre: 'I accept the ',
     terms_accept_link: 'Terms of Service and Privacy Policy',
-    see_all: 'See All'
+    see_all: 'See All',
+    movie_trailer: 'Trailer',
+    watch_trailer: 'Watch Trailer'
   },
   sw: {
     nav_home: 'Nyumbani',
@@ -433,7 +439,9 @@ export const translations = {
     acc_logged_in_as: 'Umeingia kama',
     terms_accept_pre: 'Ninakubali ',
     terms_accept_link: 'Vigezo na Masharti na Sera ya Faragha',
-    see_all: 'Tazama Zote'
+    see_all: 'Tazama Zote',
+    movie_trailer: 'Trela',
+    watch_trailer: 'Tazama Trela'
   },
   lg: {
     nav_home: 'Awaka',
@@ -542,6 +550,8 @@ export const translations = {
     acc_logged_in_as: 'Oyingidde nga',
     terms_accept_pre: "Nzikiriza ",
     terms_accept_link: "Ebiragiro by'Omuwandiisi n'Eby'Obukuumi",
-    see_all: 'Laba Byonna'
+    see_all: 'Laba Byonna',
+    movie_trailer: 'Tuleera',
+    watch_trailer: 'Laba Tuleera'
   }
 };

@@ -6,6 +6,7 @@ import './AdminLayout.css';
 
 const EMPTY_MOVIE = {
   title: '', type: 'movie', poster: '', backdrop: '', videoUrl: '',
+  trailerKey: '',
   genre: '', country: '', year: new Date().getFullYear(),
   badge: 'HD', description: '', featured: false, popular: false,
   seoTitle: '', seoDesc: '', seoKeywords: '', episodes: []
@@ -302,21 +303,47 @@ const MovieModal = ({ initial, onSave, onClose, title }) => {
       }
       
       const best = data.results[0];
+      const mediaType = best.media_type;
       const baseImg = 'https://image.tmdb.org/t/p/w1280';
       const basePoster = 'https://image.tmdb.org/t/p/w500';
+
+      // Fetch detailed info for genre names, production countries, and trailers
+      let genreNames = '';
+      let countryNames = '';
+      let trailerKey = '';
+      try {
+        const detailRes = await fetch(
+          `https://api.themoviedb.org/3/${mediaType}/${best.id}?api_key=${settings.tmdbApiKey}&append_to_response=videos`
+        );
+        const detail = await detailRes.json();
+        genreNames = (detail.genres || []).map(g => g.name).join(', ');
+        countryNames = (detail.production_countries || detail.origin_country || []).map(c => typeof c === 'string' ? c : c.name).join(', ');
+        
+        // Find Youtube trailer key
+        const videos = detail.videos?.results || [];
+        const trailer = videos.find(v => v.site === 'YouTube' && v.type === 'Trailer') || videos.find(v => v.site === 'YouTube');
+        if (trailer) {
+          trailerKey = trailer.key;
+        }
+      } catch {
+        // Detail fetch failed — continue with search data only
+      }
 
       setForm(p => ({
         ...p,
         title: best.title || best.name || p.title,
-        type: best.media_type === 'tv' ? 'series' : 'movie',
+        type: mediaType === 'tv' ? 'series' : 'movie',
         poster: best.poster_path ? `${basePoster}${best.poster_path}` : p.poster,
         backdrop: best.backdrop_path ? `${baseImg}${best.backdrop_path}` : p.backdrop,
         year: best.release_date ? parseInt(best.release_date.substring(0, 4)) : best.first_air_date ? parseInt(best.first_air_date.substring(0, 4)) : p.year,
         description: best.overview || p.description,
+        genre: genreNames || p.genre,
+        country: countryNames || p.country,
+        trailerKey: trailerKey || p.trailerKey,
         seoTitle: best.title || best.name || p.title,
         seoDesc: best.overview ? best.overview.substring(0, 150) : p.seoDesc,
       }));
-      showToast('TMDB data fetched successfully!');
+      showToast('TMDB data fetched successfully! (incl. genre, country & trailer)');
     } catch (err) {
       console.error('TMDB Fetch Error:', err);
       showToast('Failed to connect to TMDB', 'error');
@@ -370,6 +397,10 @@ const MovieModal = ({ initial, onSave, onClose, title }) => {
           <div className="adm-form-group full">
             <label className="adm-form-label">Backdrop URL</label>
             <input className="adm-input" value={form.backdrop} onChange={set('backdrop')} placeholder="https://image.tmdb.org/…" />
+          </div>
+          <div className="adm-form-group full">
+            <label className="adm-form-label">Trailer Key (YouTube Video ID / URL)</label>
+            <input className="adm-input" value={form.trailerKey || ''} onChange={set('trailerKey')} placeholder="e.g. AyIZ9tiiN8I" />
           </div>
           {form.type === 'movie' ? (
             <div className="adm-form-group full">

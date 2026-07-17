@@ -9,6 +9,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useSaved } from '../contexts/SavedContext';
 import { useMovies } from '../contexts/MoviesContext';
 import { parseMovieId } from '../utils/tmdb';
+import { buildDownloadUrl } from '../utils/settings';
 import './MovieDetailPage.css';
 
 const MovieDetailPage = () => {
@@ -24,6 +25,7 @@ const MovieDetailPage = () => {
   const seoKeywords = item?.seoKeywords || `${item?.title}, watch free online, HD movies, new releases`;
 
   const [selectedSeason, setSelectedSeason] = useState(1);
+  const [showTrailer, setShowTrailer] = useState(false);
 
   if (!item) return (
     <div className="not-found page">
@@ -112,6 +114,25 @@ const MovieDetailPage = () => {
               <Link to={`/cinema?vd=${item.id}`} className="btn btn-primary">
                 <Play size={17} fill="currentColor" /> {t('movie_watch')}
               </Link>
+              {item.trailerKey && (
+                <button className="btn btn-ghost" style={{ border: '1px solid rgba(255,255,255,.2)', display: 'flex', alignItems: 'center', gap: '0.4rem' }} onClick={() => setShowTrailer(true)}>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="#ff0000" style={{ verticalAlign: 'middle' }}>
+                    <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.518 3.545 12 3.545 12 3.545s-7.518 0-9.388.507a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.87.507 9.388.507 9.388.507s7.518 0 9.388-.507a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                  {t('watch_trailer') || 'Watch Trailer'}
+                </button>
+              )}
+              {item.type === 'movie' && (
+                <a 
+                  href={item.videoUrl ? `/api/download?url=${encodeURIComponent(item.videoUrl)}&title=${encodeURIComponent(item.title)}` : buildDownloadUrl(item.title)}
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="btn btn-ghost" 
+                  style={{ textDecoration: 'none', color: '#fff', border: '1px solid rgba(255,255,255,.2)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <Download size={17} /> {t('download_movie') || 'Download'}
+                </a>
+              )}
               <button 
                 className={`btn ${isSaved(item.id) ? 'btn-primary' : 'btn-ghost'}`} 
                 onClick={() => toggleSaved(item.id)}
@@ -175,6 +196,24 @@ const MovieDetailPage = () => {
         )}
         <AdBanner position="movie_detail" />
       </div>
+
+      {showTrailer && item.trailerKey && (
+        <div className="trailer-modal" onClick={() => setShowTrailer(false)}>
+          <div className="trailer-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="trailer-modal-close" onClick={() => setShowTrailer(false)}>×</button>
+            <div className="trailer-video-responsive">
+              <iframe
+                src={`https://www.youtube.com/embed/${item.trailerKey.includes('http') ? new URL(item.trailerKey).searchParams.get('v') : item.trailerKey}?autoplay=1`}
+                title={`${item.title} Trailer`}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );
