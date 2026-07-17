@@ -6,11 +6,11 @@ not_found_handling = "single-page-application"
 [[d1_databases]]
 binding = "DB"
 database_name = "rebafilmes-db"
-database_id = "f9f56ba0-a967-41e7-869f-f0e920672631"
+database_id = "87cfbd94-c4a0-4bad-a2a7-b13d42f6d9a3"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "d05432dd79aa408ba20791e3b10b5e21"
+id = "96569a303d5e4a9d8a5a51f506f02c29"
 
 # Set TMDB_API_KEY in Cloudflare Pages → Settings → Environment variables
 # For local: create .dev.vars with TMDB_API_KEY=your_key
