@@ -1,0 +1,123 @@
+.cinema-page {
+  background: #000;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cinema-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .75rem 1.25rem;
+  background: rgba(0,0,0,.8);
+  border-bottom: 1px solid var(--border);
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: color var(--transition);
+}
+.back-btn:hover { color: var(--accent); }
+
+.cinema-player-wrap {
+  width: 100%;
+  background: #000;
+  display: flex;
+  justify-content: center;
+}
+
+.cinema-player {
+  width: 100%;
+  max-width: 1100px;
+  aspect-ratio: 16/9;
+  background: #000;
+}
+
+.cinema-trailer iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.cinema-no-trailer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.cinema-desc {
+  color: var(--text-secondary);
+  font-size: .92rem;
+  line-height: 1.6;
+  max-width: 720px;
+  margin-top: .5rem;
+}
+
+.cinema-info {
+  background: var(--bg-secondary);
+}
+.cinema-info h2 { font-size: 1.3rem; margin-bottom: .35rem; }
+.cinema-translator { font-size: .88rem; color: var(--text-secondary); }
+.cinema-translator strong { color: var(--accent); }
+
+.cinema-error { text-align: center; padding-top: 5rem; }
+
+/* ─── Download section ─────────────────────────────── */
+.cinema-download-wrap {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.download-btn {
+  font-size: .92rem;
+}
+
+.download-gate {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: rgba(229,9,20,.08);
+  border: 1px solid rgba(229,9,20,.25);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  max-width: 420px;
+}
+
+.download-gate svg {
+  flex-shrink: 0;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.download-gate-title {
+  font-size: .9rem;
+  color: var(--text-secondary);
+  margin-bottom: .5rem;
+}
+
+@media (max-width: 768px) {
+  .cinema-player-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+  }
+}
+
+@media (max-width: 480px) {
+  .cinema-topbar { padding: 0.5rem; }
+  .cinema-info h2 { font-size: 1.1rem; }
+  .download-gate { flex-direction: column; padding: 1rem; }
+}
+

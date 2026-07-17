@@ -1,0 +1,209 @@
+.hero-carousel {
+  position: relative;
+  height: 85vh;
+  min-height: 600px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.carousel-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+  display: flex;
+  align-items: center;
+}
+
+.carousel-slide.active {
+  opacity: 1;
+  z-index: 1;
+}
+
+.carousel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to right, 
+    rgba(15, 16, 20, 1) 0%, 
+    rgba(15, 16, 20, 0.6) 50%, 
+    rgba(15, 16, 20, 0) 100%
+  ),
+  linear-gradient(
+    to bottom,
+    rgba(15, 16, 20, 0) 0%,
+    rgba(15, 16, 20, 0.4) 50%,
+    rgba(15, 16, 20, 1) 100%
+  );
+}
+
+.carousel-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  margin-top: 5rem; /* Space for navbar */
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.8s ease-in-out 0.2s;
+}
+
+.carousel-slide.active .carousel-content {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.badge-container {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: var(--glass-bg);
+  backdrop-filter: blur(5px);
+  border: 1px solid var(--glass-border);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: white;
+}
+
+.badge:first-child {
+  background: var(--gradient-accent);
+  border-color: transparent;
+}
+
+.movie-title {
+  font-size: 4rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  line-height: 1.1;
+  text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+}
+
+.movie-description {
+  font-size: 1.1rem;
+  color: var(--text-color-muted);
+  margin-bottom: 2.5rem;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.carousel-controls {
+  position: absolute;
+  bottom: 50%;
+  transform: translateY(50%);
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2rem;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.hero-carousel:hover .carousel-controls {
+  opacity: 1;
+}
+
+.control-btn {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.carousel-indicators {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.indicator.active {
+  background: var(--accent-color);
+  width: 30px;
+  border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  .hero-carousel { height: 70vh; min-height: 420px; }
+  .carousel-overlay {
+    background:
+      linear-gradient(to bottom, rgba(15,16,20,0.2) 0%, rgba(15,16,20,0.5) 50%, rgba(15,16,20,1) 100%);
+  }
+  .carousel-content {
+    max-width: 100%;
+    margin-top: 0;
+    text-align: center;
+    align-self: flex-end;
+    padding: 0 1rem 1rem;
+  }
+  .carousel-slide {
+    align-items: flex-end;
+  }
+  .badge-container { justify-content: center; }
+  .movie-title { font-size: 2rem; }
+  .movie-description { max-width: 100%; }
+  .action-buttons {
+    flex-direction: column;
+    gap: .5rem;
+    align-items: stretch;
+  }
+  .action-buttons .btn {
+    width: 100%;
+    justify-content: center;
+    padding: .9rem;
+    font-size: 1rem;
+  }
+  .carousel-controls { display: none; }
+}
+
+@media (max-width: 480px) {
+  .movie-title { font-size: 1.75rem; }
+  .movie-description { font-size: .9rem; margin-bottom: 1.25rem; }
+  .badge { font-size: .7rem; padding: .2rem .5rem; }
+  .hero-carousel { height: 60vh; min-height: 360px; }
+}

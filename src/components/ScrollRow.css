@@ -1,0 +1,57 @@
+.scroll-section { padding: 1.25rem 0; }
+
+.scroll-wrapper {
+  position: relative;
+}
+
+.scroll-row {
+  display: flex;
+  gap: .75rem;
+  overflow-x: auto;
+  padding: .5rem 1.5rem 1rem;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.scroll-row::-webkit-scrollbar { display: none; }
+
+.scroll-item {
+  flex: 0 0 148px;
+  scroll-snap-align: start;
+}
+
+.scroll-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  background: rgba(17,17,21,.9);
+  border: 1px solid var(--border);
+  color: white;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  opacity: 0;
+}
+.scroll-wrapper:hover .scroll-arrow { opacity: 1; }
+.scroll-arrow:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+.scroll-arrow.left  { left: .5rem; }
+.scroll-arrow.right { right: .5rem; }
+
+@media (max-width: 768px) {
+  .scroll-arrow { opacity: 0.85; width: 32px; height: 32px; }
+  .scroll-arrow:active { opacity: 1; background: var(--accent); border-color: var(--accent); color: #000; }
+  .scroll-item { flex: 0 0 130px; }
+  /* Override inline style via specificity — section header in scroll row */
+  .scroll-section .section-header { padding: 0 1rem !important; }
+  .scroll-row { padding: .5rem 1rem 1rem; scroll-padding-left: 1rem; }
+  .scroll-section { padding: .75rem 0; }
+}
+
+@media (max-width: 480px) {
+  .scroll-item { flex: 0 0 110px; }
+  .scroll-row { padding: .4rem .75rem .75rem; gap: .5rem; }
+  .scroll-section .section-header { padding: 0 .75rem !important; }
+}

@@ -1,0 +1,76 @@
+.search-page { max-width: 1300px; margin: 0 auto; }
+
+.search-hero {
+  margin-bottom: 2rem;
+}
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: .8rem 1.25rem;
+  transition: border-color var(--transition);
+}
+.search-input-wrap:focus-within { border-color: var(--accent); }
+.search-ico { color: var(--text-secondary); flex-shrink: 0; }
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+.search-input::placeholder { color: var(--text-secondary); }
+
+.search-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.search-filters { display: flex; flex-direction: column; gap: 1.5rem; }
+.filter-group h4 { font-size: .82rem; text-transform: uppercase; letter-spacing: .8px; color: var(--text-secondary); margin-bottom: .6rem; }
+.filter-pill {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: .45rem .75rem;
+  border-radius: 8px;
+  font-size: .88rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all var(--transition);
+  margin-bottom: .25rem;
+}
+.filter-pill:hover { background: var(--bg-card); color: var(--text-primary); }
+.filter-pill.active { background: var(--accent-glow); color: var(--accent); border-color: var(--accent); }
+
+.results-count { font-size: .82rem; color: var(--text-secondary); margin-bottom: 1rem; }
+.no-results { text-align: center; padding: 4rem 0; color: var(--text-secondary); }
+.no-results p { margin-top: 1rem; }
+
+@media (max-width: 768px) {
+  .search-layout { grid-template-columns: 1fr; gap: 1rem; }
+  .search-filters {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: .5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: .5rem;
+  }
+  .search-filters::-webkit-scrollbar { display: none; }
+  .filter-group { min-width: max-content; }
+  .filter-group h4 { display: none; }
+  .filter-pill { display: inline-flex; width: auto; white-space: nowrap; }
+  .search-input { font-size: 0.95rem; }
+}
+
+@media (max-width: 480px) {
+  .search-input-wrap { padding: .65rem 1rem; }
+}

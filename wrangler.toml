@@ -1,0 +1,16 @@
+name = "rebafilmes"
+compatibility_date = "2024-03-20"
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
+[[d1_databases]]
+binding = "DB"
+database_name = "rebafilmes-db"
+database_id = "f9f56ba0-a967-41e7-869f-f0e920672631"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "d05432dd79aa408ba20791e3b10b5e21"
+
+# Set TMDB_API_KEY in Cloudflare Pages → Settings → Environment variables
+# For local: create .dev.vars with TMDB_API_KEY=your_key

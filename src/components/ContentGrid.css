@@ -1,0 +1,12 @@
+.content-grid-section { padding: 1rem 1.5rem 2rem; }
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 480px) {
+  .content-grid { grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: .6rem; }
+  .content-grid-section { padding: 1rem 0 2rem; }
+}

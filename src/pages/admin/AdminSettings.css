@@ -1,0 +1,30 @@
+.adm-settings-section {
+  background: #13131a;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  padding: 1.5rem;
+}
+
+.adm-settings-heading {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1.25rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.adm-danger-zone {
+  border-color: rgba(239,68,68,.2);
+  background: rgba(239,68,68,.04);
+}
+
+.adm-danger-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .75rem 0;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.adm-danger-row:last-child { border-bottom: none; }

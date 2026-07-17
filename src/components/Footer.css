@@ -1,0 +1,218 @@
+.footer {
+  position: relative;
+  background-color: #0d0000;
+  background-image: radial-gradient(circle at 25% 50%, #73030c 0%, #360004 45%, #0d0000 80%);
+  border-top: 1px solid var(--border);
+  padding: 3rem 2rem 0;
+  margin-top: 3rem;
+}
+
+/* Top Badge Overlay */
+.footer-top-badge {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.badge-inner {
+  background: #fff;
+  padding: 3px;
+  border-radius: 6px;
+  transform: rotate(15deg);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-inner img {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  animation: floatLeftRight 3s ease-in-out infinite;
+}
+
+/* ─── 3-Column Grid Container ────────────── */
+.footer-container {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  max-width: 1400px;
+  margin: 0 auto 2rem;
+  gap: 2.5rem;
+}
+
+/* Column 1: Brand Info */
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.footer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.footer-logo-img {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #fff;
+  animation: floatLeftRight 3s ease-in-out infinite;
+}
+
+@keyframes floatLeftRight {
+  0%, 100% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+.footer-desc {
+  color: #d1d1d1;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: 450px;
+}
+
+/* Social icons */
+.footer-socials {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+.social-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  opacity: 0;
+  translate: -20px 0;
+}
+.social-icon svg {
+  width: 16px;
+  height: 16px;
+  animation: floatLeftRight 3s ease-in-out infinite;
+}
+
+.social-icon:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-3px);
+}
+
+.animate-socials .social-icon {
+  animation: slideInRight 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.animate-socials .social-icon:nth-child(1) { animation-delay: 0.1s; }
+.animate-socials .social-icon:nth-child(2) { animation-delay: 0.2s; }
+.animate-socials .social-icon:nth-child(3) { animation-delay: 0.3s; }
+.animate-socials .social-icon:nth-child(4) { animation-delay: 0.4s; }
+.animate-socials .social-icon:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    translate: -20px 0;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* Column 2 & 3: Link Groups */
+.link-group h4 {
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.link-group ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.link-group a {
+  color: #d1d1d1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.15rem 0;
+  display: inline-block;
+  transition: color var(--transition);
+}
+
+.link-group a:hover {
+  color: #ffffff;
+}
+
+/* Bottom Bar */
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ─── Responsive ────────────────────────── */
+@media (max-width: 900px) {
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .footer {
+    padding: 2.5rem 1.5rem 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .footer-bottom {
+    padding: 1rem 0 4.5rem; /* Reduced from 5rem to be slightly more compact while still clearing the bottom nav */
+  }
+}
+
+@media (max-width: 480px) {
+  .footer { padding: 1.5rem 1rem 0; margin-top: 2rem; }
+  .footer-container { 
+    grid-template-columns: 1fr 1fr; 
+    gap: 1.5rem 1rem; 
+  }
+  .footer-brand {
+    grid-column: span 2;
+  }
+  .footer-desc {
+    font-size: 0.8rem;
+  }
+  .link-group h4 {
+    margin-bottom: 0.75rem;
+  }
+  .link-group ul {
+    gap: 0.4rem;
+  }
+}
+
+

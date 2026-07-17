@@ -1,0 +1,161 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  padding: 1.5rem 0;
+  background: transparent;
+}
+
+.navbar.scrolled {
+  background: rgba(15, 16, 20, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem 0;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-left, .navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-links a {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-color-muted);
+}
+
+.nav-links a:hover, .nav-links a.active {
+  color: var(--text-color);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: var(--bg-color-light);
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  transition: border-color 0.3s ease;
+}
+
+.search-box:focus-within {
+  border-color: var(--accent-color);
+}
+
+.search-icon {
+  color: var(--text-color-muted);
+  margin-right: 0.5rem;
+}
+
+.search-box input {
+  background: transparent;
+  border: none;
+  color: white;
+  outline: none;
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+  width: 200px;
+}
+
+.user-btn {
+  background: var(--bg-color-light);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.user-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.mobile-only {
+  display: none;
+}
+
+.mobile-menu {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .desktop-only {
+    display: none;
+  }
+  .mobile-only {
+    display: block;
+  }
+  
+  .mobile-menu-btn {
+    color: white;
+  }
+
+  .mobile-menu {
+    display: block;
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 300px;
+    height: 100vh;
+    background: var(--bg-color);
+    padding: 5rem 2rem 2rem;
+    transition: right 0.3s ease;
+    box-shadow: -5px 0 30px rgba(0,0,0,0.5);
+    border-left: 1px solid var(--border-color);
+  }
+
+  .mobile-menu.open {
+    right: 0;
+  }
+
+  .mobile-search {
+    margin-bottom: 2rem;
+  }
+
+  .mobile-nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .mobile-nav-links a {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar { padding: 1rem 0; }
+  .navbar.scrolled { padding: 0.75rem 0; }
+  .navbar-left, .navbar-right { gap: 0.75rem; }
+  .logo { font-size: 1.25rem; }
+  .search-box { padding: 0.4rem 0.8rem; }
+  .search-box input { width: 100px; }
+}
