@@ -4,7 +4,7 @@ import { ArrowLeft, Download, Film } from 'lucide-react';
 import AdBanner from '../components/AdBanner';
 import { useMovies } from '../contexts/MoviesContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { getDownloadUrl, moviePath, getTrailerKey } from '../utils/tmdb';
+import { getDownloadUrl, moviePath, getTrailerKey, parseMovieId } from '../utils/tmdb';
 import { getSettings } from '../utils/settings';
 import './CinemaPage.css';
 
@@ -23,7 +23,7 @@ const CinemaPage = () => {
     return () => window.removeEventListener('storage', sync);
   }, []);
 
-  const id = Number(params.get('vd'));
+  const id = parseMovieId(params.get('vd'));
 
   useEffect(() => {
     let cancelled = false;

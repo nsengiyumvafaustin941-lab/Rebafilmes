@@ -8,6 +8,7 @@ import Footer from '../components/Footer';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSaved } from '../contexts/SavedContext';
 import { useMovies } from '../contexts/MoviesContext';
+import { parseMovieId } from '../utils/tmdb';
 import './MovieDetailPage.css';
 
 const MovieDetailPage = () => {
@@ -15,7 +16,8 @@ const MovieDetailPage = () => {
   const { isSaved, toggleSaved } = useSaved();
   const { allMovies } = useMovies();
   const { id } = useParams();
-  const item = allMovies.find(c => c.id === Number(id));
+  const numericId = parseMovieId(id);
+  const item = allMovies.find(c => c.id === numericId);
 
   const seoTitle = item?.seoTitle || `${item?.title} - RebaFilme`;
   const seoDesc = item?.seoDesc || item?.description || '';
