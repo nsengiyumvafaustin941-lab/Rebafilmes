@@ -9,7 +9,7 @@ import Footer from '../components/Footer';
 import UpcomingRow from '../components/UpcomingRow';
 import { useMovies } from '../contexts/MoviesContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { HOME_SECTIONS, UPCOMING_CALENDAR } from '../data/homeSectionsData';
+import { HOME_SECTIONS } from '../data/homeSectionsData';
 
 /* ─── Read localStorage progress ─────────────────── */
 const getInProgressItems = (allMovies) => {
@@ -93,7 +93,7 @@ const HomePage = () => {
       <CuratedRow title={HOME_SECTIONS[5].title} queries={HOME_SECTIONS[5].queries} />
 
       {/* 7. Upcoming Calendar */}
-      <UpcomingRow title="Upcoming Calendar" items={UPCOMING_CALENDAR} />
+      <UpcomingRow title="Upcoming Calendar" />
 
       {/* 8. Gangster */}
       <CuratedRow title={HOME_SECTIONS[6].title} queries={HOME_SECTIONS[6].queries} />

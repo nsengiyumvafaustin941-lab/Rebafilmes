@@ -154,6 +154,15 @@ export async function getTopRatedTv(page = 1) {
   return (data.results || []).map((m) => mapTmdbMovie({ ...m, media_type: 'tv' }));
 }
 
+/** Returns upcoming movies from TMDB with real release dates */
+export async function getUpcoming(page = 1) {
+  const data = await tmdbFetch('upcoming', { page: String(page) });
+  return (data.results || []).map((m) => ({
+    ...mapTmdbMovie({ ...m, media_type: 'movie' }),
+    releaseDate: m.release_date || '',
+  }));
+}
+
 export async function getMovie(id) {
   const data = await tmdbFetch('movie', { id: String(id) });
   return mapTmdbMovie(data);

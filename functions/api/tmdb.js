@@ -53,10 +53,14 @@ export async function onRequest(context) {
       tmdbPath = '/tv/top_rated';
       params.set('page', page);
       break;
+    case 'upcoming':
+      tmdbPath = '/movie/upcoming';
+      params.set('page', page);
+      break;
     case 'discover':
       tmdbPath = '/discover/movie';
       params.set('page', page);
-      if (id) params.set('with_genres', id);       // reuse id param for genre id
+      if (id) params.set('with_genres', id);
       params.set('sort_by', query || 'popularity.desc');
       break;
     case 'movie':
