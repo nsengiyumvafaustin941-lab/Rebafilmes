@@ -152,7 +152,8 @@ function App() {
                                       <Route path="/search"     element={<SearchPage />} />
                                       <Route path="/movies"     element={<MoviesPage />} />
                                       <Route path="/saved"      element={<SavedPage />} />
-                                      <Route path="/highlights" element={
+                                      <Route path="/highlights" element={<Navigate to="/newsfeeds" replace />} />
+                                      <Route path="/newsfeeds" element={
                                         <Suspense fallback={<div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', color:'var(--accent)', fontSize:'1rem' }}>Loading…</div>}>
                                           <HighlightsPage />
                                         </Suspense>
