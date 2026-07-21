@@ -1,62 +1,153 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Home, Search, Film, Bookmark, Globe, Clapperboard } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import {
+  Home, Search, Film, Bookmark, Globe, Clapperboard,
+  MessageCircle, ChevronRight, Flame, Star, Tv, X
+} from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import logo from '../assets/logo.jpg';
 import './Sidebar.css';
 
 const Sidebar = () => {
   const { t, setIsModalOpen } = useLanguage();
+  const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQ, setSearchQ] = useState('');
+  const searchRef = useRef(null);
 
   const NAV = [
-    { to: '/',        icon: Home,     label: t('nav_home') },
-    { to: '/search',  icon: Search,   label: t('nav_search') },
-    { to: '/movies',  icon: Film,     label: t('nav_movies') },
-    { to: '/saved',       icon: Bookmark,      label: t('nav_saved') },
-    { to: '/highlights',  icon: Clapperboard,  label: 'Highlights' },
+    { to: '/',           icon: Home,        label: t('nav_home'),   badge: null },
+    { to: '/movies',     icon: Film,        label: t('nav_movies'), badge: null },
+    { to: '/search',     icon: Search,      label: t('nav_search'), badge: null },
+    { to: '/saved',      icon: Bookmark,    label: t('nav_saved'),  badge: null },
+    { to: '/highlights', icon: Clapperboard,label: 'Highlights',    badge: '🔥' },
   ];
+
+  // Close sidebar on outside click (mobile)
+  useEffect(() => {
+    if (!collapsed) return;
+    const handleKey = (e) => { if (e.key === 'Escape') setCollapsed(true); };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [collapsed]);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQ.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQ.trim())}`);
+      setSearchQ('');
+      setSearchOpen(false);
+      setCollapsed(true);
+    }
+  };
 
   return (
     <>
-      {/* Desktop left sidebar */}
-      <aside className="sidebar">
-        <NavLink to="/" className="sidebar-logo">
-          <img src={logo} alt="RebaFilme" className="sidebar-logo-img" />
-        </NavLink>
+      {/* ── Desktop Sidebar ── */}
+      <aside className={`sidebar ${collapsed ? 'collapsed' : 'expanded'}`}>
+
+        {/* Logo + collapse toggle */}
+        <div className="sidebar-top">
+          <NavLink to="/" className="sidebar-logo" onClick={() => setCollapsed(true)}>
+            <img src={logo} alt="RebaFilme" className="sidebar-logo-img" />
+            <span className="sidebar-brand">RebaFilme</span>
+          </NavLink>
+          <button
+            className="sidebar-collapse-btn"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
+          >
+            <ChevronRight size={16} className={`collapse-icon ${collapsed ? '' : 'rotated'}`} />
+          </button>
+        </div>
+
+        {/* Inline search bar (expanded only) */}
+        {!collapsed && (
+          <form className="sidebar-search-form" onSubmit={handleSearch}>
+            <Search size={14} className="sidebar-search-ico" />
+            <input
+              ref={searchRef}
+              className="sidebar-search-input"
+              placeholder="Search movies, shows…"
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+            />
+            {searchQ && (
+              <button type="button" className="sidebar-search-clear" onClick={() => setSearchQ('')}>
+                <X size={12} />
+              </button>
+            )}
+          </form>
+        )}
+
+        {/* Section: Browse */}
+        <div className="sidebar-section-label">Browse</div>
         <nav className="sidebar-nav">
-          {NAV.map(({ to, icon: Icon, label }) => (
+          {NAV.map(({ to, icon: Icon, label, badge }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/'}
               className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
-              title={label}
+              title={collapsed ? label : undefined}
+              onClick={() => setCollapsed(true)}
             >
-              <Icon size={22} />
+              <span className="sidebar-icon-wrap">
+                <Icon size={20} />
+                {badge && <span className="sidebar-badge">{badge}</span>}
+              </span>
               <span className="sidebar-label">{label}</span>
+              {!collapsed && <ChevronRight size={12} className="sidebar-link-arrow" />}
             </NavLink>
           ))}
         </nav>
-        
-        <div className="sidebar-bottom">
+
+        {/* Section: More */}
+        <div className="sidebar-section-label">More</div>
+        <div className="sidebar-nav">
+          <button
+            className="sidebar-link"
+            title={collapsed ? t('choose_language') : undefined}
+            onClick={() => { setIsModalOpen(true); setCollapsed(true); }}
+          >
+            <span className="sidebar-icon-wrap"><Globe size={20} /></span>
+            <span className="sidebar-label">{t('choose_language')}</span>
+          </button>
           <a
             href="https://wa.me/250781344196"
             target="_blank"
             rel="noopener noreferrer"
-            className="sidebar-whatsapp-btn"
-            title={t('request_movie')}
+            className="sidebar-link sidebar-whatsapp"
+            title={collapsed ? t('request_movie') : undefined}
+            onClick={() => setCollapsed(true)}
           >
-            <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
-              <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/>
-            </svg>
+            <span className="sidebar-icon-wrap">
+              <MessageCircle size={20} />
+            </span>
+            <span className="sidebar-label">{t('request_movie')}</span>
           </a>
-          <button className="sidebar-lang-btn" onClick={() => setIsModalOpen(true)} title={t('choose_language')}>
-            <Globe size={22} />
-          </button>
         </div>
+
+        {/* Footer tag */}
+        {!collapsed && (
+          <div className="sidebar-footer">
+            <span>© 2025 RebaFilme</span>
+          </div>
+        )}
       </aside>
 
-      {/* Mobile bottom tab bar */}
+      {/* Backdrop when expanded */}
+      {!collapsed && (
+        <div className="sidebar-backdrop" onClick={() => setCollapsed(true)} />
+      )}
+
+      {/* ── Mobile Bottom Tab Bar ── */}
       <nav className="bottom-nav">
         {NAV.map(({ to, icon: Icon, label }) => (
           <NavLink
@@ -65,12 +156,14 @@ const Sidebar = () => {
             end={to === '/'}
             className={({ isActive }) => `bottom-link${isActive ? ' active' : ''}`}
           >
-            <Icon size={20} />
+            <span className="bottom-icon-wrap">
+              <Icon size={21} />
+            </span>
             <span>{label}</span>
           </NavLink>
         ))}
-        <button className="bottom-lang-btn" onClick={() => setIsModalOpen(true)}>
-          <Globe size={20} />
+        <button className="bottom-link bottom-lang-btn" onClick={() => setIsModalOpen(true)}>
+          <span className="bottom-icon-wrap"><Globe size={21} /></span>
           <span>Lang</span>
         </button>
       </nav>

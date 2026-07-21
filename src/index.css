@@ -12,7 +12,7 @@
   --accent-glow:  rgba(229, 9, 20, 0.25);
   --danger:       #ef4444;
   --border:       rgba(255,255,255,0.08);
-  --sidebar-width:58px;
+  --sidebar-width:64px;
   --font:         'Inter', sans-serif;
   --glass:        rgba(17,17,21,0.85);
   --radius:       10px;
@@ -46,6 +46,7 @@ input,select { font-family: var(--font); }
   flex: 1;
   margin-left: var(--sidebar-width);
   min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Scrollbar */
