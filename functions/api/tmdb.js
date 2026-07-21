@@ -49,6 +49,16 @@ export async function onRequest(context) {
       params.set('query', query);
       params.set('page', page);
       break;
+    case 'multi':
+      tmdbPath = '/search/multi';
+      params.set('query', query);
+      params.set('page', page);
+      break;
+    case 'tv':
+      tmdbPath = '/search/tv';
+      params.set('query', query);
+      params.set('page', page);
+      break;
     default:
       return new Response(JSON.stringify({ error: 'Invalid type' }), { status: 400, headers: CORS });
   }

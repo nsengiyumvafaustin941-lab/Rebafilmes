@@ -6,7 +6,7 @@ import AdBanner from '../components/AdBanner';
 import Footer from '../components/Footer';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useMovies } from '../contexts/MoviesContext';
-import { searchMovies } from '../utils/tmdb';
+import { searchAny } from '../utils/tmdb';
 import './SearchPage.css';
 
 const SearchPage = () => {
@@ -31,7 +31,7 @@ const SearchPage = () => {
     const handle = setTimeout(async () => {
       setSearching(true);
       try {
-        const results = await searchMovies(query.trim());
+        const results = await searchAny(query.trim());
         setRemoteResults(results);
       } catch (err) {
         console.warn('TMDB search failed', err);

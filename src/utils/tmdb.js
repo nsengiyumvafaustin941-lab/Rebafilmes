@@ -161,18 +161,13 @@ export async function searchTv(query, page = 1) {
 }
 
 /**
- * Search both movies AND TV — returns the best match for a title.
- * Tries movies first, then TV; picks whichever has a poster.
+ * Search both movies AND TV — uses /search/multi through the proxy.
+ * Falls back to direct TMDB call using client-side key if proxy unavailable.
  */
 export async function searchAny(query, page = 1) {
   if (!query?.trim()) return [];
-  const apiKey = getSettings().tmdbApiKey || '';
-  if (!apiKey) return [];
   try {
-    const params = new URLSearchParams({ api_key: apiKey, language: 'en-US', query: query.trim(), page: String(page) });
-    const res = await fetch(`https://api.themoviedb.org/3/search/multi?${params}`);
-    if (!res.ok) return [];
-    const data = await res.json();
+    const data = await tmdbFetch('multi', { query: query.trim(), page: String(page) });
     return (data.results || [])
       .filter((m) => m.media_type === 'movie' || m.media_type === 'tv')
       .map(mapTmdbMovie);
@@ -180,3 +175,4 @@ export async function searchAny(query, page = 1) {
     return [];
   }
 }
+
