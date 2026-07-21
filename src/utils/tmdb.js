@@ -143,3 +143,40 @@ export async function searchMovies(query, page = 1) {
   const data = await tmdbFetch('search', { query: query.trim(), page: String(page) });
   return (data.results || []).map(mapTmdbMovie);
 }
+
+/** Search TV series only */
+export async function searchTv(query, page = 1) {
+  if (!query?.trim()) return [];
+  const apiKey = getSettings().tmdbApiKey || '';
+  if (!apiKey) return [];
+  try {
+    const params = new URLSearchParams({ api_key: apiKey, language: 'en-US', query: query.trim(), page: String(page) });
+    const res = await fetch(`https://api.themoviedb.org/3/search/tv?${params}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results || []).map((m) => mapTmdbMovie({ ...m, media_type: 'tv' }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Search both movies AND TV — returns the best match for a title.
+ * Tries movies first, then TV; picks whichever has a poster.
+ */
+export async function searchAny(query, page = 1) {
+  if (!query?.trim()) return [];
+  const apiKey = getSettings().tmdbApiKey || '';
+  if (!apiKey) return [];
+  try {
+    const params = new URLSearchParams({ api_key: apiKey, language: 'en-US', query: query.trim(), page: String(page) });
+    const res = await fetch(`https://api.themoviedb.org/3/search/multi?${params}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results || [])
+      .filter((m) => m.media_type === 'movie' || m.media_type === 'tv')
+      .map(mapTmdbMovie);
+  } catch {
+    return [];
+  }
+}

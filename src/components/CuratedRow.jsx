@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { searchMovies } from '../utils/tmdb';
+import { searchAny } from '../utils/tmdb';
 import MovieCard from './MovieCard';
 import './ScrollRow.css';
 
@@ -26,7 +26,7 @@ const CuratedRow = ({ title, queries = [], viewAllTo = '/movies' }) => {
 
     const resolve = async () => {
       const results = await Promise.allSettled(
-        queries.map((q) => searchMovies(q, 1))
+        queries.map((q) => searchAny(q, 1))
       );
       if (cancelled) return;
 

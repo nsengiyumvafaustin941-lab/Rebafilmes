@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { searchMovies } from '../utils/tmdb';
+import { searchAny } from '../utils/tmdb';
 import './UpcomingRow.css';
 
 /**
@@ -19,7 +19,7 @@ const UpcomingRow = ({ title = 'Upcoming Calendar', items = [] }) => {
 
     const resolve = async () => {
       const results = await Promise.allSettled(
-        items.map((item) => searchMovies(item.query || item.title, 1))
+        items.map((item) => searchAny(item.query || item.title, 1))
       );
       if (cancelled) return;
 
