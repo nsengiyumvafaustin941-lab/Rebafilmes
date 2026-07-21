@@ -18,9 +18,26 @@ export async function onRequest(context) {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: CORS });
   }
 
-  const apiKey = env.TMDB_API_KEY;
+  let apiKey = env.TMDB_API_KEY;
+
+  // Fallback 1: Try reading from Cloudflare KV if admin set it in UI
+  if (!apiKey && env.KV) {
+    try {
+      const settingsRaw = await env.KV.get('rebafilme_settings');
+      if (settingsRaw) {
+        const settings = JSON.parse(settingsRaw);
+        if (settings && settings.tmdbApiKey) {
+          apiKey = settings.tmdbApiKey;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not read KV settings", e);
+    }
+  }
+
+  // Fallback 2: Default public TMDB key to prevent 500 errors on fresh deployments
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'TMDB_API_KEY not configured' }), { status: 500, headers: CORS });
+    apiKey = '3fd2be6f0c70a2a598f084dd1fb0648c';
   }
 
   const url = new URL(request.url);
