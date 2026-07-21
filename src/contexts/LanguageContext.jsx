@@ -3,16 +3,36 @@ import { translations } from '../data/translations';
 
 const LanguageContext = createContext();
 
+// Languages that we have manual translations for in translations.js
+const BUILT_IN_LANGS = ['rw', 'fr', 'en', 'sw', 'lg'];
+
 export const LanguageProvider = ({ children }) => {
-  const [lang, setLang] = useState(localStorage.getItem('rebafilme_lang') || 'rw');
+  const [lang, setLangState] = useState(localStorage.getItem('rebafilme_lang') || 'rw');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem('rebafilme_lang', lang);
-  }, [lang]);
+  const setLang = (code) => {
+    setLangState(code);
+    localStorage.setItem('rebafilme_lang', code);
+
+    if (BUILT_IN_LANGS.includes(code)) {
+      // Clear google translate cookie
+      document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=' + window.location.hostname + '; path=/;';
+    } else {
+      // For non-built-in, set Google Translate cookie (translating from rw to chosen language)
+      // rw is our default base language in index.html <html lang="rw">
+      document.cookie = `googtrans=/rw/${code}; path=/;`;
+      document.cookie = `googtrans=/rw/${code}; domain=.${window.location.hostname}; path=/;`;
+    }
+    
+    // Reload page to let Google Translate script pick up the new cookie
+    window.location.reload();
+  };
 
   const t = (key) => {
-    return translations[lang]?.[key] || translations['rw']?.[key] || key;
+    // If it's a non-built-in language, we fallback to rw (Kinyarwanda) so Google Translate can translate it from rw to target
+    const sourceLang = BUILT_IN_LANGS.includes(lang) ? lang : 'rw';
+    return translations[sourceLang]?.[key] || translations['rw']?.[key] || key;
   };
 
   return (

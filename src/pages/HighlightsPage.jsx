@@ -40,8 +40,8 @@ const NewsfeedsPage = () => {
   // 2. Fetch live news articles (Automatic RSS)
   useEffect(() => {
     let cancelled = false;
-    const RSS_URL = 'https://screenrant.com/feed/movie-news/';
-    const API = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}&count=6`;
+    const rssUrl = encodeURIComponent('https://www.hollywoodreporter.com/c/movies/feed/');
+    const API = `https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}&count=6`;
 
     fetch(API)
       .then((r) => r.json())
