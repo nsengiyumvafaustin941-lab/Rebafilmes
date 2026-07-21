@@ -15,10 +15,29 @@ import './MovieDetailPage.css';
 const MovieDetailPage = () => {
   const { t } = useLanguage();
   const { isSaved, toggleSaved } = useSaved();
-  const { allMovies } = useMovies();
+  const { allMovies, fetchMovieById } = useMovies();
   const { id } = useParams();
   const numericId = parseMovieId(id);
-  const item = allMovies.find(c => c.id === numericId);
+
+  // Try local cache first; if not found fetch directly from TMDB
+  const cached = allMovies.find(c => c.id === numericId);
+  const [item, setItem] = useState(cached || null);
+  const [fetching, setFetching] = useState(!cached);
+
+  useEffect(() => {
+    if (cached) { setItem(cached); setFetching(false); return; }
+    setFetching(true);
+    fetchMovieById(numericId).then(result => {
+      setItem(result || null);
+      setFetching(false);
+    });
+  }, [numericId]);
+
+  // Keep item in sync if allMovies updates (e.g. after fetch lands in context)
+  useEffect(() => {
+    const fresh = allMovies.find(c => c.id === numericId);
+    if (fresh) setItem(fresh);
+  }, [allMovies, numericId]);
 
   const seoTitle = item?.seoTitle || `${item?.title} - RebaFilme`;
   const seoDesc = item?.seoDesc || item?.description || '';
@@ -26,6 +45,12 @@ const MovieDetailPage = () => {
 
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [showTrailer, setShowTrailer] = useState(false);
+
+  if (fetching) return (
+    <div className="page" style={{ padding: '4rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+      Loading…
+    </div>
+  );
 
   if (!item) return (
     <div className="not-found page">
