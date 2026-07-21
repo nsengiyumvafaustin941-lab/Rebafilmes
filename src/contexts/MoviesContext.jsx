@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { getTrending, getMovie } from '../utils/tmdb';
+import { getTrending, getTopRated, getPopular, getPopularTv, getTopRatedTv, getMovie } from '../utils/tmdb';
 import { api } from '../utils/api';
 
 const MoviesContext = createContext();
@@ -34,22 +34,45 @@ export const MoviesProvider = ({ children }) => {
         const curated = await api.get(CURATED_KEY, {});
         setCuratedMap(curated);
 
-        const pages = await Promise.all([
+        // Fetch from 5 diverse TMDB sources in parallel for a mixed catalogue
+        const [
+          trend1, trend2,       // This week's trending (movies + TV mixed)
+          topRated1, topRated2, // All-time top rated movies (classics + modern)
+          popular1,             // Popular movies of all time
+          popularTv1,           // Popular TV shows
+          topRatedTv1,          // Top-rated TV shows
+        ] = await Promise.allSettled([
           getTrending(1),
           getTrending(2),
-          getTrending(3),
+          getTopRated(1),
+          getTopRated(2),
+          getPopular(1),
+          getPopularTv(1),
+          getTopRatedTv(1),
         ]);
+
+        // Collect successful results
+        const sources = [trend1, trend2, topRated1, topRated2, popular1, popularTv1, topRatedTv1]
+          .filter((r) => r.status === 'fulfilled')
+          .map((r) => r.value);
+
+        // Interleave sources so home page shows variety (not all trending first)
         const merged = [];
         const seen = new Set();
-        for (const page of pages) {
-          for (const m of page) {
-            if (!seen.has(m.id)) {
-              seen.add(m.id);
-              merged.push({ ...m, source: 'tmdb' });
+        const maxLen = Math.max(...sources.map((s) => s.length));
+        for (let i = 0; i < maxLen; i++) {
+          for (const src of sources) {
+            if (i < src.length) {
+              const m = src[i];
+              if (!seen.has(m.id)) {
+                seen.add(m.id);
+                merged.push({ ...m, source: 'tmdb' });
+              }
             }
           }
         }
 
+        // Add admin-uploaded movies (always included, not deduplicated away)
         const customMovies = await api.get(ADMIN_MOVIES_KEY, []);
         for (const m of customMovies) {
           if (!seen.has(m.id)) {

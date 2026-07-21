@@ -130,7 +130,28 @@ async function tmdbFetch(type, params = {}) {
 
 export async function getTrending(page = 1) {
   const data = await tmdbFetch('trending', { page: String(page) });
+  // trending/all returns mixed media_type; mapTmdbMovie handles both
   return (data.results || []).map(mapTmdbMovie);
+}
+
+export async function getTopRated(page = 1) {
+  const data = await tmdbFetch('top_rated', { page: String(page) });
+  return (data.results || []).map((m) => mapTmdbMovie({ ...m, media_type: 'movie' }));
+}
+
+export async function getPopular(page = 1) {
+  const data = await tmdbFetch('popular', { page: String(page) });
+  return (data.results || []).map((m) => mapTmdbMovie({ ...m, media_type: 'movie' }));
+}
+
+export async function getPopularTv(page = 1) {
+  const data = await tmdbFetch('popular_tv', { page: String(page) });
+  return (data.results || []).map((m) => mapTmdbMovie({ ...m, media_type: 'tv' }));
+}
+
+export async function getTopRatedTv(page = 1) {
+  const data = await tmdbFetch('top_rated_tv', { page: String(page) });
+  return (data.results || []).map((m) => mapTmdbMovie({ ...m, media_type: 'tv' }));
 }
 
 export async function getMovie(id) {

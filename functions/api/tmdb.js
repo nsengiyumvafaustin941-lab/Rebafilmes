@@ -34,8 +34,30 @@ export async function onRequest(context) {
 
   switch (type) {
     case 'trending':
-      tmdbPath = '/trending/movie/week';
+      tmdbPath = '/trending/all/week';
       params.set('page', page);
+      break;
+    case 'top_rated':
+      tmdbPath = '/movie/top_rated';
+      params.set('page', page);
+      break;
+    case 'popular':
+      tmdbPath = '/movie/popular';
+      params.set('page', page);
+      break;
+    case 'popular_tv':
+      tmdbPath = '/tv/popular';
+      params.set('page', page);
+      break;
+    case 'top_rated_tv':
+      tmdbPath = '/tv/top_rated';
+      params.set('page', page);
+      break;
+    case 'discover':
+      tmdbPath = '/discover/movie';
+      params.set('page', page);
+      if (id) params.set('with_genres', id);       // reuse id param for genre id
+      params.set('sort_by', query || 'popularity.desc');
       break;
     case 'movie':
       if (!id) {
