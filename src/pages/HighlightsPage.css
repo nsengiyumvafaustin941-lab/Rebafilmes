@@ -1,8 +1,7 @@
 /* ═══════════════════════════════════════════════
-   NEWSFEEDS PAGE
+   NEWSFEEDS PAGE — Movie News & Debates
 ═══════════════════════════════════════════════ */
 
-/* ── Page shell ── */
 .nf-page {
   padding: 1.5rem 1.25rem 4rem;
   max-width: 1200px;
@@ -17,7 +16,7 @@
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 .nf-header-icon {
   width: 50px;
@@ -29,7 +28,7 @@
   justify-content: center;
   color: #fff;
   flex-shrink: 0;
-  box-shadow: 0 4px 18px rgba(229,9,20,0.35);
+  box-shadow: 0 4px 18px rgba(229, 9, 20, 0.35);
 }
 .nf-title {
   font-size: 1.7rem;
@@ -40,11 +39,11 @@
 }
 .nf-subtitle {
   font-size: 0.84rem;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255, 255, 255, 0.45);
   margin: 0;
 }
 
-/* ── Tabs ── */
+/* ── Navigation Tabs ── */
 .nf-tabs {
   display: flex;
   gap: 0.5rem;
@@ -52,20 +51,23 @@
   flex-wrap: wrap;
 }
 .nf-tab {
-  padding: 0.4rem 1.1rem;
+  padding: 0.45rem 1.15rem;
   border-radius: 99px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background: transparent;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.6);
   font-size: 0.83rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.18s;
 }
-.nf-tab:hover { border-color: rgba(229,9,20,0.4); color: #fff; }
+.nf-tab:hover {
+  border-color: rgba(229, 9, 20, 0.4);
+  color: #fff;
+}
 .nf-tab.active {
-  background: rgba(229,9,20,0.14);
-  border-color: rgba(229,9,20,0.5);
+  background: rgba(229, 9, 20, 0.14);
+  border-color: rgba(229, 9, 20, 0.5);
   color: #e50914;
 }
 
@@ -73,66 +75,39 @@
 .nf-section {
   margin-bottom: 2.5rem;
 }
+.nf-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
 .nf-section-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #fff;
-  margin-bottom: 1rem;
+  margin: 0;
 }
 .nf-spinner {
   animation: spin 1s linear infinite;
   margin-left: 0.5rem;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Highlights (video) grid ── */
-.hl-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.25rem;
-}
-.hl-card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 14px;
-  overflow: hidden;
-  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
-}
-.hl-card:hover {
-  border-color: rgba(229,9,20,0.35);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(229,9,20,0.12);
-}
-.hl-video-wrap {
-  position: relative;
-  padding-bottom: 56.25%;
-  background: #000;
-}
-.hl-iframe {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  border: none;
-}
-.hl-card-body { padding: 0.85rem 1rem 1rem; }
-.hl-card-title { font-size: 0.93rem; font-weight: 700; color: #fff; margin: 0 0 0.3rem; line-height: 1.3; }
-.hl-card-desc  { font-size: 0.79rem; color: rgba(255,255,255,0.5); margin: 0; line-height: 1.5; }
-
-/* ── News grid ── */
+/* ── 1. News Grid ── */
 .nf-news-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  gap: 1.1rem;
 }
 .nf-news-card {
   display: flex;
   flex-direction: column;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 14px;
   overflow: hidden;
   text-decoration: none;
@@ -140,9 +115,9 @@
   transition: border-color 0.22s, transform 0.22s, box-shadow 0.22s;
 }
 .nf-news-card:hover {
-  border-color: rgba(229,9,20,0.35);
+  border-color: rgba(229, 9, 20, 0.35);
   transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(229,9,20,0.1);
+  box-shadow: 0 8px 30px rgba(229, 9, 20, 0.1);
 }
 .nf-news-img-wrap {
   width: 100%;
@@ -176,10 +151,10 @@
   align-items: center;
   gap: 0.25rem;
   font-size: 0.68rem;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255, 255, 255, 0.35);
 }
 .nf-news-title {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #fff;
   line-height: 1.35;
@@ -187,7 +162,7 @@
 }
 .nf-news-desc {
   font-size: 0.77rem;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255, 255, 255, 0.45);
   line-height: 1.5;
   margin: 0;
   flex: 1;
@@ -199,33 +174,259 @@
   font-size: 0.74rem;
   font-weight: 600;
   color: #e50914;
-  margin-top: auto;
+  margin-top: 0.4rem;
 }
 
-/* Skeleton loading */
+/* ── 2. Movie Debates ── */
+.nf-debates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
+}
+.nf-debate-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.nf-debate-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+.nf-debate-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.nf-debate-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(229, 9, 20, 0.15);
+  color: #e50914;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid rgba(229, 9, 20, 0.3);
+}
+.nf-debate-meta {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+.nf-debate-question {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.nf-debate-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.nf-debate-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: left;
+}
+.nf-debate-opt:hover {
+  background: rgba(229, 9, 20, 0.1);
+  border-color: rgba(229, 9, 20, 0.35);
+  color: #fff;
+}
+.nf-debate-opt.voted {
+  background: rgba(229, 9, 20, 0.2);
+  border-color: #e50914;
+  color: #fff;
+  font-weight: 700;
+}
+.opt-pct {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #e50914;
+  margin-left: 0.5rem;
+}
+
+.nf-debate-bar {
+  height: 6px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  display: flex;
+  overflow: hidden;
+}
+.nf-debate-fill-a {
+  height: 100%;
+  background: #e50914;
+  transition: width 0.4s ease;
+}
+.nf-debate-fill-b {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: width 0.4s ease;
+}
+
+.nf-debate-footer {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding-top: 0.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.nf-debate-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.73rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── 3. Automatic Movie Shows Grid ── */
+.nf-shows-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+.nf-show-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.22s, border-color 0.22s;
+}
+.nf-show-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(229, 9, 20, 0.4);
+}
+.nf-show-poster-wrap {
+  width: 100%;
+  aspect-ratio: 2/3;
+  position: relative;
+  overflow: hidden;
+  background: #18181c;
+}
+.nf-show-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s;
+}
+.nf-show-card:hover .nf-show-poster { transform: scale(1.05); }
+.nf-show-play-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.nf-show-card:hover .nf-show-play-overlay { opacity: 1; }
+.nf-show-play-icon { color: #e50914; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+
+.nf-show-info {
+  padding: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.nf-show-type {
+  font-size: 0.63rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #e50914;
+}
+.nf-show-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nf-show-meta {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Skeleton */
 .nf-skeleton {
   background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  min-height: 240px;
+  min-height: 200px;
 }
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 
-/* Empty */
+/* Video Grid */
+.hl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+.hl-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.25s, transform 0.25s;
+}
+.hl-card:hover {
+  border-color: rgba(229,9,20,0.35);
+  transform: translateY(-3px);
+}
+.hl-video-wrap {
+  position: relative;
+  padding-bottom: 56.25%;
+  background: #000;
+}
+.hl-iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border: none;
+}
+.hl-card-body { padding: 0.85rem 1rem 1rem; }
+.hl-card-title { font-size: 0.93rem; font-weight: 700; color: #fff; margin: 0 0 0.3rem; line-height: 1.3; }
+.hl-card-desc  { font-size: 0.79rem; color: rgba(255,255,255,0.5); margin: 0; line-height: 1.5; }
+
 .hl-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
   padding: 4rem 2rem;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255, 255, 255, 0.25);
   text-align: center;
 }
-.hl-empty p { font-size: 0.9rem; max-width: 300px; }
 
-/* ── Responsive ── */
+/* Responsive */
 @media (max-width: 600px) {
   .nf-page { padding: 1rem 0.75rem 5rem; }
   .nf-title { font-size: 1.3rem; }
-  .hl-grid, .nf-news-grid { grid-template-columns: 1fr; }
+  .nf-news-grid, .nf-debates-grid, .hl-grid { grid-template-columns: 1fr; }
+  .nf-shows-grid { grid-template-columns: repeat(2, 1fr); }
 }
