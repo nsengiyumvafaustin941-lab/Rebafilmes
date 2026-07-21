@@ -1,12 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, Film } from 'lucide-react';
-import AdBanner from '../components/AdBanner';
-import { useMovies } from '../contexts/MoviesContext';
-import { useLanguage } from '../contexts/LanguageContext';
-import { getDownloadUrl, moviePath, getTrailerKey, parseMovieId } from '../utils/tmdb';
-import { getSettings } from '../utils/settings';
-import './CinemaPage.css';
+import React, { useEffect, useState } from "react";
+import { useSearchParams, Link } from "react-router-dom";
+import { ArrowLeft, Download, Film } from "lucide-react";
+import AdBanner from "../components/AdBanner";
+import { useMovies } from "../contexts/MoviesContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import {
+  getDownloadUrl,
+  moviePath,
+  getTrailerKey,
+  parseMovieId,
+} from "../utils/tmdb";
+import { getSettings } from "../utils/settings";
+import "./CinemaPage.css";
 
 const CinemaPage = () => {
   const { t } = useLanguage();
@@ -19,11 +24,11 @@ const CinemaPage = () => {
   useEffect(() => {
     const sync = () => setSettings(getSettings());
     sync();
-    window.addEventListener('storage', sync);
-    return () => window.removeEventListener('storage', sync);
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
   }, []);
 
-  const id = parseMovieId(params.get('vd'));
+  const id = parseMovieId(params.get("vd"));
 
   useEffect(() => {
     let cancelled = false;
@@ -64,25 +69,29 @@ const CinemaPage = () => {
   if (!item) {
     return (
       <div className="cinema-error page">
-        <h2>{t('cinema_error')}</h2>
-        <Link to="/" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-          ← {t('account_back_home')}
+        <h2>{t("cinema_error")}</h2>
+        <Link to="/" className="btn btn-primary" style={{ marginTop: "1rem" }}>
+          ← {t("account_back_home")}
         </Link>
       </div>
     );
   }
 
-  const trailerKey = settings.trailersEnabled !== false ? getTrailerKey(item) : null;
+  const trailerKey =
+    settings.trailersEnabled !== false ? getTrailerKey(item) : null;
   const downloadUrl = getDownloadUrl(item.title);
 
   return (
     <div className="cinema-page">
+      <div className="bg-logo-pattern" />
       <div className="cinema-topbar">
         <Link to={moviePath(item.id, item.title)} className="back-btn">
           <ArrowLeft size={20} />
           <span className="cinema-title">{item.title}</span>
         </Link>
-        <span className="cinema-badge badge badge-accent">{item.badge || 'HD'}</span>
+        <span className="cinema-badge badge badge-accent">
+          {item.badge || "HD"}
+        </span>
       </div>
 
       <AdBanner position="cinema_top" />
@@ -118,7 +127,7 @@ const CinemaPage = () => {
               rel="noopener noreferrer"
               className="btn btn-primary download-btn"
             >
-              <Download size={17} /> {t('download_movie') || 'Download Movie'}
+              <Download size={17} /> {t("download_movie") || "Download Movie"}
             </a>
           </div>
         )}

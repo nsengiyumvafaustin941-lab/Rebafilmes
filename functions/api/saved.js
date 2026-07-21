@@ -2,6 +2,7 @@
 import { getSessionToken } from '../_lib/cookies.js';
 
 export async function onRequestGet({ request, env }) {
+  if (!env.DB) return new Response(JSON.stringify([]), { status: 503, headers: { 'Content-Type': 'application/json' } });
   const token = getSessionToken(request);
   if (!token) return new Response(JSON.stringify([]), { status: 401 });
 
@@ -15,6 +16,7 @@ export async function onRequestGet({ request, env }) {
 }
 
 export async function onRequestPost({ request, env }) {
+  if (!env.DB) return new Response(JSON.stringify({ error: 'Database not configured' }), { status: 503, headers: { 'Content-Type': 'application/json' } });
   const token = getSessionToken(request);
   if (!token) return new Response('Unauthorized', { status: 401 });
 

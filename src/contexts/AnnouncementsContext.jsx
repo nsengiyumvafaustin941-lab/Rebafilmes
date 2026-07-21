@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { api } from '../utils/api';
+import { ANNOUNCEMENTS_KEY, DISMISSED_KEY } from '../utils/constants';
 
 const AnnouncementsContext = createContext();
-const ANNOUNCEMENTS_KEY = 'rebafilme_announcement';
-const DISMISSED_KEY = 'rebafilme_announcement_dismissed';
 
 export const AnnouncementsProvider = ({ children }) => {
   const [announcement, setAnnouncement] = useState(null);

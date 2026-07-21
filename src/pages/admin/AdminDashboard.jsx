@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Film, Megaphone, Users, Plus, Send, Star, Download } from 'lucide-react';
+import { Film, Megaphone, Plus, Send, Star, Download } from 'lucide-react';
 import { useMovies } from '../../contexts/MoviesContext';
 import { useAds } from '../../contexts/AdsContext';
 import { useAnnouncements } from '../../contexts/AnnouncementsContext';

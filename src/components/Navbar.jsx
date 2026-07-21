@@ -29,8 +29,6 @@ const Navbar = () => {
             <li><a href="#">Top IMDb</a></li>
           </ul>
         </div>
-        
-        </div>
 
         <button 
           className="mobile-menu-btn mobile-only"

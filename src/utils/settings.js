@@ -1,4 +1,6 @@
-export const SETTINGS_KEY = 'rebafilme_settings';
+import { SETTINGS_KEY as CONSTANTS_SETTINGS_KEY } from './constants';
+
+export const SETTINGS_KEY = CONSTANTS_SETTINGS_KEY;
 
 export const DEFAULT_SETTINGS = {
   siteName: 'RebaFilme',
@@ -17,7 +19,7 @@ export const DEFAULT_SETTINGS = {
 
 export function getSettings() {
   try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
+    const raw = localStorage.getItem(CONSTANTS_SETTINGS_KEY);
     if (!raw) return { ...DEFAULT_SETTINGS };
     return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
   } catch {

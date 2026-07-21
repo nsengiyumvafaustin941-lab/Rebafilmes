@@ -62,7 +62,7 @@ const UpcomingRow = ({ title = 'Upcoming Calendar' }) => {
   };
 
   /* ── Format release date → "Jul 23" style ── */
-  const formatDate = (dateStr) => {
+  const _formatDate = (dateStr) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     if (isNaN(d)) return '';

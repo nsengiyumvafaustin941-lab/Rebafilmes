@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Users, Shield, ShieldAlert, Check, Search, User, RefreshCw, AlertCircle } from 'lucide-react';
+import { ADMIN_SESSION_KEY } from '../../utils/constants';
 import AdminLayout from './AdminLayout';
 import './AdminLayout.css';
 
 /* ─── API helpers ──────────────────────────────────────── */
 const getAdminToken = () => {
   try {
-    const raw = localStorage.getItem('rebafilme_admin_session');
+    const raw = localStorage.getItem(ADMIN_SESSION_KEY);
     if (!raw) return '';
     const parsed = JSON.parse(raw);
     // AdminContext stores { username, token: password, at }

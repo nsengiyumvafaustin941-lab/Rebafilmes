@@ -1,6 +1,13 @@
 import { hashPassword } from '../../_lib/crypto.js';
 
 export async function onRequestPost({ request, env }) {
+  if (!env.DB) {
+    return new Response(
+      JSON.stringify({ error: 'Database not configured. Please contact support.' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   let body;
   try {
     body = await request.json();

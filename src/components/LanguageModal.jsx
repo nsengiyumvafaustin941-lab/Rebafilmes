@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, X, Check, Globe } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { LANG_KEY } from '../utils/constants';
 import logo from '../assets/logo.jpg';
 import './LanguageModal.css';
 
@@ -52,12 +53,12 @@ const LANGUAGES = [
 const REGIONS = ['All', 'Africa', 'Global'];
 
 const LanguageModal = () => {
-  const { lang, setLang, t, isModalOpen, setIsModalOpen } = useLanguage();
+  const { lang, setLang, isModalOpen, setIsModalOpen } = useLanguage();
   const [search, setSearch] = useState('');
   const [region, setRegion] = useState('All');
 
   useEffect(() => {
-    const saved = localStorage.getItem('rebafilme_lang');
+    const saved = localStorage.getItem(LANG_KEY);
     if (!saved) setIsModalOpen(true);
   }, [setIsModalOpen]);
 
@@ -83,11 +84,11 @@ const LanguageModal = () => {
   if (!isModalOpen) return null;
 
   return (
-    <div className="lang-overlay" onClick={() => localStorage.getItem('rebafilme_lang') && setIsModalOpen(false)}>
+    <div className="lang-overlay" onClick={() => localStorage.getItem(LANG_KEY) && setIsModalOpen(false)}>
       <div className="lang-modal" onClick={(e) => e.stopPropagation()}>
         
         {/* Close (only after first selection) */}
-        {localStorage.getItem('rebafilme_lang') && (
+        {localStorage.getItem(LANG_KEY) && (
           <button className="lang-close" onClick={() => setIsModalOpen(false)} aria-label="Close">
             <X size={16} />
           </button>

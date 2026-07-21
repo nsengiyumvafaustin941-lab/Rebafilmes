@@ -8,9 +8,10 @@ const SplashScreen = ({ onFinish }) => {
   useEffect(() => {
     // Attempt to play audio on mount. 
     // It will play if the user clicked a link to get here. If blocked, it fails silently.
-    if (audioRef.current) {
-      audioRef.current.volume = 0.6;
-      audioRef.current.play().catch(err => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.volume = 0.6;
+      audio.play().catch(err => {
         console.warn("Silent intro: Browser blocked audio autoplay.", err);
       });
     }
@@ -43,8 +44,8 @@ const SplashScreen = ({ onFinish }) => {
 
     return () => {
         clearTimeout(timer);
-        if (audioRef.current) {
-            audioRef.current.pause();
+        if (audio) {
+            audio.pause();
         }
     };
   }, [onFinish]);

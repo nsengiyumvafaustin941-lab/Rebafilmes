@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { hashPassword, verifyPassword } from '../../functions/_lib/crypto.js';
 
 describe('Crypto Auth Flow', () => {

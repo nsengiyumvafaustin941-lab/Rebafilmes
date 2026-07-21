@@ -1,12 +1,11 @@
 // src/contexts/SavedContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useAuth } from './AuthContext';
+import { SAVED_KEY } from '../utils/constants';
 
 const SavedContext = createContext();
 
 export const useSaved = () => useContext(SavedContext);
-
-const SAVED_KEY = 'rebafilme_saved_movies';
 
 export const SavedProvider = ({ children }) => {
   const { isLoggedIn } = useAuth();

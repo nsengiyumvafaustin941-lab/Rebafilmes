@@ -79,7 +79,7 @@ const Footer = () => {
           <ul>
             <li><Link to="/">{t('nav_home')}</Link></li>
             <li><Link to="/movies">{t('nav_movies')}</Link></li>
-            <li><Link to="/movies">{t('nav_search')}</Link></li>
+            <li><Link to="/search">{t('nav_search')}</Link></li>
             <li><Link to="/saved">{t('nav_saved')}</Link></li>
           </ul>
         </div>
@@ -92,8 +92,8 @@ const Footer = () => {
             {settings.sponsorContactEmail && (
               <li><a href={`mailto:${settings.sponsorContactEmail}`}>Advertise / Sponsor</a></li>
             )}
-            <li><Link to="/account">{t('footer_terms')}</Link></li>
-            <li><Link to="/account">{t('footer_privacy')}</Link></li>
+            <li><Link to="/terms">{t('footer_terms')}</Link></li>
+            <li><Link to="/terms">{t('footer_privacy')}</Link></li>
           </ul>
         </div>
       </div>

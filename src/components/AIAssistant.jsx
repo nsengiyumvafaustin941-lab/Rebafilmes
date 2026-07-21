@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { Bot, X, Send, Film, Sparkles } from 'lucide-react';
 import { api } from '../utils/api';
 import { moviePath } from '../utils/tmdb';
+import { SETTINGS_KEY } from '../utils/constants';
 import './AIAssistant.css';
 
 const EXAMPLE_CHIPS = [
@@ -24,7 +25,7 @@ const AIAssistant = () => {
   // Default false prevents the button flashing for users with no cached settings.
   const [visible, setVisible] = useState(() => {
     try {
-      const s = JSON.parse(localStorage.getItem('rebafilme_settings') || '{}');
+      const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
       return s.aiAssistantEnabled === true; // strict: must be explicitly true
     } catch {
       return false; // safe default: hidden
@@ -36,7 +37,7 @@ const AIAssistant = () => {
   // Fetch authoritative value from KV on every mount.
   // This is the source of truth — overrides any cached localStorage value.
   useEffect(() => {
-    api.get('rebafilme_settings', {}).then(s => {
+    api.get(SETTINGS_KEY, {}).then(s => {
       setVisible(s.aiAssistantEnabled === true); // strict: must be explicitly true
     }).catch(() => {
       setVisible(false); // hide on API error — safe default

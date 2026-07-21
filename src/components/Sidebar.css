@@ -4,7 +4,7 @@
 
 /* ── CSS Variables ── */
 :root {
-  --sidebar-collapsed-w: 64px;
+  --sidebar-collapsed-w: 58px;
   --sidebar-expanded-w: 230px;
 }
 
@@ -14,18 +14,26 @@
   top: 0;
   left: 0;
   height: 100vh;
-  background: linear-gradient(180deg,
-    rgba(10, 10, 14, 0.98) 0%,
-    rgba(14, 14, 20, 0.99) 100%
-  );
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background-image: linear-gradient(to bottom, rgba(17, 17, 21, 0.92), rgba(17, 17, 21, 0.96)), url('../assets/logo.jpg');
+  background-size: auto, 46px auto;
+  background-repeat: no-repeat, repeat-y;
+  background-position: center, center 0px;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   z-index: 200;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  backdrop-filter: blur(20px);
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+  animation: moveSidebarLogos 8s linear infinite;
+}
+
+@keyframes moveSidebarLogos {
+  from {
+    background-position: center, center 0px;
+  }
+  to {
+    background-position: center, center 46px;
+  }
 }
 
 .sidebar.collapsed  { width: var(--sidebar-collapsed-w); }

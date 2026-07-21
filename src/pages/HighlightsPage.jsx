@@ -1,21 +1,28 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Play, Star, Bookmark, Share2, MessageSquare, TrendingUp, Calendar, Newspaper, ExternalLink } from 'lucide-react';
-import { useMovies } from '../contexts/MoviesContext';
-import { useSaved } from '../contexts/SavedContext';
-import { getTrending, getUpcoming, getTopRated, moviePath } from '../utils/tmdb';
-import Footer from '../components/Footer';
-import './HighlightsPage.css';
+import React, { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
+import {
+  Star,
+  TrendingUp,
+  Calendar,
+  Newspaper,
+  ExternalLink,
+} from "lucide-react";
+import { useMovies } from "../contexts/MoviesContext";
+import {
+  getTrending,
+  getUpcoming,
+  getTopRated,
+  moviePath,
+} from "../utils/tmdb";
+import Footer from "../components/Footer";
+import "./HighlightsPage.css";
 
 const NewsfeedsPage = () => {
-  const navigate = useNavigate();
   const { allMovies } = useMovies();
-  const { isSaved, toggleSaved } = useSaved();
 
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [upcomingMovies, setUpcomingMovies] = useState([]);
   const [news, setNews] = useState([]);
-  const [copiedId, setCopiedId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // 1. Fetch live TMDB data
@@ -29,85 +36,92 @@ const NewsfeedsPage = () => {
         setTrendingMovies(trendingRes.filter((m) => m.poster || m.backdrop));
         setUpcomingMovies(upcomingRes.filter((m) => m.poster));
       })
-      .catch((err) => console.warn('Failed to load TMDB newsfeed content', err))
+      .catch((err) => console.warn("Failed to load TMDB newsfeed content", err))
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // 2. Fetch live news articles (Automatic RSS)
   useEffect(() => {
     let cancelled = false;
-    const rssUrl = encodeURIComponent('https://www.hollywoodreporter.com/c/movies/feed/');
+    const rssUrl = encodeURIComponent(
+      "https://www.hollywoodreporter.com/c/movies/feed/",
+    );
     const API = `https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}&count=10`;
 
     fetch(API)
       .then((r) => r.json())
       .then((data) => {
-        if (!cancelled && data.status === 'ok' && data.items?.length > 0) {
+        if (!cancelled && data.status === "ok" && data.items?.length > 0) {
           setNews(
             data.items.map((item) => {
-              let image = item.thumbnail || item.enclosure?.link || '';
+              let image = item.thumbnail || item.enclosure?.link || "";
               // Try extracting img src from content if thumbnail is missing
               if (!image) {
-                const imgMatch = (item.description || item.content || '').match(/<img[^>]+src="([^">]+)"/);
+                const imgMatch = (item.description || item.content || "").match(
+                  /<img[^>]+src="([^">]+)"/,
+                );
                 if (imgMatch) image = imgMatch[1];
               }
               return {
                 id: item.guid || item.link,
                 title: item.title,
-                snippet: item.description?.replace(/<[^>]+>/g, '').slice(0, 140) + '...',
+                snippet:
+                  item.description?.replace(/<[^>]+>/g, "").slice(0, 140) +
+                  "...",
                 url: item.link,
                 image: image,
-                date: item.pubDate ? new Date(item.pubDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
+                date: item.pubDate
+                  ? new Date(item.pubDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "Recent",
               };
-            })
+            }),
           );
         }
       })
       .catch(() => {});
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Use the very first news article for the Hero banner
   const heroNews = useMemo(() => news[0] || null, [news]);
   // Fallback image for hero if the RSS article lacks an image
-  const heroBg = heroNews?.image || trendingMovies[0]?.backdrop || trendingMovies[0]?.poster;
+  const heroBg =
+    heroNews?.image || trendingMovies[0]?.backdrop || trendingMovies[0]?.poster;
 
   // Next 3 news articles for the Grid
   const gridNews = useMemo(() => news.slice(1, 4), [news]);
 
   // Sidebar trending list (TMDB movies)
-  const sidebarTrending = useMemo(() => trendingMovies.slice(0, 4), [trendingMovies]);
+  const sidebarTrending = useMemo(
+    () => trendingMovies.slice(0, 4),
+    [trendingMovies],
+  );
 
   // Upcoming widget movie (TMDB movie)
-  const upcomingWidgetMovie = useMemo(() => upcomingMovies[0] || allMovies[1] || null, [upcomingMovies, allMovies]);
-
-  const handleShare = (movie, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const url = `${window.location.origin}/movie/${movie.id}`;
-    if (navigator.share) {
-      navigator.share({ title: movie.title, url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url);
-      setCopiedId(movie.id);
-      setTimeout(() => setCopiedId(null), 2000);
-    }
-  };
-
-  const handleToggleBookmark = (id, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleSaved(id);
-  };
+  const upcomingWidgetMovie = useMemo(
+    () => upcomingMovies[0] || allMovies[1] || null,
+    [upcomingMovies, allMovies],
+  );
 
   if (loading && !heroNews && trendingMovies.length === 0) {
     return (
-      <div className="nf-page page" style={{ textAlign: 'center', padding: '5rem 1rem', color: '#888' }}>
+      <div
+        className="nf-page page"
+        style={{ textAlign: "center", padding: "5rem 1rem", color: "#888" }}
+      >
         Loading Newsfeeds...
       </div>
     );
@@ -115,12 +129,11 @@ const NewsfeedsPage = () => {
 
   return (
     <div className="nf-page page">
-
+      <div className="bg-logo-pattern" />
       {/* ════════════════════════════════════════════════════════════
          TOP SECTION: Hero Banner (Left 2/3) + Trending Now (Right 1/3)
       ════════════════════════════════════════════════════════════ */}
       <div className="nf-top-layout">
-        
         {/* HERO BANNER (Top News) */}
         {heroNews ? (
           <div
@@ -129,16 +142,24 @@ const NewsfeedsPage = () => {
               backgroundImage: `linear-gradient(180deg, rgba(14, 16, 22, 0.4) 0%, rgba(14, 16, 22, 0.92) 80%), url(${heroBg})`,
             }}
           >
-            <div className="nf-hero-badge-tag"><Newspaper size={14} style={{display: 'inline', marginRight: '5px', verticalAlign: 'text-bottom'}} /> Breaking News</div>
+            <div className="nf-hero-badge-tag">
+              <Newspaper
+                size={14}
+                style={{
+                  display: "inline",
+                  marginRight: "5px",
+                  verticalAlign: "text-bottom",
+                }}
+              />{" "}
+              Breaking News
+            </div>
 
             <div className="nf-hero-content">
               <h1 className="nf-hero-title">{heroNews.title}</h1>
-              <p className="nf-hero-desc">
-                {heroNews.snippet}
-              </p>
+              <p className="nf-hero-desc">{heroNews.snippet}</p>
 
               {/* Action bar below description */}
-              <div className="nf-hero-actions" style={{ marginTop: '1.5rem' }}>
+              <div className="nf-hero-actions" style={{ marginTop: "1.5rem" }}>
                 <a
                   href={heroNews.url}
                   target="_blank"
@@ -152,8 +173,10 @@ const NewsfeedsPage = () => {
             </div>
           </div>
         ) : (
-          <div className="nf-hero-card" style={{ background: '#1a1a24' }}>
-            <div className="nf-hero-content"><h1 className="nf-hero-title">Loading Latest News...</h1></div>
+          <div className="nf-hero-card" style={{ background: "#1a1a24" }}>
+            <div className="nf-hero-content">
+              <h1 className="nf-hero-title">Loading Latest News...</h1>
+            </div>
           </div>
         )}
 
@@ -171,12 +194,16 @@ const NewsfeedsPage = () => {
                 to={moviePath(item.id, item.title)}
                 className="nf-trending-item"
               >
-                <img src={item.poster} alt={item.title} className="nf-trending-thumb" />
+                <img
+                  src={item.poster}
+                  alt={item.title}
+                  className="nf-trending-thumb"
+                />
                 <div className="nf-trending-info">
                   <h4 className="nf-trending-item-title">{item.title}</h4>
                   <div className="nf-trending-tags">
-                    <span>{item.year || '2025'}</span>
-                    <span>{item.genre || 'Action'}</span>
+                    <span>{item.year || "2025"}</span>
+                    <span>{item.genre || "Action"}</span>
                     <span className="nf-tag-rating">
                       <Star size={11} fill="#ffc107" color="#ffc107" />
                       {(item.rating || 8.0).toFixed(1)}
@@ -187,7 +214,6 @@ const NewsfeedsPage = () => {
             ))}
           </div>
         </div>
-
       </div>
 
       {/* ════════════════════════════════════════════════════════════
@@ -195,12 +221,21 @@ const NewsfeedsPage = () => {
          (Left: Large News Card | Middle: Medium News Cards | Right: Upcoming Release)
       ════════════════════════════════════════════════════════════ */}
       <div className="nf-grid-layout">
-
         {/* ── LEFT COLUMN: Large Vertical News Card ── */}
         {gridNews[0] && (
-          <a href={gridNews[0].url} target="_blank" rel="noopener noreferrer" className="nf-card nf-card-large" style={{ textDecoration: 'none' }}>
+          <a
+            href={gridNews[0].url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nf-card nf-card-large"
+            style={{ textDecoration: "none" }}
+          >
             <div className="nf-card-media-wrap">
-              <img src={gridNews[0].image || trendingMovies[1]?.backdrop} alt={gridNews[0].title} className="nf-card-img" />
+              <img
+                src={gridNews[0].image || trendingMovies[1]?.backdrop}
+                alt={gridNews[0].title}
+                className="nf-card-img"
+              />
               <span className="nf-badge-label review">Featured</span>
             </div>
             <div className="nf-card-body">
@@ -217,9 +252,19 @@ const NewsfeedsPage = () => {
         {/* ── MIDDLE COLUMN: 2 Square / Medium News Cards ── */}
         <div className="nf-middle-col">
           {gridNews[1] && (
-            <a href={gridNews[1].url} target="_blank" rel="noopener noreferrer" className="nf-card nf-card-medium" style={{ textDecoration: 'none' }}>
+            <a
+              href={gridNews[1].url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nf-card nf-card-medium"
+              style={{ textDecoration: "none" }}
+            >
               <div className="nf-card-media-wrap square">
-                <img src={gridNews[1].image || trendingMovies[2]?.backdrop} alt={gridNews[1].title} className="nf-card-img" />
+                <img
+                  src={gridNews[1].image || trendingMovies[2]?.backdrop}
+                  alt={gridNews[1].title}
+                  className="nf-card-img"
+                />
                 <span className="nf-badge-label news">Industry</span>
               </div>
               <div className="nf-card-body">
@@ -233,9 +278,19 @@ const NewsfeedsPage = () => {
           )}
 
           {gridNews[2] && (
-            <a href={gridNews[2].url} target="_blank" rel="noopener noreferrer" className="nf-card nf-card-medium" style={{ textDecoration: 'none' }}>
+            <a
+              href={gridNews[2].url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="nf-card nf-card-medium"
+              style={{ textDecoration: "none" }}
+            >
               <div className="nf-card-media-wrap">
-                <img src={gridNews[2].image || trendingMovies[3]?.backdrop} alt={gridNews[2].title} className="nf-card-img" />
+                <img
+                  src={gridNews[2].image || trendingMovies[3]?.backdrop}
+                  alt={gridNews[2].title}
+                  className="nf-card-img"
+                />
                 <span className="nf-badge-label trailer">Update</span>
               </div>
               <div className="nf-card-body">
@@ -260,23 +315,43 @@ const NewsfeedsPage = () => {
             {upcomingWidgetMovie && (
               <div className="nf-card nf-card-widget">
                 <div className="nf-card-media-wrap widget">
-                  <img src={upcomingWidgetMovie.backdrop || upcomingWidgetMovie.poster} alt={upcomingWidgetMovie.title} className="nf-card-img" />
+                  <img
+                    src={
+                      upcomingWidgetMovie.backdrop || upcomingWidgetMovie.poster
+                    }
+                    alt={upcomingWidgetMovie.title}
+                    className="nf-card-img"
+                  />
                 </div>
                 <div className="nf-card-body">
                   <h3 className="nf-card-title">{upcomingWidgetMovie.title}</h3>
                   <div className="nf-card-meta">
-                    <span>{upcomingWidgetMovie.year || '2026'}</span>
+                    <span>{upcomingWidgetMovie.year || "2026"}</span>
                     <span>{upcomingWidgetMovie.genre}</span>
                   </div>
-                  <p className="nf-card-snippet">{upcomingWidgetMovie.description}</p>
-                  
+                  <p className="nf-card-snippet">
+                    {upcomingWidgetMovie.description}
+                  </p>
+
                   <div className="nf-card-footer">
                     <div className="nf-rating-pill">
                       <Star size={14} fill="#ffc107" color="#ffc107" />
-                      <span>{(upcomingWidgetMovie.rating || 8.7).toFixed(1)}/10</span>
+                      <span>
+                        {(upcomingWidgetMovie.rating || 8.7).toFixed(1)}/10
+                      </span>
                     </div>
                     <div className="nf-card-btn-group">
-                      <Link to={`/movie/${upcomingWidgetMovie.id}`} className="nf-icon-btn" style={{ padding: '0 0.5rem', width: 'auto', background: 'rgba(229,9,20,0.1)', color: '#e50914', textDecoration: 'none' }}>
+                      <Link
+                        to={`/movie/${upcomingWidgetMovie.id}`}
+                        className="nf-icon-btn"
+                        style={{
+                          padding: "0 0.5rem",
+                          width: "auto",
+                          background: "rgba(229,9,20,0.1)",
+                          color: "#e50914",
+                          textDecoration: "none",
+                        }}
+                      >
                         View Details
                       </Link>
                     </div>
@@ -286,7 +361,6 @@ const NewsfeedsPage = () => {
             )}
           </div>
         </div>
-
       </div>
 
       <Footer />

@@ -2,6 +2,8 @@ import { getSessionToken } from '../../_lib/cookies.js';
 import { hashPassword, verifyPassword } from '../../_lib/crypto.js';
 
 export async function onRequestPut({ request, env }) {
+  if (!env.DB) return new Response(JSON.stringify({ error: 'Database not configured' }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+
   const token = getSessionToken(request);
   if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
 
@@ -43,7 +45,7 @@ export async function onRequestPut({ request, env }) {
       .run();
 
     return new Response(JSON.stringify({ success: true, message: 'Password changed successfully' }));
-  } catch (err) {
+  } catch {
     return new Response(JSON.stringify({ error: 'Invalid request data' }), { status: 400 });
   }
 }

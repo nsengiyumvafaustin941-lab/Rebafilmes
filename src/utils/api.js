@@ -1,3 +1,5 @@
+import { ADMIN_SESSION_KEY } from './constants';
+
 export const api = {
   get: async (key, fallback) => {
     let apiData = null;
@@ -9,8 +11,8 @@ export const api = {
         apiData = await res.json();
         apiSuccess = true;
       }
-    } catch (e) {
-      console.warn("API GET failed, falling back to localStorage", e);
+    } catch {
+      console.warn("API GET failed, falling back to localStorage");
     }
     
     if (apiSuccess && apiData !== null && apiData !== undefined) {
@@ -30,7 +32,7 @@ export const api = {
            api.set(key, parsed, true);
         }
         return parsed;
-      } catch(e) {
+      } catch {
         return localData;
       }
     }
@@ -46,7 +48,7 @@ export const api = {
       const headers = { 'Content-Type': 'application/json' };
       if (isAdmin) {
         // Retrieve token from AdminContext/localStorage
-        const adminData = JSON.parse(localStorage.getItem('rebafilme_admin_session') || '{}');
+        const adminData = JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || '{}');
         if (adminData && adminData.token) {
           headers['x-admin-token'] = adminData.token;
         }

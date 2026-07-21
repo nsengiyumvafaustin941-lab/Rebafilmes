@@ -130,7 +130,7 @@ export const MoviesProvider = ({ children }) => {
     setCuratedMap(nextCurated);
     setAllMovies((prev) => prev.map((m) => {
       if (m.id !== id) return m;
-      const { featured, popular, badge, curated, ...rest } = m;
+      const { featured: _featured, popular: _popular, badge: _badge, curated: _curated, ...rest } = m;
       return { ...rest, featured: false, popular: false, badge: 'HD' };
     }));
     await api.set(CURATED_KEY, nextCurated, true);

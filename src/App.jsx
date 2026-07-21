@@ -22,6 +22,7 @@ import { AnnouncementsProvider } from './contexts/AnnouncementsContext';
 import { HighlightsProvider } from './contexts/HighlightsContext';
 import AnnouncementBar from './components/AnnouncementBar';
 import SplashScreen from './components/SplashScreen';
+import { SETTINGS_KEY } from './utils/constants';
 import './index.css';
 
 // ── Lazy load heavy pages ──────────────────────────────────────
@@ -45,7 +46,7 @@ const RequireAdmin = ({ children }) => {
 // ── Maintenance Gate ──────────────────────────────────────────
 const RequireMaintenanceGate = ({ children }) => {
   const settings = React.useMemo(() => {
-    try { return JSON.parse(localStorage.getItem('rebafilme_settings')) || {}; }
+    try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; }
     catch { return {}; }
   }, []);
 

@@ -1,6 +1,8 @@
 import { getSessionToken } from '../../_lib/cookies.js';
 
 export async function onRequestPut({ request, env }) {
+  if (!env.DB) return new Response(JSON.stringify({ error: 'Database not configured' }), { status: 503, headers: { 'Content-Type': 'application/json' } });
+
   const token = getSessionToken(request);
   if (!token) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
 
@@ -28,7 +30,7 @@ export async function onRequestPut({ request, env }) {
     ).bind(session.user_id).first();
 
     return new Response(JSON.stringify({ success: true, user: updatedUser }));
-  } catch (err) {
+  } catch {
     return new Response(JSON.stringify({ error: 'Invalid request data' }), { status: 400 });
   }
 }

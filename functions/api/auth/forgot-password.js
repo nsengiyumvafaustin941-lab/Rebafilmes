@@ -1,4 +1,11 @@
 export async function onRequestPost({ request, env }) {
+  if (!env.DB) {
+    return new Response(
+      JSON.stringify({ error: 'Database not configured. Please contact support.' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   let body;
   try {
     body = await request.json();
@@ -71,7 +78,7 @@ export async function onRequestPost({ request, env }) {
   );
 }
 
-async function sendRecoveryEmail(email, code, env) {
+async function sendRecoveryEmail(email, code, _env) {
   // Using Cloudflare's free MailChannels integration
   // This works automatically in production without API keys!
   const sendRequest = new Request('https://api.mailchannels.net/tx/v1/send', {

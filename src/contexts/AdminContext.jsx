@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { ADMIN_SESSION_KEY } from '../utils/constants';
 
 const AdminContext = createContext();
 
-const ADMIN_SESSION_KEY = 'rebafilme_admin_session';
 const ADMIN_CREDENTIALS  = { username: 'admin', password: 'rebafilme2026' };
 
 export const AdminProvider = ({ children }) => {

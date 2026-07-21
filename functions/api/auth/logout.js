@@ -3,6 +3,16 @@ import { getSessionToken, clearSessionCookie } from '../../_lib/cookies.js';
 
 export async function onRequestPost({ request, env }) {
   try {
+    if (!env.DB) {
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Set-Cookie': clearSessionCookie(),
+        },
+      });
+    }
+
     const token = getSessionToken(request);
     if (token) {
       await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();

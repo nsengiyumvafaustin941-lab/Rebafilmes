@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, User, Phone, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useMovies } from '../contexts/MoviesContext';

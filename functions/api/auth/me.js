@@ -3,6 +3,13 @@ import { getSessionToken } from '../../_lib/cookies.js';
 
 export async function onRequestGet({ request, env }) {
   try {
+    if (!env.DB) {
+      return new Response(JSON.stringify({ user: null }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const token = getSessionToken(request);
     if (!token) {
       return new Response(JSON.stringify({ user: null }), {
