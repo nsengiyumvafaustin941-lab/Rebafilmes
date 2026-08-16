@@ -1,6 +1,22 @@
 import React, { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
+import {
+  Flame,
+  Zap,
+  Ghost,
+  Rocket,
+  Sparkles,
+  Smile,
+  Heart,
+  Globe,
+  Trophy,
+  Clapperboard,
+  Shield,
+  Compass,
+} from "lucide-react";
 import HeroBanner from "../components/HeroBanner";
 import FilterTabs from "../components/FilterTabs";
+import Top10Row from "../components/Top10Row";
 import ScrollRow from "../components/ScrollRow";
 import CuratedRow from "../components/CuratedRow";
 import ContentGrid from "../components/ContentGrid";
@@ -11,6 +27,22 @@ import { useMovies } from "../contexts/MoviesContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { HOME_SECTIONS } from "../data/homeSectionsData";
 import { PROGRESS_KEY } from "../utils/constants";
+
+/* ─── Quick-Access Discovery Chips ─────────────────── */
+const QUICK_CHIPS = [
+  { icon: Flame, label: 'Trending Now', to: '/search?sort=popularity.desc' },
+  { icon: Zap, label: 'Action', to: '/search?genre=28' },
+  { icon: Ghost, label: 'Horror', to: '/search?genre=27' },
+  { icon: Rocket, label: 'Sci-Fi', to: '/search?genre=878' },
+  { icon: Sparkles, label: 'Drama', to: '/search?genre=18' },
+  { icon: Smile, label: 'Comedy', to: '/search?genre=35' },
+  { icon: Heart, label: 'Romance', to: '/search?genre=10749' },
+  { icon: Globe, label: 'K-Drama', to: '/search?q=korean&type=series' },
+  { icon: Trophy, label: 'Top Rated', to: '/search?sort=vote_average.desc' },
+  { icon: Clapperboard, label: 'Documentary', to: '/search?genre=99' },
+  { icon: Shield, label: 'War', to: '/search?genre=10752' },
+  { icon: Compass, label: 'Western', to: '/search?genre=37' },
+];
 
 /* ─── Read localStorage progress ─────────────────── */
 const getInProgressItems = (allMovies) => {
@@ -47,14 +79,14 @@ const HomePage = () => {
   );
 
   const latest = useMemo(
-    () => [...filtered].sort((a, b) => b.year - a.year).slice(0, 12),
+    () => [...filtered].sort((a, b) => b.year - a.year).slice(0, 24),
     [filtered],
   );
   const recentlyAdded = useMemo(
-    () => [...filtered].sort((a, b) => b.id - a.id).slice(0, 12),
+    () => [...filtered].sort((a, b) => b.id - a.id).slice(0, 24),
     [filtered],
   );
-  const popularF = useMemo(() => filtered.filter((m) => m.popular), [filtered]);
+  const popularF = useMemo(() => filtered.filter((m) => m.popular).slice(0, 24), [filtered]);
   const featured = useMemo(
     () => filtered.filter((m) => m.featured || m.popular),
     [filtered],
@@ -84,6 +116,22 @@ const HomePage = () => {
 
       <AdBanner position="home_top" />
       <FilterTabs activeTab={tab} onChange={setTab} />
+
+      {/* ── Quick-Access Genre/Discovery Chips ── */}
+      <div className="quick-chips">
+        {QUICK_CHIPS.map((chip) => {
+          const Icon = chip.icon;
+          return (
+            <Link key={chip.to} to={chip.to} className="quick-chip">
+              <Icon size={16} className="quick-chip-icon-3d" />
+              <span className="quick-chip-label">{chip.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* ── Top 10 Billboard Row ── */}
+      <Top10Row />
 
       {/* Continue Watching */}
       {inProgress.length > 0 && (

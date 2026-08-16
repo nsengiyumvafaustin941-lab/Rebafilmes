@@ -66,7 +66,17 @@ const CuratedRow = ({ title, queries = [], viewAllTo = '/movies' }) => {
   }, [items]);
 
   const scroll = (dir) => {
-    rowRef.current?.scrollBy({ left: dir * 320, behavior: 'smooth' });
+    if (!rowRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = rowRef.current;
+    const scrollStep = Math.max(clientWidth * 0.82, 280);
+
+    if (dir === 1 && Math.ceil(scrollLeft + clientWidth) >= scrollWidth - 10) {
+      rowRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    } else if (dir === -1 && scrollLeft <= 10) {
+      rowRef.current.scrollTo({ left: scrollWidth, behavior: 'smooth' });
+    } else {
+      rowRef.current.scrollBy({ left: dir * scrollStep, behavior: 'smooth' });
+    }
   };
 
   if (items.length === 0) return null;

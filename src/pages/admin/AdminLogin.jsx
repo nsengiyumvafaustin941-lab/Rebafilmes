@@ -27,6 +27,7 @@ const AdminLogin = () => {
 
   return (
     <div className="adm-login-page">
+      <div className="bg-logo-pattern" />
       <div className="adm-login-card">
         <div className="adm-login-icon">
           <Shield size={32} />

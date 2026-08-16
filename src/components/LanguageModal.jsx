@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, X, Check, Globe } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { LANG_KEY } from '../utils/constants';
 import logo from '../assets/logo.jpg';
 import './LanguageModal.css';
 
@@ -57,11 +56,6 @@ const LanguageModal = () => {
   const [search, setSearch] = useState('');
   const [region, setRegion] = useState('All');
 
-  useEffect(() => {
-    const saved = localStorage.getItem(LANG_KEY);
-    if (!saved) setIsModalOpen(true);
-  }, [setIsModalOpen]);
-
   // Reset search when modal opens
   useEffect(() => {
     if (isModalOpen) { setSearch(''); setRegion('All'); }
@@ -84,15 +78,13 @@ const LanguageModal = () => {
   if (!isModalOpen) return null;
 
   return (
-    <div className="lang-overlay" onClick={() => localStorage.getItem(LANG_KEY) && setIsModalOpen(false)}>
+    <div className="lang-overlay" onClick={() => setIsModalOpen(false)}>
       <div className="lang-modal" onClick={(e) => e.stopPropagation()}>
         
-        {/* Close (only after first selection) */}
-        {localStorage.getItem(LANG_KEY) && (
-          <button className="lang-close" onClick={() => setIsModalOpen(false)} aria-label="Close">
-            <X size={16} />
-          </button>
-        )}
+        {/* Close Button */}
+        <button className="lang-close" onClick={() => setIsModalOpen(false)} aria-label="Close">
+          <X size={16} />
+        </button>
 
         {/* Header */}
         <div className="lang-logo">

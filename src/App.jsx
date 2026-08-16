@@ -1,10 +1,11 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Sidebar from './components/Sidebar';
 import AIAssistant from './components/AIAssistant';
 import LanguageModal from './components/LanguageModal';
+import InstallAppModal from './components/InstallAppModal';
 import HomePage from './pages/HomePage';
 import MovieDetailPage from './pages/MovieDetailPage';
 import SearchPage from './pages/SearchPage';
@@ -93,7 +94,8 @@ const AdminSuspense = ({ children }) => (
 const queryClient = new QueryClient();
 
 function App() {
-  const [showSplash, setShowSplash] = React.useState(true);
+  const [showSplash, setShowSplash] = useState(true);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
   return (
     <HelmetProvider>
@@ -109,6 +111,10 @@ function App() {
                       <SavedProvider>
                         <BrowserRouter>
                           <LanguageModal />
+                          <InstallAppModal 
+                            isOpen={isInstallModalOpen} 
+                            onClose={() => setIsInstallModalOpen(false)} 
+                          />
                           <Routes>
 
                             {/* ── Admin Routes (completely separate layout) ── */}
@@ -138,7 +144,8 @@ function App() {
                             <Route path="*" element={
                               <RequireMaintenanceGate>
                                 <div className="layout">
-                                  <Sidebar />
+                                  <div className="bg-logo-pattern" />
+                                  <Sidebar onOpenInstallModal={() => setIsInstallModalOpen(true)} />
                                   <AIAssistant />
                                   <main className="main-content">
                                     <AnnouncementBar />
@@ -183,3 +190,4 @@ function App() {
 }
 
 export default App;
+

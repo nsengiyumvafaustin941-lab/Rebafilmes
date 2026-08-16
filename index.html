@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="rw">
+<html lang="eng">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
@@ -33,6 +33,37 @@
   <!-- PWA -->
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="apple-touch-icon" href="/favicon.jpg" />
+
+  <!-- Preconnect & DNS-Prefetch for Streaming Infrastructure & TMDB CDN -->
+  <link rel="preconnect" href="https://image.tmdb.org" crossorigin />
+  <link rel="dns-prefetch" href="https://image.tmdb.org" />
+  <link rel="preconnect" href="https://vidlink.pro" crossorigin />
+  <link rel="dns-prefetch" href="https://vidlink.pro" />
+  <link rel="preconnect" href="https://vidnest.fun" crossorigin />
+  <link rel="dns-prefetch" href="https://vidnest.fun" />
+  <link rel="preconnect" href="https://vidsrc.mov" crossorigin />
+  <link rel="dns-prefetch" href="https://vidsrc.mov" />
+  <link rel="preconnect" href="https://vidfast.pro" crossorigin />
+  <link rel="dns-prefetch" href="https://vidfast.pro" />
+  <link rel="preconnect" href="https://www.vidking.net" crossorigin />
+  <link rel="dns-prefetch" href="https://www.vidking.net" />
+  <link rel="dns-prefetch" href="https://player.videasy.net" />
+  <link rel="dns-prefetch" href="https://peachify.top" />
+  <link rel="dns-prefetch" href="https://multiembed.mov" />
+  <link rel="dns-prefetch" href="https://www.youtube.com" />
+
+  <script>
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Retain native browser install button while capturing deferred prompt for custom UI trigger
+      window.deferredPwaPrompt = e;
+    });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
 </head>
 <body>
   <!-- Google Translate Element (Hidden) -->

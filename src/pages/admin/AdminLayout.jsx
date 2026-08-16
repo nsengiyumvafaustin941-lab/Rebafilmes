@@ -24,6 +24,7 @@ const AdminLayout = ({ children }) => {
 
   return (
     <div className="adm-layout">
+      <div className="bg-logo-pattern" />
       {/* Mobile Header */}
       <div className="adm-mobile-header">
         <div className="adm-brand">

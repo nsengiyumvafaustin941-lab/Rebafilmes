@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { getTrending, getTopRated, getPopular, getPopularTv, getTopRatedTv, getMovie } from '../utils/tmdb';
+import { getTrending, getTopRated, getPopular, getPopularTv, getTopRatedTv, getMovieOrTv } from '../utils/tmdb';
 import { api } from '../utils/api';
 
 const MoviesContext = createContext();
@@ -99,10 +99,15 @@ export const MoviesProvider = ({ children }) => {
   const fetchMovieById = useCallback(async (id) => {
     const numericId = Number(id);
     const cached = moviesRef.current.find((m) => m.id === numericId);
-    if (cached?.trailerKey || cached?.videos) return cached;
+    if (cached) {
+      const isTv = cached.type === 'series' || cached.type === 'tv';
+      if (!isTv && (cached.trailerKey || cached.videos)) return cached;
+      if (isTv && cached.seasons && cached.seasons.length > 0) return cached;
+    }
 
     try {
-      const movie = await getMovie(numericId);
+      const movie = await getMovieOrTv(numericId, cached?.type);
+      if (!movie) return cached || null;
       const withSource = { ...movie, source: 'tmdb', ...curatedMap[numericId] };
       setAllMovies((prev) => {
         const exists = prev.some((m) => m.id === movie.id);

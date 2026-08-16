@@ -24,12 +24,13 @@ export const api = {
     if (localData) {
       try {
         const parsed = JSON.parse(localData);
-        // If the API succeeded but was empty, let's sync this local data UP to the KV!
+        // If the API succeeded but was empty, only sync if logged in as admin
         if (apiSuccess) {
-           console.log(`Migrating local data for ${key} to Cloudflare KV...`);
-           // We do a fire-and-forget sync (requires admin token if it's an admin key, 
-           // but since we don't know here, we'll try with admin=true which will append the token if it exists)
-           api.set(key, parsed, true);
+          const adminData = JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || '{}');
+          if (adminData && adminData.token) {
+            console.log(`Migrating local data for ${key} to Cloudflare KV...`);
+            api.set(key, parsed, true);
+          }
         }
         return parsed;
       } catch {

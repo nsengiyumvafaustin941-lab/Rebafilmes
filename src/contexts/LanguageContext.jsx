@@ -8,7 +8,7 @@ const LanguageContext = createContext();
 const BUILT_IN_LANGS = ["rw", "fr", "en", "sw", "lg"];
 
 export const LanguageProvider = ({ children }) => {
-  const [lang, setLangState] = useState(localStorage.getItem(LANG_KEY) || "rw");
+  const [lang, setLangState] = useState(localStorage.getItem(LANG_KEY) || "en");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const setLang = (code) => {

@@ -1,0 +1,451 @@
+/* ── InstallAppModal Glassmorphic Styling ── */
+.install-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(8, 9, 13, 0.82);
+  backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeInModal .3s ease forwards;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; transform: scale(.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.install-modal-container {
+  position: relative;
+  width: 100%;
+  max-width: 860px;
+  background: linear-gradient(135deg, rgba(22, 25, 35, 0.95) 0%, rgba(13, 15, 22, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 2.25rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.install-modal-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .2s ease;
+  z-index: 10;
+}
+.install-modal-close:hover {
+  background: #e50914;
+  border-color: #e50914;
+  transform: rotate(90deg);
+}
+
+.install-modal-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+/* ── 3D Smartphone Mockup ── */
+.phone-mockup-wrapper {
+  perspective: 1000px;
+  display: flex;
+  justify-content: center;
+}
+
+.phone-3d-body {
+  position: relative;
+  width: 250px;
+  height: 480px;
+  background: #000;
+  border: 9px solid #1f2330;
+  border-radius: 36px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(229, 9, 20, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: rotateY(-8deg) rotateX(4deg);
+  transition: transform .4s ease;
+}
+.phone-3d-body:hover {
+  transform: rotateY(0deg) rotateX(0deg);
+}
+
+/* Notch */
+.phone-notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 18px;
+  background: #1f2330;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.phone-speaker { width: 32px; height: 3px; background: #353b4e; border-radius: 2px; }
+.phone-camera { width: 6px; height: 6px; background: #11141c; border-radius: 50%; border: 1px solid #353b4e; }
+
+/* Phone Screen */
+.phone-screen {
+  flex: 1;
+  background: #0d0e14;
+  display: flex;
+  flex-direction: column;
+  padding-top: 18px;
+  overflow: hidden;
+}
+
+.phone-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 14px 2px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+.phone-status-icons { display: flex; gap: 4px; align-items: center; }
+
+.phone-app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.phone-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+.phone-logo { width: 16px; height: 16px; border-radius: 4px; }
+.phone-badge {
+  font-size: 9px;
+  font-weight: 800;
+  background: #e50914;
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* Hero Mini */
+.phone-hero-mini {
+  position: relative;
+  height: 80px;
+  flex-shrink: 0;
+  margin: 6px 8px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.phone-hero-img { width: 100%; height: 100%; object-fit: cover; }
+.phone-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(13, 14, 20, 0.95) 0%, transparent 60%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 6px 8px;
+}
+.phone-hero-tag { font-size: 8px; color: #e50914; font-weight: 800; }
+.phone-hero-title { font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Phone Live Grid */
+.phone-grid-preview {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px 8px 8px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.phone-grid-preview::-webkit-scrollbar { display: none; }
+
+.phone-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.phone-card-poster {
+  position: relative;
+  aspect-ratio: 2/3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1a1d28;
+}
+.phone-card-poster img { width: 100%; height: 100%; object-fit: cover; }
+.phone-card-tag {
+  position: absolute;
+  top: 3px; right: 3px;
+  background: rgba(0,0,0,0.75);
+  font-size: 7px;
+  font-weight: 700;
+  padding: 1px 3px;
+  border-radius: 2px;
+  color: #fff;
+}
+.phone-card-title {
+  font-size: 9px;
+  font-weight: 600;
+  color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+/* Phone Nav Bar */
+.phone-nav-bar {
+  display: flex;
+  justify-content: space-around;
+  padding: 6px 0;
+  background: #141722;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.phone-tab {
+  background: none;
+  border: none;
+  color: #777;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 8px;
+  cursor: pointer;
+}
+.phone-tab.active { color: #e50914; }
+
+.phone-home-bar {
+  width: 70px;
+  height: 3px;
+  background: #444;
+  border-radius: 2px;
+  margin: 4px auto 3px;
+}
+
+/* ── Info & Actions Column ── */
+.install-info-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.install-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(229, 9, 20, 0.15);
+  border: 1px solid rgba(229, 9, 20, 0.3);
+  color: #ff3b47;
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: fit-content;
+  margin-bottom: 0.75rem;
+}
+.sparkle-icon { color: #ff3b47; }
+
+.install-modal-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 0.5rem;
+}
+
+.install-modal-desc {
+  font-size: 0.92rem;
+  color: #a0a5b5;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.install-features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.install-features-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #e1e4ed;
+}
+.feature-icon { color: #22c55e; flex-shrink: 0; }
+
+.install-actions-wrapper {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+/* Vector QR Code Box */
+.qr-code-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+}
+.qr-svg-wrapper {
+  background: #fff;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qr-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.qr-title { font-size: 0.75rem; font-weight: 700; color: #fff; }
+.qr-sub { font-size: 0.68rem; color: #888; }
+
+/* Buttons group */
+.action-buttons-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.btn-download-apk {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #e50914 0%, #b20710 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+  transition: all .2s ease;
+}
+.btn-download-apk:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(229, 9, 20, 0.6);
+}
+
+.btn-install-pwa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.7rem 1.25rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.btn-install-pwa:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.btn-install-pwa.installed {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+}
+
+.btn-share-app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-top: 2px;
+}
+.btn-share-app:hover { color: #fff; }
+
+/* ── Mobile Responsive (<= 820px) ── */
+@media (max-width: 820px) {
+  .install-modal-container {
+    padding: 1.5rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .install-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  /* Mockup centered at top on mobile */
+  .phone-mockup-wrapper {
+    order: -1;
+  }
+  .phone-3d-body {
+    width: 220px;
+    height: 380px;
+    transform: none;
+  }
+  .phone-hero-mini { height: 75px; }
+
+  /* Smart QR Hiding on mobile viewports */
+  .qr-code-box {
+    display: none !important;
+  }
+
+  .install-info-column {
+    align-items: center;
+    text-align: center;
+  }
+  .install-modal-title { font-size: 1.3rem; }
+  .install-modal-desc { font-size: 0.85rem; }
+
+  .install-actions-wrapper {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Full-width tap targets on mobile */
+  .action-buttons-group {
+    width: 100%;
+    max-width: 280px;
+  }
+  .btn-download-apk, .btn-install-pwa {
+    width: 100%;
+    padding: 0.8rem 1rem;
+  }
+}

@@ -1,14 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Play, Bookmark, Globe, Calendar, Film, Download } from "lucide-react";
+import {
+  Play,
+  Bookmark,
+  Globe,
+  Calendar,
+  Film,
+  Download,
+  Layers,
+  Sparkles,
+  Clock,
+  Star,
+} from "lucide-react";
 import ContentGrid from "../components/ContentGrid";
 import AdBanner from "../components/AdBanner";
 import Footer from "../components/Footer";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useSaved } from "../contexts/SavedContext";
 import { useMovies } from "../contexts/MoviesContext";
-import { parseMovieId } from "../utils/tmdb";
+import { parseMovieId, getTvSeason } from "../utils/tmdb";
 import { buildDownloadUrl } from "../utils/settings";
 import "./MovieDetailPage.css";
 
@@ -19,29 +30,150 @@ const MovieDetailPage = () => {
   const { id } = useParams();
   const numericId = parseMovieId(id);
 
-  // Try local cache first; if not found fetch directly from TMDB
   const cached = allMovies.find((c) => c.id === numericId);
   const [item, setItem] = useState(cached || null);
   const [fetching, setFetching] = useState(!cached);
+  const [selectedSeason, setSelectedSeason] = useState(1);
+  const [seasonEpisodes, setSeasonEpisodes] = useState([]);
+  const [loadingSeasonEpisodes, setLoadingSeasonEpisodes] = useState(false);
+  const [showTrailer, setShowTrailer] = useState(false);
 
+  // Load / upgrade item to full details (including seasons for TV series)
   useEffect(() => {
-    if (cached) {
+    let isCancelled = false;
+
+    const isTv = cached?.type === 'series' || cached?.type === 'tv';
+    if (cached && (!isTv || (cached.seasons && cached.seasons.length > 0))) {
       setItem(cached);
       setFetching(false);
       return;
     }
-    setFetching(true);
+
+    setFetching(!cached);
     fetchMovieById(numericId).then((result) => {
-      setItem(result || null);
-      setFetching(false);
+      if (!isCancelled && result) {
+        setItem(result);
+        setFetching(false);
+      }
     });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [numericId, cached, fetchMovieById]);
 
-  // Keep item in sync if allMovies updates (e.g. after fetch lands in context)
+  // Keep in sync if allMovies changes
   useEffect(() => {
     const fresh = allMovies.find((c) => c.id === numericId);
-    if (fresh) setItem(fresh);
+    if (fresh && fresh.seasons && fresh.seasons.length > 0) {
+      setItem(fresh);
+    }
   }, [allMovies, numericId]);
+
+  const isSeries = item?.type === "series" || item?.type === "tv";
+
+  // Derive all available seasons
+  const seasonsList = useMemo(() => {
+    if (!isSeries || !item) return [];
+
+    // 1. If admin custom episodes exist
+    if (item.episodes && item.episodes.length > 0) {
+      const distinct = [...new Set(item.episodes.map((ep) => ep.s || 1))].sort((a, b) => a - b);
+      return distinct.map((sNum) => ({
+        seasonNumber: sNum,
+        name: `Season ${sNum}`,
+        episodeCount: item.episodes.filter((ep) => (ep.s || 1) === sNum).length,
+      }));
+    }
+
+    // 2. If TMDB seasons exist
+    if (item.seasons && item.seasons.length > 0) {
+      return item.seasons.map((s, idx) => ({
+        seasonNumber: s.seasonNumber || s.season_number || idx + 1,
+        name: s.name || `Season ${s.seasonNumber || s.season_number || idx + 1}`,
+        episodeCount: s.episodeCount || s.episode_count || null,
+        poster: s.poster || '',
+        overview: s.overview || '',
+      }));
+    }
+
+    // 3. Fallback based on numberOfSeasons
+    const total = item.numberOfSeasons || item.number_of_seasons || 1;
+    return Array.from({ length: total }, (_, i) => ({
+      seasonNumber: i + 1,
+      name: `Season ${i + 1}`,
+      episodeCount: null,
+    }));
+  }, [isSeries, item]);
+
+  // Ensure selectedSeason is valid
+  useEffect(() => {
+    if (seasonsList.length > 0) {
+      const exists = seasonsList.some((s) => s.seasonNumber === selectedSeason);
+      if (!exists) {
+        setSelectedSeason(seasonsList[0].seasonNumber);
+      }
+    }
+  }, [seasonsList, selectedSeason]);
+
+  // Load episodes when selectedSeason or item changes
+  useEffect(() => {
+    if (!isSeries || !item) {
+      setSeasonEpisodes([]);
+      return;
+    }
+
+    // Admin custom episodes
+    if (item.episodes && item.episodes.length > 0) {
+      const filtered = item.episodes
+        .filter((ep) => (ep.s || 1) === selectedSeason)
+        .map((ep) => ({
+          id: ep.id || `ep-${selectedSeason}-${ep.e}`,
+          episodeNumber: ep.e || 1,
+          seasonNumber: ep.s || selectedSeason,
+          title: ep.title || `Episode ${ep.e || 1}`,
+          videoUrl: ep.videoUrl || '',
+          still: ep.still || item.backdrop || item.poster || '',
+        }));
+      setSeasonEpisodes(filtered);
+      return;
+    }
+
+    // TMDB series live episodes
+    let isCancelled = false;
+    setLoadingSeasonEpisodes(true);
+
+    getTvSeason(item.id, selectedSeason)
+      .then((data) => {
+        if (!isCancelled) {
+          if (data && data.length > 0) {
+            setSeasonEpisodes(data);
+          } else {
+            const fallbackCount = item.numberOfEpisodes || 10;
+            const generated = Array.from({ length: Math.min(fallbackCount, 24) }, (_, i) => ({
+              id: `ep-${selectedSeason}-${i + 1}`,
+              episodeNumber: i + 1,
+              seasonNumber: selectedSeason,
+              title: `Episode ${i + 1}`,
+              overview: '',
+              still: item.backdrop || item.poster || '',
+            }));
+            setSeasonEpisodes(generated);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('Failed to fetch season episodes', err);
+        if (!isCancelled) setSeasonEpisodes([]);
+      })
+      .finally(() => {
+        if (!isCancelled) setLoadingSeasonEpisodes(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isSeries, item, selectedSeason]);
 
   const seoTitle = item?.seoTitle || `${item?.title} - RebaFilme`;
   const seoDesc = item?.seoDesc || item?.description || "";
@@ -49,8 +181,12 @@ const MovieDetailPage = () => {
     item?.seoKeywords ||
     `${item?.title}, watch free online, HD movies, new releases`;
 
-  const [selectedSeason, setSelectedSeason] = useState(1);
-  const [showTrailer, setShowTrailer] = useState(false);
+  const related = useMemo(() => {
+    if (!item) return [];
+    return allMovies
+      .filter((c) => c.id !== item.id && (c.genre === item.genre || c.type === item.type))
+      .slice(0, 8);
+  }, [item, allMovies]);
 
   if (fetching)
     return (
@@ -75,43 +211,6 @@ const MovieDetailPage = () => {
         </Link>
       </div>
     );
-  let seriesEpisodes = [];
-  let useInternalEpisodes = false;
-  if (item && item.type === "series") {
-    if (item.episodes && item.episodes.length > 0) {
-      seriesEpisodes = [...item.episodes].sort((a, b) =>
-        a.s !== b.s ? a.s - b.s : a.e - b.e,
-      );
-      useInternalEpisodes = true;
-    } else {
-      const baseName = item.title.split("-")[0].trim();
-      seriesEpisodes = allMovies
-        .filter(
-          (c) =>
-            c.type === "series" && c.title.split("-")[0].trim() === baseName,
-        )
-        .sort((a, b) => {
-          if (a.title < b.title) return -1;
-          if (a.title > b.title) return 1;
-          return a.id - b.id;
-        });
-    }
-  }
-
-  const uniqueSeasons = useInternalEpisodes
-    ? [...new Set(seriesEpisodes.map((ep) => ep.s))].sort((a, b) => a - b)
-    : [];
-  const activeSeason = uniqueSeasons.includes(selectedSeason)
-    ? selectedSeason
-    : uniqueSeasons[0] || 1;
-  const displayedEpisodes =
-    useInternalEpisodes && uniqueSeasons.length > 0
-      ? seriesEpisodes.filter((ep) => ep.s === activeSeason)
-      : seriesEpisodes;
-
-  const related = allMovies
-    .filter((c) => c.id !== item.id && c.genre === item.genre)
-    .slice(0, 8);
 
   return (
     <div className="detail-page">
@@ -125,10 +224,11 @@ const MovieDetailPage = () => {
         <meta property="og:image" content={item.poster} />
         <meta property="og:type" content="video.movie" />
       </Helmet>
+
       {/* Backdrop */}
       <div
         className="detail-backdrop"
-        style={{ backgroundImage: `url(${item.backdrop})` }}
+        style={{ backgroundImage: `url(${item.backdrop || item.poster})` }}
       >
         <div className="detail-backdrop-overlay" />
       </div>
@@ -154,8 +254,16 @@ const MovieDetailPage = () => {
               <span className="badge badge-accent">{item.badge}</span>
               <span className="badge badge-dark">{item.genre}</span>
               <span className="badge badge-dark">
-                {item.type === "series" ? "Serie" : "Filme"}
+                {isSeries ? "TV Series" : "Movie"}
               </span>
+              {item.rating > 0 && (
+                <span
+                  className="badge badge-dark"
+                  style={{ display: "flex", alignItems: "center", gap: "3px", color: "#ffb400" }}
+                >
+                  <Star size={11} fill="#ffb400" /> {Number(item.rating).toFixed(1)}
+                </span>
+              )}
             </div>
 
             <h1 className="detail-title">{item.title}</h1>
@@ -180,15 +288,27 @@ const MovieDetailPage = () => {
                   </td>
                   <td>{item.year}</td>
                 </tr>
+                {isSeries && seasonsList.length > 0 && (
+                  <tr>
+                    <td>
+                      <Layers size={14} /> Total Seasons
+                    </td>
+                    <td>{seasonsList.length} {seasonsList.length === 1 ? 'Season' : 'Seasons'} Available</td>
+                  </tr>
+                )}
               </tbody>
             </table>
 
             <p className="detail-desc">{item.description}</p>
 
             <div className="detail-actions">
-              <Link to={`/cinema?vd=${item.id}`} className="btn btn-primary">
-                <Play size={17} fill="currentColor" /> {t("movie_watch")}
+              <Link
+                to={`/cinema?vd=${item.id}${isSeries ? `&type=series&s=${selectedSeason}&e=1` : ''}`}
+                className="btn btn-primary"
+              >
+                <Play size={17} fill="currentColor" /> {t("movie_watch") || "Watch Stream"}
               </Link>
+
               {item.trailerKey && (
                 <button
                   className="btn btn-ghost"
@@ -200,19 +320,12 @@ const MovieDetailPage = () => {
                   }}
                   onClick={() => setShowTrailer(true)}
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="16"
-                    height="16"
-                    fill="#ff0000"
-                    style={{ verticalAlign: "middle" }}
-                  >
-                    <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.518 3.545 12 3.545 12 3.545s-7.518 0-9.388.507a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.87.507 9.388.507 9.388.507s7.518 0 9.388-.507a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                  </svg>
+                  <Play size={15} fill="#ff0000" color="#ff0000" />
                   {t("watch_trailer") || "Watch Trailer"}
                 </button>
               )}
-              {item.type === "movie" && (
+
+              {!isSeries && (
                 <a
                   href={
                     item.videoUrl
@@ -234,6 +347,7 @@ const MovieDetailPage = () => {
                   <Download size={17} /> {t("download_movie") || "Download"}
                 </a>
               )}
+
               <button
                 className={`btn ${isSaved(item.id) ? "btn-primary" : "btn-ghost"}`}
                 onClick={() => toggleSaved(item.id)}
@@ -248,127 +362,106 @@ const MovieDetailPage = () => {
           </div>
         </div>
 
-        {/* Episode Selector for Series */}
-        {item.type === "series" && seriesEpisodes.length > 0 && (
-          <div style={{ marginTop: "2.5rem" }}>
-            <h2
-              style={{
-                fontSize: "1.25rem",
-                fontWeight: 600,
-                marginBottom: "1rem",
-                color: "#fff",
-              }}
-            >
-              Watch / Download
-            </h2>
+        {/* ── Series Seasons & Episodes Explorer ──────────────────────── */}
+        {isSeries && (
+          <section className="detail-seasons-section">
+            <div className="detail-seasons-header">
+              <div className="detail-seasons-title">
+                <Layers size={20} color="var(--accent, #e50914)" />
+                <span>Seasons & Episodes</span>
+              </div>
+              <span className="detail-seasons-count-badge">
+                {seasonsList.length} {seasonsList.length === 1 ? 'Season' : 'Seasons'} Available
+              </span>
+            </div>
 
-            {uniqueSeasons.length > 1 && (
-              <div
-                style={{
-                  display: "flex",
-                  gap: "0.5rem",
-                  marginBottom: "1.25rem",
-                  overflowX: "auto",
-                  paddingBottom: "0.5rem",
-                }}
-              >
-                {uniqueSeasons.map((seasonNum) => (
+            {/* All Available Season Tabs */}
+            {seasonsList.length > 0 && (
+              <div className="detail-season-tabs">
+                {seasonsList.map((s) => (
                   <button
-                    key={seasonNum}
-                    onClick={() => setSelectedSeason(seasonNum)}
-                    className={`btn ${activeSeason === seasonNum ? "btn-primary" : "btn-ghost"}`}
-                    style={{
-                      padding: "0.5rem 1.25rem",
-                      borderRadius: "50px",
-                      whiteSpace: "nowrap",
-                      border:
-                        activeSeason !== seasonNum
-                          ? "1px solid rgba(255,255,255,.1)"
-                          : "none",
-                    }}
+                    key={`season-${s.seasonNumber}`}
+                    onClick={() => setSelectedSeason(s.seasonNumber)}
+                    className={`detail-season-tab ${selectedSeason === s.seasonNumber ? "active" : ""}`}
                   >
-                    Season {seasonNum}
+                    {s.name} {s.episodeCount ? `(${s.episodeCount} Ep)` : ''}
                   </button>
                 ))}
               </div>
             )}
 
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.75rem",
-              }}
-            >
-              {displayedEpisodes.map((ep) => {
-                const linkTo = useInternalEpisodes
-                  ? `/cinema?vd=${item.id}&ep=${ep.id}`
-                  : `/movie/${ep.id}`;
-                const downloadUrl = ep.videoUrl || "#";
+            {/* Episodes List Grid */}
+            {loadingSeasonEpisodes ? (
+              <div style={{ textAlign: "center", padding: "3rem 1rem", color: "var(--text-secondary)" }}>
+                <Sparkles size={24} color="var(--accent)" style={{ animation: "spin 2s linear infinite" }} />
+                <p style={{ marginTop: "0.75rem", fontSize: "0.9rem" }}>Loading Season {selectedSeason} episodes…</p>
+              </div>
+            ) : seasonEpisodes.length > 0 ? (
+              <div className="detail-episodes-grid">
+                {seasonEpisodes.map((ep) => {
+                  const linkTo = `/cinema?vd=${item.id}&type=series&s=${selectedSeason}&e=${ep.episodeNumber}`;
+                  const downloadUrl = ep.videoUrl || buildDownloadUrl(`${item.title} S${selectedSeason}E${ep.episodeNumber}`);
 
-                return (
-                  <div
-                    key={ep.id}
-                    style={{
-                      background: "#13131a",
-                      padding: "1rem 1.5rem",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(255,255,255,.05)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "1.05rem",
-                        color: "#fff",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {ep.title}
-                    </div>
-                    <div style={{ display: "flex", gap: "0.75rem" }}>
-                      <Link
-                        to={linkTo}
-                        className="btn btn-primary"
-                        style={{
-                          padding: "0.45rem 1rem",
-                          fontSize: "0.9rem",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.4rem",
-                          textDecoration: "none",
-                        }}
-                      >
-                        <Play size={14} fill="currentColor" /> Watch
+                  return (
+                    <div key={ep.id || `ep-${selectedSeason}-${ep.episodeNumber}`} className="detail-episode-card">
+                      <Link to={linkTo} className="detail-ep-thumb-wrap">
+                        <img
+                          src={ep.still || item.backdrop || item.poster}
+                          alt={ep.title}
+                          className="detail-ep-thumb"
+                          loading="lazy"
+                        />
+                        <span className="detail-ep-badge">EP {ep.episodeNumber}</span>
+                        {ep.runtime && (
+                          <span className="detail-ep-duration">
+                            <Clock size={10} style={{ display: "inline", marginRight: "3px" }} />
+                            {ep.runtime}m
+                          </span>
+                        )}
+                        <div className="detail-ep-play-overlay">
+                          <Play size={28} fill="#fff" />
+                        </div>
                       </Link>
-                      <a
-                        href={downloadUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-ghost"
-                        style={{
-                          padding: "0.45rem 1rem",
-                          fontSize: "0.9rem",
-                          border: "1px solid rgba(255,255,255,.2)",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.4rem",
-                          textDecoration: "none",
-                          color: "#fff",
-                        }}
-                      >
-                        <Download size={14} /> Download
-                      </a>
+
+                      <div className="detail-ep-body">
+                        <div className="detail-ep-title">{ep.title}</div>
+                        {ep.airDate && (
+                          <span className="detail-ep-meta">
+                            Air Date: {ep.airDate}
+                          </span>
+                        )}
+                        {ep.overview && (
+                          <p className="detail-ep-desc">{ep.overview}</p>
+                        )}
+
+                        <div className="detail-ep-actions">
+                          <Link to={linkTo} className="detail-ep-watch-btn">
+                            <Play size={13} fill="currentColor" /> Watch
+                          </Link>
+                          <a
+                            href={downloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="detail-ep-download-btn"
+                            title="Download Episode"
+                          >
+                            <Download size={14} />
+                          </a>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>
+                No episodes found for Season {selectedSeason}.
+              </div>
+            )}
+          </section>
         )}
 
+        {/* ── Related Content ─────────────────────────────────────────── */}
         {related.length > 0 && (
           <div style={{ marginTop: "3rem" }}>
             <h2 className="section-title" style={{ marginBottom: "1rem" }}>
@@ -377,9 +470,12 @@ const MovieDetailPage = () => {
             <ContentGrid items={related} />
           </div>
         )}
-        <AdBanner position="movie_detail" />
+
+        <AdBanner position="detail_bottom" />
+        <Footer />
       </div>
 
+      {/* ── Official Trailer Modal ────────────────────────────────────── */}
       {showTrailer && item.trailerKey && (
         <div className="trailer-modal" onClick={() => setShowTrailer(false)}>
           <div
@@ -389,23 +485,25 @@ const MovieDetailPage = () => {
             <button
               className="trailer-modal-close"
               onClick={() => setShowTrailer(false)}
+              aria-label="Close trailer modal"
             >
-              ×
+              &times;
             </button>
             <div className="trailer-video-responsive">
               <iframe
-                src={`https://www.youtube.com/embed/${item.trailerKey.includes("http") ? new URL(item.trailerKey).searchParams.get("v") : item.trailerKey}?autoplay=1`}
+                src={`https://www.youtube.com/embed/${
+                  item.trailerKey.includes("http")
+                    ? new URL(item.trailerKey).searchParams.get("v")
+                    : item.trailerKey
+                }?autoplay=1`}
                 title={`${item.title} Trailer`}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
             </div>
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   );
 };

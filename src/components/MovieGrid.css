@@ -40,6 +40,10 @@
   gap: 1.5rem;
 }
 
+.movie-grid > * {
+  min-width: 0;
+}
+
 @media (max-width: 576px) {
   .movie-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -56,3 +60,4 @@
     padding: 2rem 0;
   }
 }
+

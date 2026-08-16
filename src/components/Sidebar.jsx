@@ -1,22 +1,27 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Search, Film, Bookmark, Globe, ChevronRight, Newspaper, X } from 'lucide-react';
+import { 
+  Compass, PlaySquare, Search, Heart, Globe, 
+  ChevronRight, Newspaper, X, Smartphone, Download
+} from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import SearchAutocomplete from './SearchAutocomplete';
 import logo from '../assets/logo.jpg';
 import './Sidebar.css';
 
-const Sidebar = () => {
+const Sidebar = ({ onOpenInstallModal }) => {
   const { t, setIsModalOpen } = useLanguage();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(true);
   const [searchQ, setSearchQ] = useState('');
+  const [showSuggest, setShowSuggest] = useState(false);
 
   const NAV = [
-    { to: '/',          icon: Home,      label: t('nav_home')   },
-    { to: '/movies',    icon: Film,      label: t('nav_movies') },
-    { to: '/search',    icon: Search,    label: t('nav_search') },
-    { to: '/saved',     icon: Bookmark,  label: t('nav_saved')  },
-    { to: '/newsfeeds', icon: Newspaper, label: 'Newsfeeds'     },
+    { to: '/',          icon: Compass,    label: t('nav_home')   },
+    { to: '/movies',    icon: PlaySquare, label: t('nav_movies') },
+    { to: '/search',    icon: Search,     label: t('nav_search') },
+    { to: '/saved',     icon: Heart,      label: t('nav_saved')  },
+    { to: '/newsfeeds', icon: Newspaper,  label: 'Newsfeeds'     },
   ];
 
   const handleSearch = (e) => {
@@ -24,6 +29,7 @@ const Sidebar = () => {
     if (searchQ.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQ.trim())}`);
       setSearchQ('');
+      setShowSuggest(false);
       setCollapsed(true);
     }
   };
@@ -56,13 +62,34 @@ const Sidebar = () => {
               className="sidebar-search-input"
               placeholder="Search movies, shows…"
               value={searchQ}
-              onChange={(e) => setSearchQ(e.target.value)}
+              onChange={(e) => {
+                setSearchQ(e.target.value);
+                setShowSuggest(true);
+              }}
+              onFocus={() => setShowSuggest(true)}
             />
             {searchQ && (
-              <button type="button" className="sidebar-search-clear" onClick={() => setSearchQ('')}>
+              <button
+                type="button"
+                className="sidebar-search-clear"
+                onClick={() => {
+                  setSearchQ('');
+                  setShowSuggest(false);
+                }}
+              >
                 <X size={12} />
               </button>
             )}
+            <SearchAutocomplete
+              query={searchQ}
+              visible={showSuggest && Boolean(searchQ.trim())}
+              onClose={() => setShowSuggest(false)}
+              onSelect={() => {
+                setCollapsed(true);
+                setSearchQ('');
+                setShowSuggest(false);
+              }}
+            />
           </form>
         )}
 
@@ -85,9 +112,22 @@ const Sidebar = () => {
           ))}
         </nav>
 
-        {/* Settings section */}
-        <div className="sidebar-section-label">Settings</div>
+        {/* Settings & Apps section */}
+        <div className="sidebar-section-label">App & Settings</div>
         <div className="sidebar-nav">
+          <button
+            className="sidebar-link app-download-link"
+            title={collapsed ? "Get Mobile App" : undefined}
+            onClick={() => {
+              if (onOpenInstallModal) onOpenInstallModal();
+              setCollapsed(true);
+            }}
+          >
+            <span className="sidebar-icon-wrap app-icon-glow"><Smartphone size={20} /></span>
+            <span className="sidebar-label">Get App</span>
+            {!collapsed && <Download size={14} style={{ marginLeft: 'auto', opacity: 0.7 }} />}
+          </button>
+
           <button
             className="sidebar-link"
             title={collapsed ? t('choose_language') : undefined}
@@ -100,7 +140,7 @@ const Sidebar = () => {
 
         {!collapsed && (
           <div className="sidebar-footer">
-            <span>© 2025 RebaFilme</span>
+            <span>© 2026 RebaFilme</span>
           </div>
         )}
       </aside>
@@ -123,9 +163,14 @@ const Sidebar = () => {
             <span>{label}</span>
           </NavLink>
         ))}
-        <button className="bottom-link bottom-lang-btn" onClick={() => setIsModalOpen(true)}>
-          <span className="bottom-icon-wrap"><Globe size={21} /></span>
-          <span>Lang</span>
+        <button 
+          className="bottom-link bottom-app-btn" 
+          onClick={() => {
+            if (onOpenInstallModal) onOpenInstallModal();
+          }}
+        >
+          <span className="bottom-icon-wrap"><Smartphone size={21} /></span>
+          <span>App</span>
         </button>
       </nav>
     </>
@@ -133,3 +178,4 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+
