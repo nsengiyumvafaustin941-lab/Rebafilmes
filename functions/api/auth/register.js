@@ -1,12 +1,16 @@
-// functions/api/auth/register.js
 import { hashPassword, generateId, generateToken } from '../../_lib/crypto.js';
 import { setSessionCookie } from '../../_lib/cookies.js';
 import { checkRateLimit } from '../../_lib/ratelimit.js';
+import { validateOrigin } from '../../_lib/csrf.js';
 
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 export async function onRequestPost({ request, env }) {
   try {
+    if (!validateOrigin(request)) {
+      return jsonError('Cross-origin request blocked (CSRF protection)', 403);
+    }
+
     let body;
     try {
       body = await request.json();

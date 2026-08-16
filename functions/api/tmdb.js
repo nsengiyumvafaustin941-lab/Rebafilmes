@@ -6,6 +6,7 @@ const CORS = {
 };
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
+const CACHE_TTL_SECONDS = 3600; // 1 hour edge cache
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -16,6 +17,32 @@ export async function onRequest(context) {
 
   if (request.method !== 'GET') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: CORS });
+  }
+
+  // 1. Cloudflare Edge Cache Check (caches.default)
+  let cache;
+  try {
+    cache = caches.default;
+  } catch {
+    cache = null;
+  }
+
+  const cacheKey = new Request(request.url, { method: 'GET' });
+  if (cache) {
+    try {
+      const cachedResponse = await cache.match(cacheKey);
+      if (cachedResponse) {
+        // Return cached response with cache hit header
+        const newHeaders = new Headers(cachedResponse.headers);
+        newHeaders.set('X-Edge-Cache', 'HIT');
+        return new Response(cachedResponse.body, {
+          status: cachedResponse.status,
+          headers: newHeaders,
+        });
+      }
+    } catch (e) {
+      console.warn('Edge cache match error:', e);
+    }
   }
 
   let apiKey = env.TMDB_API_KEY;
@@ -152,7 +179,13 @@ export async function onRequest(context) {
   }
 
   try {
-    const res = await fetch(`${TMDB_BASE}${tmdbPath}?${params}`);
+    const res = await fetch(`${TMDB_BASE}${tmdbPath}?${params}`, {
+      cf: {
+        cacheTtl: CACHE_TTL_SECONDS,
+        cacheEverything: true,
+      },
+    });
+
     const data = await res.json();
 
     if (!res.ok) {
@@ -162,7 +195,27 @@ export async function onRequest(context) {
       });
     }
 
-    return new Response(JSON.stringify(data), { status: 200, headers: CORS });
+    const responseHeaders = {
+      ...CORS,
+      'Cache-Control': `public, max-age=1800, s-maxage=${CACHE_TTL_SECONDS}, stale-while-revalidate=86400`,
+      'X-Edge-Cache': 'MISS',
+    };
+
+    const finalResponse = new Response(JSON.stringify(data), {
+      status: 200,
+      headers: responseHeaders,
+    });
+
+    // Store in Cloudflare Edge Cache for subsequent requests
+    if (cache) {
+      try {
+        context.waitUntil(cache.put(cacheKey, finalResponse.clone()));
+      } catch (e) {
+        console.warn('Edge cache write error:', e);
+      }
+    }
+
+    return finalResponse;
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: CORS });
   }

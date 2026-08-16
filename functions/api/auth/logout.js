@@ -1,8 +1,15 @@
-// functions/api/auth/logout.js
 import { getSessionToken, clearSessionCookie } from '../../_lib/cookies.js';
+import { validateOrigin } from '../../_lib/csrf.js';
 
 export async function onRequestPost({ request, env }) {
   try {
+    if (!validateOrigin(request)) {
+      return new Response(JSON.stringify({ error: 'Cross-origin request blocked' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     if (!env.DB) {
       return new Response(JSON.stringify({ ok: true }), {
         status: 200,

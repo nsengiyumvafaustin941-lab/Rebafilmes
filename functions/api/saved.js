@@ -1,5 +1,5 @@
-// functions/api/saved.js
 import { getSessionToken } from '../_lib/cookies.js';
+import { validateOrigin } from '../_lib/csrf.js';
 
 export async function onRequestGet({ request, env }) {
   if (!env.DB) return new Response(JSON.stringify([]), { status: 503, headers: { 'Content-Type': 'application/json' } });
@@ -16,6 +16,9 @@ export async function onRequestGet({ request, env }) {
 }
 
 export async function onRequestPost({ request, env }) {
+  if (!validateOrigin(request)) {
+    return new Response(JSON.stringify({ error: 'Cross-origin request blocked' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+  }
   if (!env.DB) return new Response(JSON.stringify({ error: 'Database not configured' }), { status: 503, headers: { 'Content-Type': 'application/json' } });
   const token = getSessionToken(request);
   if (!token) return new Response('Unauthorized', { status: 401 });

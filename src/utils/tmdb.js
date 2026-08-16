@@ -399,14 +399,27 @@ export async function searchTv(query, page = 1) {
   return (data.results || []).map((m) => mapTmdbMovie({ ...m, media_type: 'tv' })).filter(Boolean);
 }
 
+const searchAnyCache = new Map();
+
 export async function searchAny(query, page = 1) {
-  if (!query?.trim()) return [];
+  const cleanQ = (query || '').trim();
+  if (!cleanQ) return [];
+  const cacheKey = `${cleanQ.toLowerCase()}__${page}`;
+  if (searchAnyCache.has(cacheKey)) {
+    return searchAnyCache.get(cacheKey);
+  }
   try {
-    const data = await tmdbFetch('multi', { query: query.trim(), page: String(page) });
-    return (data.results || [])
+    const data = await tmdbFetch('multi', { query: cleanQ, page: String(page) });
+    const results = (data.results || [])
       .filter((m) => m.media_type !== 'person')
       .map(mapTmdbMovie)
       .filter(Boolean);
+    searchAnyCache.set(cacheKey, results);
+    if (searchAnyCache.size > 300) {
+      const firstKey = searchAnyCache.keys().next().value;
+      searchAnyCache.delete(firstKey);
+    }
+    return results;
   } catch {
     return [];
   }
