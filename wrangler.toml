@@ -15,9 +15,9 @@ id = "96569a303d5e4a9d8a5a51f506f02c29"
 
 [vars]
 GOOGLE_CLIENT_ID = "212693926603-492fgvn9fa0sqe1769pivtio7hnvgvqt.apps.googleusercontent.com"
-ADMIN_EMAIL = "nsengiyumvafaustin941@gmail.com"
-ADMIN_EMAILS = "nsengiyumvafaustin941@gmail.com"
 NOWPAYMENTS_PUBLIC_KEY = "24554a3e-c1bf-4fb0-a799-70305d8895a2"
-# NOWPAYMENTS_API_KEY and NOWPAYMENTS_IPN_SECRET must be set as Cloudflare secrets (never in [vars]):
-#   wrangler secret put NOWPAYMENTS_API_KEY
-#   wrangler secret put NOWPAYMENTS_IPN_SECRET
+# Secrets must be set via Cloudflare dashboard (encrypted) or `wrangler secret put`:
+#   PAYPACK_CLIENT_ID, PAYPACK_CLIENT_SECRET, MOMO_WEBHOOK_SECRET
+#   NOWPAYMENTS_API_KEY, NOWPAYMENTS_IPN_SECRET, GROQ_API_KEY
+#   ADMIN_EMAIL, ADMIN_EMAILS  ← set in Cloudflare Pages dashboard
+
