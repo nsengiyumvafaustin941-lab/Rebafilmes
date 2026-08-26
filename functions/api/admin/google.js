@@ -1,7 +1,7 @@
 // functions/api/admin/google.js
 // POST /api/admin/google → Google Identity OAuth2 verification for Admin Panel
 
-import { setAdminCookie, GOOGLE_CLIENT_ID } from '../../_lib/adminAuth.js';
+import { setAdminCookie, GOOGLE_CLIENT_ID, DEFAULT_ADMIN_EMAILS } from '../../_lib/adminAuth.js';
 
 const SESSION_HOURS = 8;
 const SESSION_SECONDS = SESSION_HOURS * 60 * 60;
@@ -48,8 +48,12 @@ export async function onRequestPost({ request, env }) {
   }
 
   // 2. Resolve Admin Whitelist
-  // Check environment variables first (ADMIN_EMAILS or ADMIN_EMAIL)
-  const envEmails = [env.ADMIN_EMAILS, env.ADMIN_EMAIL]
+  // Check environment variables, fallback default list, and KV settings
+  const envEmails = [
+    env.ADMIN_EMAILS,
+    env.ADMIN_EMAIL,
+    ...(DEFAULT_ADMIN_EMAILS || []),
+  ]
     .filter(Boolean)
     .join(',')
     .toLowerCase()

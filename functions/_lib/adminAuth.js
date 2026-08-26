@@ -3,6 +3,7 @@
 
 export const GOOGLE_CLIENT_ID = '212693926603-492fgvn9fa0sqe1769pivtio7hnvgvqt.apps.googleusercontent.com';
 export const ADMIN_COOKIE_NAME = 'admin_session';
+export const DEFAULT_ADMIN_EMAILS = ['nsengiyumvafaustin941@gmail.com'];
 
 export function setAdminCookie(token, maxAgeSeconds) {
   return `${ADMIN_COOKIE_NAME}=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAgeSeconds}`;

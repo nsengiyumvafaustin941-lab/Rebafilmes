@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { verifyAdminRequest } from "../../_lib/adminAuth.js";
 
 const ALLOWED_EXTENSIONS = [".mp4", ".mkv", ".m3u8", ".webm", ".avi"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB
@@ -20,8 +21,8 @@ function getContentType(filename) {
 
 export async function onRequestPost({ request, env }) {
   // 1. Admin auth
-  const token = request.headers.get("x-admin-token");
-  if (!token || token !== env.ADMIN_PASSWORD) {
+  const auth = await verifyAdminRequest(request, env);
+  if (!auth.authorized) {
     return new Response(JSON.stringify({ error: "Forbidden" }), {
       status: 403,
       headers: { "Content-Type": "application/json" },

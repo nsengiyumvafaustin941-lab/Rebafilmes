@@ -1,11 +1,4 @@
-// functions/api/admin/users.js
-// GET  /api/admin/users          → list all users (admin only)
-// PATCH /api/admin/users?id=xxx  → update user plan/status (admin only)
-
-function isAdmin(request, env) {
-  const token = request.headers.get('x-admin-token');
-  return token && token === env.ADMIN_PASSWORD;
-}
+import { requireAdmin } from '../../_lib/adminAuth.js';
 
 function jsonError(message, status = 400) {
   return new Response(JSON.stringify({ error: message }), {
@@ -24,8 +17,9 @@ function jsonOk(data, status = 200) {
 export async function onRequest(context) {
   const { request, env } = context;
 
+  const admin = await requireAdmin(context);
+  if (!admin) return jsonError('Unauthorized', 401);
   if (!env.DB) return jsonError('Database not configured', 503);
-  if (!isAdmin(request, env)) return jsonError('Unauthorized', 401);
 
   const method = request.method;
   const url = new URL(request.url);

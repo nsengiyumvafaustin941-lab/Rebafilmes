@@ -1,24 +1,28 @@
+import { verifyAdminRequest } from '../_lib/adminAuth.js';
 
 export async function onRequest(context) {
   const { request, env } = context;
-  const url = new URL(request.url);
-  const method = request.method;
-
   const KV = env.KV;
 
-  if (method === 'GET') {
-    const key = url.searchParams.get('key');
-    if (!key) return new Response('Missing key', { status: 400 });
+  if (!KV) {
+    return new Response('KV not bound', { status: 500 });
+  }
 
-    if (!KV) {
-      return new Response('null', {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+  const url = new URL(request.url);
+
+  // ── GET: Read a KV key ──────────────────────────────────────────────
+  if (request.method === 'GET') {
+    const key = url.searchParams.get('key');
+    if (!key) return new Response('Missing key param', { status: 400 });
 
     try {
       const data = await KV.get(key);
-      return new Response(data || 'null', {
+      if (data === null) {
+        return new Response(JSON.stringify({ found: false, data: null }), {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(data, {
         headers: { 'Content-Type': 'application/json' },
       });
     } catch (e) {
@@ -26,16 +30,8 @@ export async function onRequest(context) {
     }
   }
 
-  const ADMIN_PASSWORD = env.ADMIN_PASSWORD;
-  if (!ADMIN_PASSWORD) {
-    return new Response(JSON.stringify({ error: 'ADMIN_PASSWORD not configured' }), { status: 500 });
-  }
-
-  if (!KV) {
-    return new Response(JSON.stringify({ error: 'KV namespace not found' }), { status: 500 });
-  }
-
-  if (method === 'POST') {
+  // ── POST: Write a KV key ─────────────────────────────────────────────
+  if (request.method === 'POST') {
     try {
       const { key, value } = await request.json();
       if (!key) return new Response('Missing key', { status: 400 });
@@ -55,14 +51,18 @@ export async function onRequest(context) {
       ];
 
       if (adminKeys.includes(key)) {
-        const token = request.headers.get('x-admin-token');
-        if (!token) return new Response('Unauthorized', { status: 401 });
-
-        if (token !== env.ADMIN_PASSWORD) {
-          return new Response('Unauthorized: Admins only', { status: 403 });
+        const auth = await verifyAdminRequest(request, env);
+        if (!auth.authorized) {
+          return new Response(JSON.stringify({ error: 'Unauthorized: Admins only' }), {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
       } else if (!publicKeys.includes(key)) {
-        return new Response('Forbidden key', { status: 403 });
+        return new Response(JSON.stringify({ error: 'Forbidden key' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
 
       const valueStr = typeof value === 'string' ? value : JSON.stringify(value);
