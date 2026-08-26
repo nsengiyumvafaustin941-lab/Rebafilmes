@@ -1,6 +1,7 @@
 // functions/api/vip/initiate.js
 // POST /api/vip/initiate
 // Automated 1-Click USSD Cash-In trigger via Paypack (MTN MoMo & Airtel Rwanda)
+// SEC: Server-authoritative pricing + DB-First Pattern (prevents orphaned USSD prompts)
 
 import { getSessionToken } from '../../_lib/cookies.js';
 import { checkRateLimit } from '../../_lib/ratelimit.js';
@@ -102,10 +103,50 @@ export async function onRequestPost({ request, env }) {
     return jsonError('Kugira ngo ugure VIP kandi uyikoreshe ku bikoresho byawe byose (Telefone, Laptop, TV), banza winjire muri konti yawe cyangwa ufungure nshya.', 401);
   }
 
-  // 6. Generate unique ID & initial tracking reference
+  // 6. Generate unique IDs with timestamp + entropy
   const subId = crypto.randomUUID();
-  let paypackRef = 'REBA_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6).toUpperCase();
-  let ussdSent = false;
+  const initialRef = `REBA_MOMO_${Date.now()}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
+  // ── DB-FIRST PATTERN ──────────────────────────────────────────────────────
+  // Pre-insert pending subscription record in D1 BEFORE calling Paypack Cash-In.
+  // This guarantees that any USSD prompt dispatched to a user's phone has a
+  // corresponding database record ready to be approved when webhook arrives.
+  // ─────────────────────────────────────────────────────────────────────────
+  try {
+    await env.DB.prepare(
+      `INSERT INTO vip_subscriptions
+         (id, user_id, phone, payment_method, momo_tx_id, amount, plan, status, admin_notes, created_at, updated_at)
+       VALUES (?, ?, ?, 'paypack', ?, ?, ?, 'pending', ?, datetime('now'), datetime('now'))`
+    ).bind(
+      subId,
+      userId,
+      cleanPhone,
+      initialRef,
+      amount,
+      planType,
+      `Plan: ${planType} | Paypack MoMo | Initializing USSD Cash-In`
+    ).run();
+  } catch {
+    // Graceful fallback for pre-migration schema
+    try {
+      await env.DB.prepare(
+        `INSERT INTO vip_subscriptions
+           (id, user_id, phone, momo_tx_id, amount, plan, status, admin_notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, datetime('now'), datetime('now'))`
+      ).bind(
+        subId,
+        userId,
+        cleanPhone,
+        initialRef,
+        amount,
+        planType,
+        `Plan: ${planType} | Paypack MoMo | Initializing USSD Cash-In`
+      ).run();
+    } catch (fallbackErr) {
+      console.error('[vip/initiate] DB pre-insert failed:', fallbackErr);
+      return jsonError('Database error before payment dispatch: ' + fallbackErr.message, 500);
+    }
+  }
 
   // 7. Dispatch Cash-In Request to Paypack Gateway
   const cashinRes = await initiateCashIn({
@@ -114,51 +155,44 @@ export async function onRequestPost({ request, env }) {
     amount,
   });
 
-  if (cashinRes.success && cashinRes.ref) {
-    paypackRef = cashinRes.ref;
-    ussdSent = true;
-  } else if (!cashinRes.success) {
-    console.warn('[vip/initiate] Paypack initiation warning:', cashinRes.error);
+  if (!cashinRes.success) {
+    console.warn('[vip/initiate] Paypack initiation failed:', cashinRes.error);
+
+    // Update the pre-inserted record to failed
+    await env.DB.prepare(
+      `UPDATE vip_subscriptions
+       SET status = 'failed',
+           admin_notes = ?,
+           updated_at = datetime('now')
+       WHERE id = ?`
+    ).bind(`Paypack Cash-In dispatch failed: ${String(cashinRes.error).slice(0, 200)}`, subId).run().catch(() => {});
+
+    return jsonError(cashinRes.error || 'Failed to dispatch MoMo PIN prompt. Please verify phone number and try again.', 502);
   }
 
-  // 8. Insert record in D1 Database
+  const finalRef = cashinRes.ref || initialRef;
+  const ussdSent = Boolean(cashinRes.ref);
+
+  // 8. Update the pending record with the final gateway reference
   try {
     await env.DB.prepare(
-      `INSERT INTO vip_subscriptions (id, user_id, phone, payment_method, momo_tx_id, amount, plan, status, admin_notes, created_at, updated_at)
-       VALUES (?, ?, ?, 'paypack', ?, ?, ?, 'pending', ?, datetime('now'), datetime('now'))`
+      `UPDATE vip_subscriptions
+       SET momo_tx_id = ?,
+           admin_notes = ?,
+           updated_at = datetime('now')
+       WHERE id = ?`
     ).bind(
-      subId,
-      userId,
-      cleanPhone,
-      paypackRef,
-      amount,
-      planType,
-      `Plan: ${planType} | Automated Paypack USSD | ${ussdSent ? 'Prompt Dispatched' : 'Offline/Fallback'}`
+      finalRef,
+      `Plan: ${planType} | Automated Paypack USSD | ${ussdSent ? 'Prompt Dispatched' : 'Offline/Fallback'} | Gateway Ref: ${finalRef}`,
+      subId
     ).run();
-  } catch {
-    // Graceful fallback for pre-migration schema
-    try {
-      await env.DB.prepare(
-        `INSERT INTO vip_subscriptions (id, user_id, phone, momo_tx_id, amount, plan, status, admin_notes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, datetime('now'), datetime('now'))`
-      ).bind(
-        subId,
-        userId,
-        cleanPhone,
-        paypackRef,
-        amount,
-        planType,
-        `Plan: ${planType} | Automated Paypack USSD | ${ussdSent ? 'Prompt Dispatched' : 'Offline/Fallback'}`
-      ).run();
-    } catch (fallbackErr) {
-      console.error('[vip/initiate] DB insert error:', fallbackErr);
-      return jsonError('Failed to record order in database: ' + fallbackErr.message, 500);
-    }
+  } catch (updateErr) {
+    console.warn('[vip/initiate] Gateway ref update warning:', updateErr);
   }
 
   return jsonOk({
     success: true,
-    ref: paypackRef,
+    ref: finalRef,
     phone: cleanPhone,
     amount: amount,
     planType: planType,
