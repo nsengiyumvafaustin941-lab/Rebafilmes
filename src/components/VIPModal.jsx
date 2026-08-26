@@ -8,7 +8,7 @@ import {
 import { useVIPModal } from '../contexts/VIPModalContext';
 import { useVIP } from '../hooks/useVIP';
 import { useAuth } from '../contexts/AuthContext';
-import { getDynamicVipPlans } from '../utils/settings';
+import { getDynamicVipPlans, fetchServerSettings } from '../utils/settings';
 import logo from '../assets/logo.jpg';
 import './VIPModal.css';
 
@@ -109,12 +109,24 @@ export const VIPModal = () => {
       setFeedback(null);
       setIsSubmitting(false);
       
-      const freshPlans = getDynamicVipPlans();
-      setVipPlans(freshPlans);
+      const currentPlans = getDynamicVipPlans();
+      setVipPlans(currentPlans);
 
       const targetPlanId = initialPlanId || 'monthly';
-      const found = freshPlans.find((p) => p.id === targetPlanId) || freshPlans[1] || freshPlans[0];
+      const found = currentPlans.find((p) => p.id === targetPlanId) || currentPlans[1] || currentPlans[0];
       setSelectedPlan(found);
+
+      // Asynchronously fetch fresh live settings from Cloudflare server
+      fetchServerSettings().then((serverSettings) => {
+        if (serverSettings) {
+          const freshPlans = getDynamicVipPlans(serverSettings);
+          setVipPlans(freshPlans);
+          setSelectedPlan((prev) => {
+            const match = freshPlans.find((p) => p.id === (prev?.id || targetPlanId));
+            return match || freshPlans[1] || freshPlans[0];
+          });
+        }
+      });
 
       // If returning from login redirect, open directly at payment method selection
       try {

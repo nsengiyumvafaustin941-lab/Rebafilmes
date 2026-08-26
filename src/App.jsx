@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -25,6 +25,7 @@ import { HighlightsProvider } from './contexts/HighlightsContext';
 import AnnouncementBar from './components/AnnouncementBar';
 import SplashScreen from './components/SplashScreen';
 import { SETTINGS_KEY } from './utils/constants';
+import { fetchServerSettings } from './utils/settings';
 import useSmartLinks from './hooks/useSmartLinks';
 import { VIPModalProvider } from './contexts/VIPModalContext';
 import './index.css';
@@ -106,6 +107,10 @@ const queryClient = new QueryClient();
 function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+
+  useEffect(() => {
+    fetchServerSettings();
+  }, []);
 
   return (
     <HelmetProvider>

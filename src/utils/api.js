@@ -6,7 +6,9 @@ export const api = {
     let apiSuccess = false;
     
     try {
-      const res = await fetch(`/api/data?key=${encodeURIComponent(key)}`);
+      const res = await fetch(`/api/data?key=${encodeURIComponent(key)}`, {
+        credentials: 'include'
+      });
       if (res.ok) {
         apiData = await res.json();
         apiSuccess = true;
@@ -64,6 +66,9 @@ export const api = {
   set: async (key, value, isAdmin = false) => {
     // Save to localStorage immediately as fallback/optimistic update
     localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    if (typeof window !== 'undefined' && key === 'rebafilme_settings') {
+      window.dispatchEvent(new CustomEvent('rebafilme_settings_updated', { detail: value }));
+    }
     
     try {
       const headers = { 'Content-Type': 'application/json' };
@@ -78,6 +83,7 @@ export const api = {
       const res = await fetch(`/api/data`, {
         method: 'POST',
         headers,
+        credentials: 'include',
         body: JSON.stringify({ key, value })
       });
       

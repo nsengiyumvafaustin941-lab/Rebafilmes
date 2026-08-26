@@ -59,22 +59,48 @@ export function getSettings() {
   }
 }
 
+/**
+ * Asynchronously synchronizes the latest admin settings from Cloudflare KV
+ * to localStorage and dispatches a notification event for all active UI listeners.
+ */
+export async function fetchServerSettings() {
+  try {
+    const res = await fetch(`/api/data?key=${encodeURIComponent(CONSTANTS_SETTINGS_KEY)}`, {
+      credentials: 'include'
+    });
+    if (res.ok) {
+      const serverData = await res.json();
+      if (serverData && typeof serverData === 'object') {
+        const merged = { ...DEFAULT_SETTINGS, ...serverData };
+        localStorage.setItem(CONSTANTS_SETTINGS_KEY, JSON.stringify(merged));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('rebafilme_settings_updated', { detail: merged }));
+        }
+        return merged;
+      }
+    }
+  } catch (e) {
+    console.warn('[settings] fetchServerSettings error:', e);
+  }
+  return getSettings();
+}
+
 export function parsePriceAmount(val, defaultAmount = 1000) {
   if (typeof val === 'number' && Number.isFinite(val) && val > 0) return Math.round(val);
-  if (!val) return defaultAmount;
+  if (val === undefined || val === null || val === '') return defaultAmount;
   const num = parseInt(String(val).replace(/[^0-9]/g, ''), 10);
   return isNaN(num) || num <= 0 ? defaultAmount : num;
 }
 
 export function parseUsdPrice(val, defaultAmount = 3.99) {
   if (typeof val === 'number' && Number.isFinite(val) && val > 0) return val;
-  if (!val) return defaultAmount;
+  if (val === undefined || val === null || val === '') return defaultAmount;
   const num = parseFloat(String(val).replace(/[^0-9.]/g, ''));
   return isNaN(num) || num <= 0 ? defaultAmount : num;
 }
 
-export function getDynamicVipPlans() {
-  const s = getSettings();
+export function getDynamicVipPlans(overrideSettings = null) {
+  const s = overrideSettings || getSettings();
   const dailyRwf = parsePriceAmount(s.vipPriceDaily, 1000);
   const monthlyRwf = parsePriceAmount(s.vipPriceMonthly, 5000);
   const yearlyRwf = parsePriceAmount(s.vipPriceYearly, 45000);

@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useVIP } from '../hooks/useVIP';
 import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { useVIPModal } from '../contexts/VIPModalContext';
+import { getDynamicVipPlans } from '../utils/settings';
 import logo from '../assets/logo.jpg';
 import './AccountPage.css';
 
@@ -302,19 +303,41 @@ const BuyPlanPanel = () => {
   const { t } = useLanguage();
   const { openVIPModal } = useVIPModal();
   const vipVisible = useMonetizationEnabled();
+  const dynamicPlans = getDynamicVipPlans();
 
   if (!vipVisible) return null;
+
+  const planOptions = [
+    { 
+      id: 'daily', 
+      name: 'Umunsi 1 (Daily)', 
+      price: dynamicPlans.find(p => p.id === 'daily')?.priceRwf || '1,000 RWF', 
+      period: '/ 24 Hours', 
+      features: ['100% Zero Ads', 'Instant 1-Click USSD', 'Multi-device access'] 
+    },
+    { 
+      id: 'monthly', 
+      name: 'Ukwezi 1 (Monthly)', 
+      price: dynamicPlans.find(p => p.id === 'monthly')?.priceRwf || '5,000 RWF', 
+      period: '/ 30 Days', 
+      features: ['100% Zero Ads', 'Fast 4K Downloads', 'All movies & shows', 'Multi-device access'], 
+      highlight: true 
+    },
+    { 
+      id: 'yearly', 
+      name: 'Umwaka 1 (Yearly)', 
+      price: dynamicPlans.find(p => p.id === 'yearly')?.priceRwf || '45,000 RWF', 
+      period: '/ 365 Days', 
+      features: ['Best Value Discount', '365 Days VIP Access', 'Priority movie requests', 'Multi-device access'] 
+    },
+  ];
 
   return (
     <div className="panel">
       <h2 className="panel-heading">{t('account_buy')}</h2>
       <p className="panel-subtitle">{t('acc_buy_sub_sub')}</p>
       <div className="plan-options">
-        {[
-          { id: 'daily', name: 'Umunsi 1 (Daily)', price: '500 RWF', period: '/ 24 Hours', features: ['100% Zero Ads', 'Instant 1-Click USSD', 'Multi-device access'] },
-          { id: 'monthly', name: 'Ukwezi 1 (Monthly)', price: '2,000 RWF', period: '/ 30 Days', features: ['100% Zero Ads', 'Fast 4K Downloads', 'All movies & shows', 'Multi-device access'], highlight: true },
-          { id: 'yearly', name: 'Umwaka 1 (Yearly)', price: '20,000 RWF', period: '/ 365 Days', features: ['Best Value Discount', '365 Days VIP Access', 'Priority movie requests', 'Multi-device access'] },
-        ].map(plan => (
+        {planOptions.map(plan => (
           <div key={plan.name} className={`plan-option${plan.highlight ? ' highlighted' : ''}`}>
             <div className="plan-option-header">
               <Crown size={18} />
@@ -327,7 +350,7 @@ const BuyPlanPanel = () => {
             </ul>
             <button 
               className={`btn ${plan.highlight ? 'btn-primary' : 'btn-ghost'} full-btn`}
-              onClick={openVIPModal}
+              onClick={() => openVIPModal(plan.id)}
             >
               <CreditCard size={15}/> {t('account_buy')} {plan.name}
             </button>

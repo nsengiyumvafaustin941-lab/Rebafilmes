@@ -4,7 +4,7 @@ import AdminLayout from './AdminLayout';
 import './AdminLayout.css';
 import './AdminSettings.css';
 import { api } from '../../utils/api';
-import { DEFAULT_SETTINGS, SETTINGS_KEY } from '../../utils/settings';
+import { DEFAULT_SETTINGS, SETTINGS_KEY, parsePriceAmount, parseUsdPrice } from '../../utils/settings';
 
 const AdminSettings = () => {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -22,8 +22,21 @@ const AdminSettings = () => {
   };
 
   const handleSave = async () => {
-    await api.set(SETTINGS_KEY, settings, true);
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    const cleanSettings = {
+      ...settings,
+      vipPriceDaily: parsePriceAmount(settings.vipPriceDaily, 1000),
+      vipPriceMonthly: parsePriceAmount(settings.vipPriceMonthly, 5000),
+      vipPriceYearly: parsePriceAmount(settings.vipPriceYearly, 45000),
+      vipPriceUsdDaily: parseUsdPrice(settings.vipPriceUsdDaily, 0.99),
+      vipPriceUsdMonthly: parseUsdPrice(settings.vipPriceUsdMonthly, 3.99),
+      vipPriceUsdYearly: parseUsdPrice(settings.vipPriceUsdYearly, 34.99),
+    };
+    await api.set(SETTINGS_KEY, cleanSettings, true);
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(cleanSettings));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rebafilme_settings_updated', { detail: cleanSettings }));
+    }
+    setSettings(cleanSettings);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -266,9 +279,9 @@ const AdminSettings = () => {
               <input
                 className="adm-input"
                 type="number"
-                min="100"
-                max="50000"
-                value={settings.vipPriceDaily ?? 1000}
+                min="50"
+                max="500000"
+                value={settings.vipPriceDaily ?? ''}
                 onChange={set('vipPriceDaily')}
                 placeholder="1000"
               />
@@ -279,9 +292,9 @@ const AdminSettings = () => {
               <input
                 className="adm-input"
                 type="number"
-                min="500"
-                max="50000"
-                value={typeof settings.vipPriceMonthly === 'number' ? settings.vipPriceMonthly : parseInt(String(settings.vipPriceMonthly || '5000').replace(/\D/g, ''), 10) || 5000}
+                min="50"
+                max="500000"
+                value={settings.vipPriceMonthly ?? ''}
                 onChange={set('vipPriceMonthly')}
                 placeholder="5000"
               />
@@ -292,9 +305,9 @@ const AdminSettings = () => {
               <input
                 className="adm-input"
                 type="number"
-                min="5000"
-                max="500000"
-                value={settings.vipPriceYearly ?? 45000}
+                min="50"
+                max="5000000"
+                value={settings.vipPriceYearly ?? ''}
                 onChange={set('vipPriceYearly')}
                 placeholder="45000"
               />
@@ -308,9 +321,9 @@ const AdminSettings = () => {
                 className="adm-input"
                 type="number"
                 step="0.01"
-                min="0.10"
-                max="100"
-                value={settings.vipPriceUsdDaily ?? 0.99}
+                min="0.01"
+                max="500"
+                value={settings.vipPriceUsdDaily ?? ''}
                 onChange={set('vipPriceUsdDaily')}
                 placeholder="0.99"
               />
@@ -322,9 +335,9 @@ const AdminSettings = () => {
                 className="adm-input"
                 type="number"
                 step="0.01"
-                min="0.50"
-                max="200"
-                value={settings.vipPriceUsdMonthly ?? 3.99}
+                min="0.01"
+                max="1000"
+                value={settings.vipPriceUsdMonthly ?? ''}
                 onChange={set('vipPriceUsdMonthly')}
                 placeholder="3.99"
               />
@@ -336,9 +349,9 @@ const AdminSettings = () => {
                 className="adm-input"
                 type="number"
                 step="0.01"
-                min="5.00"
-                max="1000"
-                value={settings.vipPriceUsdYearly ?? 34.99}
+                min="0.01"
+                max="5000"
+                value={settings.vipPriceUsdYearly ?? ''}
                 onChange={set('vipPriceUsdYearly')}
                 placeholder="34.99"
               />

@@ -36,8 +36,6 @@ export async function onRequestPost({ request, env }) {
     return jsonError('Invalid JSON payload', 400);
   }
 
-  const MIN_AMOUNT = parseInt(env.VIP_MIN_AMOUNT || '1000', 10);
-
   const dataObj = body.data || body;
   const rawTx = dataObj.ref || dataObj.momoTxId || dataObj.txId || dataObj.reference || dataObj.transaction_id || '';
   const momoTxId = String(rawTx).trim();
@@ -50,8 +48,8 @@ export async function onRequestPost({ request, env }) {
   }
 
   const amount = parseInt(rawAmount, 10);
-  if (isNaN(amount) || amount < MIN_AMOUNT) {
-    return jsonError(`Amount ${amount} is below minimum required ${MIN_AMOUNT}`, 400);
+  if (isNaN(amount) || amount <= 0) {
+    return jsonError(`Invalid payment amount ${rawAmount}`, 400);
   }
 
   const isSuccess = ['SUCCESS', 'SUCCESSFUL', 'APPROVED', 'COMPLETED'].includes(rawStatus);
