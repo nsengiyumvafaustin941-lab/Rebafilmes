@@ -43,3 +43,19 @@ export async function verifyAdminRequest(request, env) {
 
   return { authorized: false, user: null };
 }
+
+/**
+ * Pages Function middleware helper.
+ * Call with the full Cloudflare Pages context object.
+ * Returns { authorized, user, username } on success, or null when unauthorized.
+ *
+ * Usage:
+ *   const admin = await requireAdmin(context);
+ *   if (!admin) return jsonError('Unauthorized', 401);
+ */
+export async function requireAdmin(context) {
+  const { request, env } = context;
+  const result = await verifyAdminRequest(request, env);
+  if (!result.authorized) return null;
+  return { ...result, username: result.user };
+}
