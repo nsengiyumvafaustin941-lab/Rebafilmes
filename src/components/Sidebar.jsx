@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useVIP } from '../hooks/useVIP';
+import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { useVIPModal } from '../contexts/VIPModalContext';
 import { useAuth } from '../contexts/AuthContext';
 import SearchAutocomplete from './SearchAutocomplete';
@@ -15,6 +16,7 @@ import './Sidebar.css';
 const Sidebar = ({ onOpenInstallModal }) => {
   const { t, setIsModalOpen } = useLanguage();
   const { isVip } = useVIP();
+  const vipVisible = useMonetizationEnabled();
   const { openVIPModal } = useVIPModal();
   const { user, isLoggedIn } = useAuth();
   const navigate = useNavigate();
@@ -119,27 +121,31 @@ const Sidebar = ({ onOpenInstallModal }) => {
         </nav>
 
         {/* VIP Pass Section */}
-        <div className="sidebar-section-label">Membership</div>
-        <div className="sidebar-nav">
-          <button
-            className={`sidebar-link vip-sidebar-btn ${isVip ? 'is-vip-active' : ''}`}
-            title={collapsed ? (isVip ? 'VIP Active 👑' : 'VIP Pass (Ad-Free)') : undefined}
-            onClick={() => {
-              openVIPModal();
-              setCollapsed(true);
-            }}
-          >
-            <span className="sidebar-icon-wrap vip-icon-glow">
-              <Crown size={20} color="#ffd700" />
-            </span>
-            <span className="sidebar-label" style={{ color: '#ffd700', fontWeight: 700 }}>
-              {isVip ? 'VIP Active 👑' : 'VIP Pass'}
-            </span>
-            {!collapsed && !isVip && (
-              <span className="vip-badge-mini">Ad-Free</span>
-            )}
-          </button>
-        </div>
+        {vipVisible && (
+          <>
+            <div className="sidebar-section-label">Membership</div>
+            <div className="sidebar-nav">
+              <button
+                className={`sidebar-link vip-sidebar-btn ${isVip ? 'is-vip-active' : ''}`}
+                title={collapsed ? (isVip ? 'VIP Active 👑' : 'VIP Pass (Ad-Free)') : undefined}
+                onClick={() => {
+                  openVIPModal();
+                  setCollapsed(true);
+                }}
+              >
+                <span className="sidebar-icon-wrap vip-icon-glow">
+                  <Crown size={20} color="#ffd700" />
+                </span>
+                <span className="sidebar-label" style={{ color: '#ffd700', fontWeight: 700 }}>
+                  {isVip ? 'VIP Active 👑' : 'VIP Pass'}
+                </span>
+                {!collapsed && !isVip && (
+                  <span className="vip-badge-mini">Ad-Free</span>
+                )}
+              </button>
+            </div>
+          </>
+        )}
 
         {/* Settings & Apps section */}
         <div className="sidebar-section-label">App &amp; Settings</div>
@@ -207,14 +213,16 @@ const Sidebar = ({ onOpenInstallModal }) => {
             <span>{label}</span>
           </NavLink>
         ))}
-        <button 
-          className="bottom-link bottom-vip-btn" 
-          onClick={() => openVIPModal()}
-          title="VIP Pass"
-        >
-          <span className="bottom-icon-wrap"><Crown size={21} color="#ffd700" /></span>
-          <span style={{ color: '#ffd700', fontWeight: 700 }}>VIP</span>
-        </button>
+        {vipVisible && (
+          <button 
+            className="bottom-link bottom-vip-btn" 
+            onClick={() => openVIPModal()}
+            title="VIP Pass"
+          >
+            <span className="bottom-icon-wrap"><Crown size={21} color="#ffd700" /></span>
+            <span style={{ color: '#ffd700', fontWeight: 700 }}>VIP</span>
+          </button>
+        )}
         <NavLink 
           to={isLoggedIn ? "/account" : "/login"}
           className={({ isActive }) => `bottom-link${isActive ? ' active' : ''}`}

@@ -430,6 +430,24 @@ const AdminSettings = () => {
           </div>
         </div>
 
+        <div className="adm-settings-section">
+          <h3 className="adm-settings-heading">Monetization Control</h3>
+          <div className="adm-form-row">
+            <div>
+              <span className="adm-form-row-label" style={{ color: settings.disableMonetization ? '#ef4444' : undefined }}>
+                Disable All Ads & Hide VIP Pass
+              </span>
+              <small style={{ display: 'block', color: '#555', fontSize: '.78rem' }}>
+                Master kill switch: hides 👑 VIP icons/buttons and stops all ads (banners, native, video, popunders)
+              </small>
+            </div>
+            <label className="adm-toggle">
+              <input type="checkbox" checked={!!settings.disableMonetization} onChange={set('disableMonetization')} />
+              <span className="adm-toggle-track" />
+            </label>
+          </div>
+        </div>
+
 
         <div className="adm-settings-section adm-danger-zone">
           <h3 className="adm-settings-heading" style={{ color: '#ef4444' }}>Danger Zone</h3>
@@ -441,8 +459,9 @@ const AdminSettings = () => {
               </div>
               <button
                 className="adm-btn adm-btn-danger adm-btn-sm"
-                onClick={() => {
-                  if (window.confirm('Clear all curated movie pins?')) {
+                onClick={async () => {
+                  if (window.confirm('Clear all curated movie pins across all devices?')) {
+                    await api.set('rebafilme_curated', {}, true);
                     localStorage.removeItem('rebafilme_curated');
                     window.location.reload();
                   }
@@ -458,8 +477,9 @@ const AdminSettings = () => {
               </div>
               <button
                 className="adm-btn adm-btn-danger adm-btn-sm"
-                onClick={() => {
-                  if (window.confirm('Delete ALL ads? Cannot be undone!')) {
+                onClick={async () => {
+                  if (window.confirm('Delete ALL sponsor ads across all devices? Cannot be undone!')) {
+                    await api.set('rebafilme_ads', [], true);
                     localStorage.removeItem('rebafilme_ads');
                     window.location.reload();
                   }

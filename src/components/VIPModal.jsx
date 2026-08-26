@@ -1,15 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  X, ChevronLeft, ArrowRight, ShieldCheck, Sparkles, Zap, 
+  X, ChevronLeft, ArrowRight, ShieldCheck, Zap, 
   CheckCircle2, AlertCircle, RefreshCw, Smartphone, 
-  CreditCard, ExternalLink, Lock, Gift, Globe
+  CreditCard, ExternalLink, Lock, Ticket, Globe
 } from 'lucide-react';
 import { useVIPModal } from '../contexts/VIPModalContext';
 import { useVIP } from '../hooks/useVIP';
 import { useAuth } from '../contexts/AuthContext';
 import { getDynamicVipPlans } from '../utils/settings';
+import logo from '../assets/logo.jpg';
 import './VIPModal.css';
+
+/* ── Branded Payment Method SVG Logos (Zero Generic Emojis) ── */
+
+const MtnLogo = ({ size = 36 }) => (
+  <svg viewBox="0 0 36 36" width={size} height={size} className="vip-brand-svg">
+    <rect width="36" height="36" rx="8" fill="#FFCC00" />
+    <ellipse cx="18" cy="18" rx="13" ry="8.5" fill="none" stroke="#000" strokeWidth="2.2" />
+    <text x="18" y="21.5" textAnchor="middle" fill="#000" fontSize="9" fontWeight="900" fontFamily="Arial Black, Impact, sans-serif">MTN</text>
+  </svg>
+);
+
+const AirtelLogo = ({ size = 36 }) => (
+  <svg viewBox="0 0 36 36" width={size} height={size} className="vip-brand-svg">
+    <rect width="36" height="36" rx="8" fill="#E40000" />
+    <path d="M12 24C12 17.5 17 12 23.5 12C24.5 12 25 12.5 25 13.5C25 14.5 24.2 15 23.5 15C18.8 15 15 18.8 15 24H12Z" fill="#FFF"/>
+    <circle cx="22" cy="20" r="3" fill="#FFF"/>
+    <text x="18" y="30" textAnchor="middle" fill="#FFF" fontSize="6.5" fontWeight="800" fontFamily="sans-serif">airtel</text>
+  </svg>
+);
+
+const VisaChipLogo = () => (
+  <svg viewBox="0 0 36 12" width="28" height="10" className="vip-chip-svg" fill="none">
+    <path d="M14.05 11.2H11.7L13.16 2.37H15.51L14.05 11.2ZM24.47 2.59C24.01 2.42 23.29 2.24 22.4 2.24C20.08 2.24 18.45 3.47 18.44 5.23C18.42 6.54 19.59 7.27 20.48 7.71C21.4 8.16 21.71 8.45 21.71 8.85C21.7 9.47 20.97 9.74 20.29 9.74C19.34 9.74 18.8 9.59 18.06 9.25L17.74 9.1L17.4 11.19C18.01 11.47 19.12 11.71 20.27 11.72C22.75 11.72 24.38 10.5 24.4 8.7C24.41 7.6 23.73 6.76 22.25 6.05C21.36 5.6 20.82 5.33 20.83 4.86C20.84 4.44 21.3 3.99 22.28 3.99C23.09 3.97 23.69 4.14 24.16 4.35L24.39 4.46L24.71 2.47L24.47 2.59ZM31.42 2.37H29.61C29.05 2.37 28.63 2.53 28.39 3.12L24.23 11.2H26.7L27.19 9.85H30.21L30.5 11.2H32.68L30.77 2.37H31.42ZM27.87 8.01L29.11 4.63L29.83 8.01H27.87ZM9.56 2.37L7.33 8.41L7.09 7.19C6.67 5.76 5.33 4.22 3.86 3.44L5.95 11.2H8.43L12.11 2.37H9.56ZM4.44 2.37H0.69L0.64 2.6C3.59 3.35 5.56 5.16 6.36 7.19L5.47 2.68C5.31 2.05 4.96 2.39 4.44 2.37Z" fill="#1A1F71"/>
+  </svg>
+);
+
+const MastercardChipLogo = () => (
+  <svg viewBox="0 0 24 16" width="20" height="13" className="vip-chip-svg" fill="none">
+    <circle cx="8" cy="8" r="7" fill="#EB001B" />
+    <circle cx="16" cy="8" r="7" fill="#F79E1B" fillOpacity="0.85" />
+  </svg>
+);
+
+const ApplePayChipLogo = () => (
+  <svg viewBox="0 0 34 16" width="26" height="12" className="vip-chip-svg" fill="#FFF">
+    <path d="M5.38 6.55c-.26.31-.67.55-1.12.55-.06 0-.12 0-.17-.01.03-.36.19-.74.45-1.02.26-.29.68-.52 1.09-.54.02.05.03.11.03.18-.01.33-.13.63-.28.84zm1.18 1.4c-.65 0-1.19-.39-1.63-.39-.46 0-1.05.37-1.57.37-.81 0-1.74-.69-1.74-2.02 0-1.35.88-2.05 1.71-2.05.47 0 .93.31 1.25.31.3 0 .85-.33 1.45-.33.25 0 .98.02 1.48.74-.04.03-.88.51-.88 1.54 0 1.22 1.07 1.63 1.11 1.65-.01.03-.17.58-.57 1.16-.36.52-.73 1.02-1.21 1.02zM12.44 4.02h2.24c1.19 0 1.94.81 1.94 1.94 0 1.14-.76 1.95-1.95 1.95h-1.09v2.04h-1.14V4.02zm1.14 2.92h.93c.69 0 1.09-.38 1.09-.98 0-.59-.4-.97-1.09-.97h-.93v1.95zm5.72 3.05c-.17 0-.39-.06-.55-.18-.24-.18-.34-.49-.34-.84 0-.69.52-1.08 1.45-1.13l.89-.05v-.26c0-.44-.31-.69-.87-.69-.42 0-.75.14-.88.35l-.83-.49c.27-.47.88-.74 1.76-.74 1.25 0 1.93.59 1.93 1.65v2.29h-1.08v-.51c-.32.37-.8.55-1.48.55zm.22-.88c.49 0 .92-.25 1.14-.65v-.46l-.77.05c-.52.03-.83.21-.83.56 0 .32.22.5.46.5zm4.84 2.76l1.24-3.88h1.2l-1.91 5.25c-.39 1.07-.84 1.48-1.77 1.48-.28 0-.58-.04-.73-.09l.19-.88c.11.03.26.05.42.05.46 0 .72-.21.9-.68l.12-.34-1.75-4.79h1.21l1.13 3.88z"/>
+  </svg>
+);
+
+const GooglePayChipLogo = () => (
+  <svg viewBox="0 0 34 16" width="28" height="12" className="vip-chip-svg" fill="none">
+    <path d="M5.5 3.5v7.2H3.7V3.5h1.8z" fill="#4285F4"/>
+    <path d="M12.8 7.3c0 2.2-1.6 3.7-3.7 3.7-2.1 0-3.7-1.5-3.7-3.7s1.6-3.7 3.7-3.7c2.1 0 3.7 1.5 3.7 3.7zm-1.8 0c0-1.3-.9-2.2-2-2.2-1.1 0-2 .9-2 2.2 0 1.3.9 2.2 2 2.2 1.1 0 2-.9 2-2.2z" fill="#EA4335"/>
+    <path d="M19.8 8.6c0 1.8-1.5 2.4-2.8 2.4-1.2 0-2.4-.6-2.8-1.7l1.5-.6c.2.6.7.9 1.3.9.7 0 1.2-.4 1.2-.9 0-.6-.5-.8-1.3-1-1.1-.3-2.1-.8-2.1-2 0-1.2 1.1-2.1 2.5-2.1 1.1 0 2 .5 2.4 1.4l-1.5.6c-.2-.4-.5-.6-1-.6-.5 0-.9.3-.9.7 0 .5.4.7 1.1.9 1.4.4 2.4.9 2.4 2.4z" fill="#FBBC05"/>
+    <text x="21" y="9.5" fill="#FFF" fontSize="6.5" fontWeight="700" fontFamily="system-ui, sans-serif">Pay</text>
+  </svg>
+);
+
+const UsdtLogo = ({ size = 36 }) => (
+  <svg viewBox="0 0 36 36" width={size} height={size} className="vip-brand-svg" fill="none">
+    <rect width="36" height="36" rx="8" fill="#1b2838" stroke="rgba(38,161,123,0.4)" strokeWidth="1"/>
+    <circle cx="18" cy="18" r="12" fill="#26A17B" />
+    <path d="M19 18.5c-.07 0-.5.04-1 .04-.5 0-.93-.04-1-.04-2.4-.1-4.2-.6-4.2-1.2s1.8-1.1 4.2-1.2v1.5c.3.02.66.03 1 .03.35 0 .72-.01 1-.03v-1.5c2.4.1 4.2.6 4.2 1.2s-1.8 1.1-4.2 1.2zm0-2.8V13.5h3.6V11.5H13.4v2h3.6v2.2c-2.8.13-4.9.76-4.9 1.5s2.1 1.37 4.9 1.5v5.3h2v-5.3c2.8-.13 4.9-.76 4.9-1.5s-2.1-1.37-4.9-1.5z" fill="#FFF"/>
+  </svg>
+);
+
+const UsdtChipLogo = () => (
+  <svg viewBox="0 0 20 20" width="14" height="14" className="vip-chip-svg" fill="none">
+    <circle cx="10" cy="10" r="9" fill="#26A17B" />
+    <path d="M10.8 10.3c-.05 0-.4.03-.8.03-.38 0-.7-.03-.76-.03-1.8-.08-3.15-.46-3.15-.92s1.35-.84 3.15-.92v1.14c.23.02.5.02.77.02.28 0 .58 0 .79-.02V8.46c1.8.08 3.15.46 3.15.92s-1.35.84-3.15.92zm0-2.16V6.5h2.8V5H6.4v1.5h2.8v1.64c-2.1.1-3.7.57-3.7 1.14 0 .57 1.6 1.04 3.7 1.14v3.98h1.6V10.42c2.1-.1 3.7-.57 3.7-1.14 0-.57-1.6-1.04-3.7-1.14z" fill="#FFF"/>
+  </svg>
+);
 
 export const VIPModal = () => {
   const { isOpen, closeVIPModal, initialPlanId } = useVIPModal();
@@ -243,7 +306,7 @@ export const VIPModal = () => {
             )}
             <div className="vip-title-wrap">
               <div className="vip-crown-icon">
-                <Sparkles size={20} color="#ffd700" />
+                <img src={logo} alt="RebaFilme" className="vip-header-logo-img" />
               </div>
               <div>
                 <h3 className="vip-modal-title">RebaFilme VIP &amp; Premium</h3>
@@ -338,7 +401,7 @@ export const VIPModal = () => {
                   setStep('details');
                 }}
               >
-                <Gift size={14} />
+                <Ticket size={15} />
                 <span>Have a Voucher / Promo Code? Click here</span>
               </button>
             </div>
@@ -375,8 +438,8 @@ export const VIPModal = () => {
                   setStep('details');
                 }}
               >
-                <div className="vip-method-icon-box mtn-bg">
-                  <Smartphone size={20} color="#000" />
+                <div className="vip-method-icon-box">
+                  <MtnLogo />
                 </div>
                 <div className="vip-method-info">
                   <div className="vip-method-title">MTN Mobile Money</div>
@@ -394,8 +457,8 @@ export const VIPModal = () => {
                   setStep('details');
                 }}
               >
-                <div className="vip-method-icon-box airtel-bg">
-                  <Smartphone size={20} color="#fff" />
+                <div className="vip-method-icon-box">
+                  <AirtelLogo />
                 </div>
                 <div className="vip-method-info">
                   <div className="vip-method-title">Airtel Money</div>
@@ -432,8 +495,8 @@ export const VIPModal = () => {
                   setStep('details');
                 }}
               >
-                <div className="vip-method-icon-box crypto-bg">
-                  <Globe size={20} color="#fff" />
+                <div className="vip-method-icon-box">
+                  <UsdtLogo />
                 </div>
                 <div className="vip-method-info">
                   <div className="vip-method-title">Crypto (USDT / TON)</div>
@@ -452,7 +515,7 @@ export const VIPModal = () => {
                 }}
               >
                 <div className="vip-method-icon-box voucher-bg">
-                  <Gift size={20} color="#ffd700" />
+                  <Ticket size={20} color="#ffd700" />
                 </div>
                 <div className="vip-method-info">
                   <div className="vip-method-title">Voucher / Promo Code</div>
@@ -502,7 +565,7 @@ export const VIPModal = () => {
                   />
                 </div>
                 <p className="vip-input-hint">
-                  💡 You will receive a prompt on your phone to enter your MoMo PIN and authorize payment.
+                  You will receive a USSD prompt on your phone to enter your MoMo PIN and authorize payment.
                 </p>
 
                 <button 
@@ -530,11 +593,11 @@ export const VIPModal = () => {
               <form onSubmit={handleCardCryptoSubmit} className="vip-details-form">
                 {/* Method Badges */}
                 <div className="vip-badges-row">
-                  <span className="vip-method-chip">💳 Visa</span>
-                  <span className="vip-method-chip">💳 Mastercard</span>
-                  <span className="vip-method-chip"> Apple Pay</span>
-                  <span className="vip-method-chip">🌐 Google Pay</span>
-                  <span className="vip-method-chip">⚡ USDT</span>
+                  <span className="vip-method-chip"><VisaChipLogo /> Visa</span>
+                  <span className="vip-method-chip"><MastercardChipLogo /> Mastercard</span>
+                  <span className="vip-method-chip"><ApplePayChipLogo /> Apple Pay</span>
+                  <span className="vip-method-chip"><GooglePayChipLogo /> Google Pay</span>
+                  <span className="vip-method-chip"><UsdtChipLogo /> USDT</span>
                 </div>
 
                 <label className="vip-input-label">
@@ -552,7 +615,7 @@ export const VIPModal = () => {
                   />
                 </div>
                 <p className="vip-input-hint">
-                  🔒 A secure checkout page will open to complete payment. VIP activates automatically upon confirmation.
+                  A secure checkout page will open to complete payment. VIP activates automatically upon confirmation.
                 </p>
 
                 <button 
@@ -582,7 +645,7 @@ export const VIPModal = () => {
                   Enter your VIP voucher code:
                 </label>
                 <div className="vip-phone-wrapper">
-                  <Gift size={18} className="vip-phone-icon" />
+                  <Ticket size={18} className="vip-phone-icon" />
                   <input
                     type="text"
                     placeholder="e.g. REBAVIP-2026"
@@ -671,7 +734,9 @@ export const VIPModal = () => {
             <div className="vip-success-summary">
               <div className="vip-summary-row">
                 <span>Status:</span>
-                <strong className="vip-active-text">VIP Active ✅</strong>
+                <strong className="vip-active-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <CheckCircle2 size={14} color="#00e676" /> VIP Active
+                </strong>
               </div>
               <div className="vip-summary-row">
                 <span>Plan:</span>

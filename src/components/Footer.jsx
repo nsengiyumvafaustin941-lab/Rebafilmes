@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getSettings } from '../utils/settings';
-import { useVIPModal } from '../contexts/VIPModalContext';
 import logo from '../assets/logo.jpg';
 import './Footer.css';
 
@@ -11,7 +10,6 @@ const Footer = () => {
   const socialsRef = useRef(null);
   const settings = getSettings();
   const whatsapp = settings.whatsapp || '250786934081';
-  const { openVIPModal } = useVIPModal();
 
   useEffect(() => {
     const el = socialsRef.current;
@@ -83,15 +81,6 @@ const Footer = () => {
             <li><Link to="/movies">{t('nav_movies')}</Link></li>
             <li><Link to="/search">{t('nav_search')}</Link></li>
             <li><Link to="/saved">{t('nav_saved')}</Link></li>
-            <li>
-              <button 
-                type="button" 
-                onClick={() => openVIPModal('monthly')}
-                style={{ background: 'none', border: 'none', color: '#ffd700', cursor: 'pointer', padding: 0, font: 'inherit' }}
-              >
-                VIP Pass 👑
-              </button>
-            </li>
           </ul>
         </div>
         

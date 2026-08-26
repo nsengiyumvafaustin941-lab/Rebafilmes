@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { useAds } from '../contexts/AdsContext';
 import { useVIP } from '../hooks/useVIP';
+import { useAdmin } from '../contexts/AdminContext';
+import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { getSettings } from '../utils/settings';
 import './AdBanner.css';
 
@@ -67,12 +69,14 @@ const SingleBanner = ({ ad, isSponsor, sponsorLabel, onTrackClick, onTrackImpres
 
 const AdBanner = ({ position }) => {
   const { isVip } = useVIP();
+  const { isAdmin } = useAdmin();
+  const monetizationEnabled = useMonetizationEnabled();
   const { getAdsByPosition, trackClick, trackImpression } = useAds();
   const adsToShow = getAdsByPosition(position);
   const sponsorLabel = getSettings().adSponsorLabel || 'Sponsored';
 
-  // VIP users do not see banner ads
-  if (isVip || adsToShow.length === 0) return null;
+  // VIP users, admins, and when monetization is disabled do not see banner ads
+  if (isVip || isAdmin || !monetizationEnabled || adsToShow.length === 0) return null;
 
   return (
     <div className="promo-zone">

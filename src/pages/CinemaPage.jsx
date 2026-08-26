@@ -10,6 +10,8 @@ import { useVIPModal } from '../contexts/VIPModalContext';
 import { useMovies } from '../contexts/MoviesContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useVIP } from '../hooks/useVIP';
+import { useAdmin } from '../contexts/AdminContext';
+import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { moviePath, parseMovieId, getMovieOrTv } from '../utils/tmdb';
 import { buildDownloadUrl, getSettings } from '../utils/settings';
 import './CinemaPage.css';
@@ -18,6 +20,8 @@ const CinemaPage = () => {
   const { t } = useLanguage();
   const { allMovies } = useMovies();
   const { isVip } = useVIP();
+  const { isAdmin } = useAdmin();
+  const vipVisible = useMonetizationEnabled();
   const { openVIPModal } = useVIPModal();
   const [params, setParams] = useSearchParams();
   const settings = getSettings();
@@ -196,7 +200,7 @@ const CinemaPage = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-              {!isVip && (
+              {!isVip && !isAdmin && vipVisible && (
                 <button
                   type="button"
                   className="btn"

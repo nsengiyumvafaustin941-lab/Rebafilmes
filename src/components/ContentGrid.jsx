@@ -2,6 +2,8 @@ import React from 'react';
 import MovieCard from './MovieCard';
 import NativeAdCard from './NativeAdCard';
 import { useVIP } from '../hooks/useVIP';
+import { useAdmin } from '../contexts/AdminContext';
+import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { useVIPModal } from '../contexts/VIPModalContext';
 import { useAds } from '../contexts/AdsContext';
 import { getSettings } from '../utils/settings';
@@ -9,6 +11,8 @@ import './ContentGrid.css';
 
 const ContentGrid = ({ title, items }) => {
   const { isVip } = useVIP();
+  const { isAdmin } = useAdmin();
+  const monetizationEnabled = useMonetizationEnabled();
   const { openVIPModal } = useVIPModal();
   const { ads } = useAds();
   const settings = getSettings();
@@ -25,7 +29,7 @@ const ContentGrid = ({ title, items }) => {
       )}
       <div className="content-grid">
         {items.map((item, idx) => {
-          const showAdAfter = !isVip && idx > 0 && (idx + 1) % interval === 0;
+          const showAdAfter = !isVip && !isAdmin && monetizationEnabled && idx > 0 && (idx + 1) % interval === 0;
           const adIndex = Math.floor(idx / interval) % (activeAds.length || 1);
           const currentAd = activeAds.length > 0 ? activeAds[adIndex] : null;
 

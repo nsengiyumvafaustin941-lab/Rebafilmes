@@ -3,6 +3,7 @@ import { getSettings } from '../utils/settings';
 import { LAST_POP_KEY, POP_INDEX_KEY } from '../utils/constants';
 import { useVIP } from './useVIP';
 import { useAdmin } from '../contexts/AdminContext';
+import { useMonetizationEnabled } from './useMonetizationEnabled';
 
 // ── Elements that should NEVER trigger a popunder ──────────────
 const BLOCKED_SELECTORS = [
@@ -34,12 +35,13 @@ const TRIGGER_SELECTORS = [
 export function useSmartLinks() {
   const { isVip } = useVIP();
   const { isAdmin } = useAdmin();
+  const monetizationEnabled = useMonetizationEnabled();
 
   // Cache a ref so we don't re-register the listener on every VIP toggle
-  const stateRef = useRef({ isVip, isAdmin });
+  const stateRef = useRef({ isVip, isAdmin, monetizationEnabled });
   useEffect(() => {
-    stateRef.current = { isVip, isAdmin };
-  }, [isVip, isAdmin]);
+    stateRef.current = { isVip, isAdmin, monetizationEnabled };
+  }, [isVip, isAdmin, monetizationEnabled]);
 
   useEffect(() => {
     // Cache settings for the session (re-read at most once per mount)
@@ -50,10 +52,10 @@ export function useSmartLinks() {
     };
 
     const handleClick = (e) => {
-      const { isVip: vip, isAdmin: admin } = stateRef.current;
+      const { isVip: vip, isAdmin: admin, monetizationEnabled: isMonetized } = stateRef.current;
 
       // 1. Hard bypasses
-      if (admin || vip) return;
+      if (admin || vip || !isMonetized) return;
       if (window.location.pathname.startsWith('/admin')) return;
 
       // 2. Target discrimination ─────────────────────────────────
@@ -67,7 +69,7 @@ export function useSmartLinks() {
 
       // 3. Settings guard
       const settings = loadSettings();
-      if (!settings.smartlinksEnabled) return;
+      if (!settings.smartlinksEnabled || settings.disableMonetization) return;
 
       const rawList = settings.smartlinksList || '';
       const links = rawList
@@ -77,15 +79,20 @@ export function useSmartLinks() {
 
       if (links.length === 0) return;
 
-      // 4. Cooldown check
+      // 4. Cooldown and Session Frequency Cap check
       const cooldownMs = (Number(settings.smartlinksCooldown) || 45) * 1000;
       const lastPop = localStorage.getItem(LAST_POP_KEY);
       const now = Date.now();
 
       if (lastPop && now - parseInt(lastPop, 10) < cooldownMs) return;
 
+      const sessionPopCount = parseInt(sessionStorage.getItem('rebafilme_session_pop_count') || '0', 10);
+      const maxPerSession = Number(settings.smartlinksMaxPerSession) || 6;
+      if (sessionPopCount >= maxPerSession) return;
+
       // 5. Fire — record before opening to prevent double-fire on slow clicks
       localStorage.setItem(LAST_POP_KEY, now.toString());
+      sessionStorage.setItem('rebafilme_session_pop_count', (sessionPopCount + 1).toString());
 
       const idx = parseInt(localStorage.getItem(POP_INDEX_KEY) || '0', 10);
       const targetUrl = links[idx % links.length];
@@ -123,8 +130,7 @@ export function useSmartLinks() {
       }
     };
 
-    // Bubble phase (not capture) — fires after the element's own click handler
-    // so the page action completes before the tab opens.
+    // Bubble phase ({ capture: false }) — fires after child element click handlers complete
     document.addEventListener('click', handleClick, { capture: false });
     return () => document.removeEventListener('click', handleClick, { capture: false });
   }, []); // runs once; reads current VIP/admin from ref on every click

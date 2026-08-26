@@ -8,6 +8,7 @@ import {
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useVIP } from '../hooks/useVIP';
+import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { useVIPModal } from '../contexts/VIPModalContext';
 import logo from '../assets/logo.jpg';
 import './AccountPage.css';
@@ -191,6 +192,7 @@ const SubscriptionPanel = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { isVip, daysRemaining, expiresAt, serverVip } = useVIP();
+  const vipVisible = useMonetizationEnabled();
   const { openVIPModal } = useVIPModal();
 
   return (
@@ -240,21 +242,23 @@ const SubscriptionPanel = () => {
           </span>
         </div>
 
-        <div style={{ marginTop: '1.25rem' }}>
-          <button 
-            className="btn btn-primary full-btn" 
-            style={{ 
-              background: 'linear-gradient(135deg, #ffd700, #ff8c00)', 
-              color: '#000', 
-              fontWeight: 800,
-              fontSize: '0.92rem' 
-            }}
-            onClick={openVIPModal}
-          >
-            <Sparkles size={16} />
-            <span>{isVip ? 'Ongera Igihe cya VIP (Renew / Extend)' : 'Gura VIP Nonaha (Upgrade to VIP)'}</span>
-          </button>
-        </div>
+        {vipVisible && (
+          <div style={{ marginTop: '1.25rem' }}>
+            <button 
+              className="btn btn-primary full-btn" 
+              style={{ 
+                background: 'linear-gradient(135deg, #ffd700, #ff8c00)', 
+                color: '#000', 
+                fontWeight: 800,
+                fontSize: '0.92rem' 
+              }}
+              onClick={openVIPModal}
+            >
+              <Sparkles size={16} />
+              <span>{isVip ? 'Ongera Igihe cya VIP (Renew / Extend)' : 'Gura VIP Nonaha (Upgrade to VIP)'}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Perks summary */}
@@ -297,6 +301,9 @@ const NotificationsPanel = () => {
 const BuyPlanPanel = () => {
   const { t } = useLanguage();
   const { openVIPModal } = useVIPModal();
+  const vipVisible = useMonetizationEnabled();
+
+  if (!vipVisible) return null;
 
   return (
     <div className="panel">
@@ -337,25 +344,28 @@ const AccountPage = () => {
   const { t } = useLanguage();
   const { user, isLoggedIn, logout } = useAuth();
   const { isVip, daysRemaining } = useVIP();
+  const vipVisible = useMonetizationEnabled();
   const [activeTab, setActiveTab] = useState('subscription');
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
   }
 
-  const TABS = [
+  const allTabs = [
     { id: 'subscription',  icon: Package,    label: t('account_subscription') },
     { id: 'profile',       icon: User,       label: t('account_profile') },
     { id: 'buy',           icon: CreditCard, label: t('account_buy') },
     { id: 'notifications', icon: Bell,       label: t('account_notifications') },
   ];
 
+  const TABS = vipVisible ? allTabs : allTabs.filter(t => t.id !== 'buy');
+
   const renderPanel = () => {
     switch (activeTab) {
       case 'profile':       return <ProfilePanel />;
       case 'subscription':  return <SubscriptionPanel />;
       case 'notifications': return <NotificationsPanel />;
-      case 'buy':           return <BuyPlanPanel />;
+      case 'buy':           return vipVisible ? <BuyPlanPanel /> : <SubscriptionPanel />;
       default:              return <SubscriptionPanel />;
     }
   };

@@ -108,8 +108,8 @@ export async function onRequestPost({ request, env }) {
       try {
         await env.DB.prepare(
           `INSERT INTO vip_subscriptions (id, user_id, phone, payment_method, momo_tx_id, amount, plan, status, expires_at, admin_notes, created_at, updated_at)
-           VALUES (?, ?, ?, 'passcode', ?, 0, 'monthly', 'approved', ?, 'Activated via VIP Passcode', datetime('now'), datetime('now'))`
-        ).bind(subId, userId, 'PASSCODE-' + code, 'PASS-' + Date.now() + '-' + code, expiresAt).run();
+           VALUES (?, ?, ?, ?, ?, 0, 'monthly', 'approved', ?, 'Activated via VIP Passcode', datetime('now'), datetime('now'))`
+        ).bind(subId, userId, 'PASSCODE-' + code, 'passcode', 'PASS-' + Date.now() + '-' + code, expiresAt).run();
       } catch {
         // Fallback for pre-migration schema
         await env.DB.prepare(

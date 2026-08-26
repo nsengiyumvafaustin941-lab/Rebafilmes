@@ -1,10 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { ExternalLink, Crown, Megaphone } from 'lucide-react';
 import { useAds } from '../contexts/AdsContext';
+import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { getSettings } from '../utils/settings';
 import './NativeAdCard.css';
 
 const NativeAdCard = ({ ad, onOpenVIP }) => {
+  const monetizationEnabled = useMonetizationEnabled();
   const { trackClick, trackImpression } = useAds();
   const tracked = useRef(new Set());
   const cardRef = useRef(null);
@@ -12,7 +14,7 @@ const NativeAdCard = ({ ad, onOpenVIP }) => {
   const sponsorLabel = settings.adSponsorLabel || 'Sponsored';
 
   useEffect(() => {
-    if (!ad || tracked.current.has(ad.id)) return;
+    if (!monetizationEnabled || !ad || tracked.current.has(ad.id)) return;
 
     if (!('IntersectionObserver' in window)) {
       trackImpression(ad.id);
@@ -42,11 +44,19 @@ const NativeAdCard = ({ ad, onOpenVIP }) => {
     return () => observer.disconnect();
   }, [ad, trackImpression]);
 
+  if (!monetizationEnabled) return null;
+
   if (!ad) {
     return (
       <div 
         className="card native-ad-card vip-promo-card"
-        onClick={onOpenVIP}
+        onClick={() => {
+          if (typeof onOpenVIP === 'function') {
+            onOpenVIP();
+          } else {
+            window.dispatchEvent(new CustomEvent('rebafilme_open_vip'));
+          }
+        }}
         title="Upgrade to RebaFilme VIP"
       >
         <div className="card-poster native-ad-poster vip-gradient">

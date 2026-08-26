@@ -149,14 +149,24 @@ export async function onRequestPost({ request, env }) {
   }
 
   // 7. Dispatch Cash-In Request to Paypack Gateway
-  const cashinRes = await initiateCashIn({
-    env,
-    phone: cleanPhone,
-    amount,
-  });
+  let cashinRes;
+  try {
+    cashinRes = await initiateCashIn({
+      env,
+      phone: cleanPhone,
+      amount,
+    });
+  } catch (err) {
+    console.error('[vip/initiate] Paypack dispatch exception:', err);
+    await env.DB.prepare(
+      `UPDATE vip_subscriptions SET status = 'failed', admin_notes = ?, updated_at = datetime('now') WHERE id = ?`
+    ).bind(`Paypack Cash-In exception: ${String(err.message).slice(0, 200)}`, subId).run().catch(() => {});
+    return jsonError('Payment gateway communication error: ' + (err.message || 'Please try again'), 502);
+  }
 
-  if (!cashinRes.success) {
-    console.warn('[vip/initiate] Paypack initiation failed:', cashinRes.error);
+  if (!cashinRes || !cashinRes.success) {
+    const errorMsg = cashinRes?.error || 'Failed to dispatch MoMo PIN prompt. Please verify phone number and try again.';
+    console.warn('[vip/initiate] Paypack initiation failed:', errorMsg);
 
     // Update the pre-inserted record to failed
     await env.DB.prepare(
@@ -165,9 +175,9 @@ export async function onRequestPost({ request, env }) {
            admin_notes = ?,
            updated_at = datetime('now')
        WHERE id = ?`
-    ).bind(`Paypack Cash-In dispatch failed: ${String(cashinRes.error).slice(0, 200)}`, subId).run().catch(() => {});
+    ).bind(`Paypack Cash-In dispatch failed: ${String(errorMsg).slice(0, 200)}`, subId).run().catch(() => {});
 
-    return jsonError(cashinRes.error || 'Failed to dispatch MoMo PIN prompt. Please verify phone number and try again.', 502);
+    return jsonError(errorMsg, 502);
   }
 
   const finalRef = cashinRes.ref || initialRef;

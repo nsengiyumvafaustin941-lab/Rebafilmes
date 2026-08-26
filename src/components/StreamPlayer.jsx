@@ -18,6 +18,8 @@ import { STREAM_PROVIDERS, buildStreamUrl } from '../utils/streamProviders';
 import { getTvSeason, getTvShow } from '../utils/tmdb';
 import { buildDownloadUrl, getSettings } from '../utils/settings';
 import { useVIP } from '../hooks/useVIP';
+import { useAdmin } from '../contexts/AdminContext';
+import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { useVIPModal } from '../contexts/VIPModalContext';
 import { useAds } from '../contexts/AdsContext';
 import './StreamPlayer.css';
@@ -31,6 +33,8 @@ export const StreamPlayer = ({
   onServerChange,
 }) => {
   const { isVip } = useVIP();
+  const { isAdmin } = useAdmin();
+  const monetizationEnabled = useMonetizationEnabled();
   const { openVIPModal } = useVIPModal();
   const { trackImpression, trackClick } = useAds();
   const settings = getSettings();
@@ -84,7 +88,7 @@ export const StreamPlayer = ({
   };
 
   const triggerPlay = () => {
-    if (!isVip && settings.videoAdsEnabled && settings.videoAdUrl && settings.videoAdUrl.trim()) {
+    if (!isVip && !isAdmin && monetizationEnabled && settings.videoAdsEnabled && settings.videoAdUrl && settings.videoAdUrl.trim()) {
       setPlayingVideoAd(true);
       setAdSecondsLeft(Number(settings.videoAdDuration) || 10);
       setCanSkipAd(false);
@@ -387,15 +391,17 @@ export const StreamPlayer = ({
                     <ExternalLink size={13} />
                   </a>
                 )}
-                <button
-                  type="button"
-                  className="stream-ad-vip-btn"
-                  onClick={openVIPModal}
-                  title="Remove ads with MoMo VIP"
-                >
-                  <Crown size={14} color="#ffd700" />
-                  <span>Remove Ads (VIP)</span>
-                </button>
+                {monetizationEnabled && (
+                  <button
+                    type="button"
+                    className="stream-ad-vip-btn"
+                    onClick={openVIPModal}
+                    title="Remove ads with MoMo VIP"
+                  >
+                    <Crown size={14} color="#ffd700" />
+                    <span>Remove Ads (VIP)</span>
+                  </button>
+                )}
               </div>
 
               <div className="stream-video-ad-bottom">
@@ -494,10 +500,10 @@ export const StreamPlayer = ({
         </div>
 
         <div className="stream-toolbar-right">
-          {!isVip && (
+          {!isVip && !isAdmin && monetizationEnabled && (
             <button
               className="stream-tool-btn stream-vip-cta-btn"
-              onClick={() => setVipModalOpen(true)}
+              onClick={openVIPModal}
               title="Activate VIP: Ad-free & Direct Downloads"
             >
               <Crown size={14} color="#ffd700" />

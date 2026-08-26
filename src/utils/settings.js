@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS = {
   trailersEnabled: true,
   maintenanceMode: false,
   aiAssistantEnabled: true,
+  disableMonetization: false,
   footerTagline: "Reba filime z'umwimerere mu Kinyarwanda no mu Luganda.",
   adminEmail: 'nsengiyumvafaustin941@gmail.com',
   sponsorContactEmail: '',
