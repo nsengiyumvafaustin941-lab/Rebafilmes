@@ -8,9 +8,10 @@ const ADMIN_MOVIES_KEY = 'rebafilme_admin_movies';
 const CURATED_KEY = 'rebafilme_curated';
 
 function applyCurated(movies, curated) {
+  if (!Array.isArray(movies)) return [];
   if (!curated || !Object.keys(curated).length) return movies;
   return movies.map((m) => {
-    const patch = curated[m.id];
+    const patch = curated[m?.id];
     return patch ? { ...m, ...patch, curated: true } : m;
   });
 }
@@ -32,7 +33,7 @@ export const MoviesProvider = ({ children }) => {
       setError(null);
       try {
         const curated = await api.get(CURATED_KEY, {});
-        setCuratedMap(curated);
+        setCuratedMap(curated && typeof curated === 'object' && !Array.isArray(curated) ? curated : {});
 
         // Fetch from 5 diverse TMDB sources in parallel for a mixed catalogue
         const [
@@ -51,20 +52,20 @@ export const MoviesProvider = ({ children }) => {
           getTopRatedTv(1),
         ]);
 
-        // Collect successful results
+        // Collect successful results and ensure only valid arrays
         const sources = [trend1, trend2, topRated1, topRated2, popular1, popularTv1, topRatedTv1]
-          .filter((r) => r.status === 'fulfilled')
+          .filter((r) => r.status === 'fulfilled' && Array.isArray(r.value))
           .map((r) => r.value);
 
         // Interleave sources so home page shows variety (not all trending first)
         const merged = [];
         const seen = new Set();
-        const maxLen = Math.max(...sources.map((s) => s.length));
+        const maxLen = sources.length > 0 ? Math.max(...sources.map((s) => s.length)) : 0;
         for (let i = 0; i < maxLen; i++) {
           for (const src of sources) {
             if (i < src.length) {
               const m = src[i];
-              if (!seen.has(m.id)) {
+              if (m && m.id && !seen.has(m.id)) {
                 seen.add(m.id);
                 merged.push({ ...m, source: 'tmdb' });
               }
@@ -74,10 +75,12 @@ export const MoviesProvider = ({ children }) => {
 
         // Add admin-uploaded movies (always included, not deduplicated away)
         const customMovies = await api.get(ADMIN_MOVIES_KEY, []);
-        for (const m of customMovies) {
-          if (!seen.has(m.id)) {
-            seen.add(m.id);
-            merged.push({ ...m, source: 'admin' });
+        if (Array.isArray(customMovies)) {
+          for (const m of customMovies) {
+            if (m && m.id && !seen.has(m.id)) {
+              seen.add(m.id);
+              merged.push({ ...m, source: 'admin' });
+            }
           }
         }
 
@@ -87,8 +90,9 @@ export const MoviesProvider = ({ children }) => {
         setError(err.message);
         const fetchedMovies = await api.get(ADMIN_MOVIES_KEY, []);
         const curated = await api.get(CURATED_KEY, {});
-        setCuratedMap(curated);
-        setAllMovies(applyCurated(fetchedMovies.map((m) => ({ ...m, source: 'admin' })), curated));
+        setCuratedMap(curated && typeof curated === 'object' && !Array.isArray(curated) ? curated : {});
+        const safeFetched = Array.isArray(fetchedMovies) ? fetchedMovies : [];
+        setAllMovies(applyCurated(safeFetched.map((m) => ({ ...m, source: 'admin' })), curated));
       } finally {
         setLoading(false);
       }

@@ -14,9 +14,29 @@ export const api = {
     } catch {
       console.warn("API GET failed, falling back to localStorage");
     }
+
+    const sanitizeResult = (data) => {
+      if (data === null || data === undefined) return fallback;
+      // If server returned { found: false, ... }, treat as missing
+      if (typeof data === 'object' && !Array.isArray(data) && data.found === false && data.data === null) {
+        return fallback;
+      }
+      if (Array.isArray(fallback) && !Array.isArray(data)) {
+        return fallback;
+      }
+      if (typeof fallback === 'object' && fallback !== null && !Array.isArray(fallback)) {
+        if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+          return fallback;
+        }
+      }
+      return data;
+    };
     
     if (apiSuccess && apiData !== null && apiData !== undefined) {
-      return apiData;
+      const sanitized = sanitizeResult(apiData);
+      if (sanitized !== fallback || apiData === fallback) {
+        return sanitized;
+      }
     }
     
     // Fallback to localStorage if API failed or returned null (empty KV)
@@ -32,9 +52,9 @@ export const api = {
             api.set(key, parsed, true);
           }
         }
-        return parsed;
+        return sanitizeResult(parsed);
       } catch {
-        return localData;
+        return sanitizeResult(localData);
       }
     }
     

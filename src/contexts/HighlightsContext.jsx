@@ -12,7 +12,7 @@ export const HighlightsProvider = ({ children }) => {
   useEffect(() => {
     const fetchHighlights = async () => {
       const fetched = await api.get(HIGHLIGHTS_KEY, []);
-      setHighlights(fetched);
+      setHighlights(Array.isArray(fetched) ? fetched : []);
       setLoading(false);
     };
     fetchHighlights();
@@ -21,9 +21,10 @@ export const HighlightsProvider = ({ children }) => {
   // Helper: update state and persist to KV (admin-protected)
   const mutate = useCallback((fn) => {
     setHighlights(prev => {
-      const next = fn(prev);
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const next = fn(safePrev);
       api.set(HIGHLIGHTS_KEY, next, true); // true = requires admin token
-      return next;
+      return Array.isArray(next) ? next : [];
     });
   }, []);
 

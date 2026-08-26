@@ -27,7 +27,7 @@ export const AdsProvider = ({ children }) => {
   useEffect(() => {
     const fetchAds = async () => {
       const fetchedAds = await api.get(ADS_KEY, []);
-      setAds(fetchedAds);
+      setAds(Array.isArray(fetchedAds) ? fetchedAds : []);
       setLoading(false);
     };
     fetchAds();
@@ -35,9 +35,10 @@ export const AdsProvider = ({ children }) => {
 
   const mutate = useCallback((fn) => {
     setAds((prev) => {
-      const next = fn(prev);
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const next = fn(safePrev);
       api.set(ADS_KEY, next, true);
-      return next;
+      return Array.isArray(next) ? next : [];
     });
   }, []);
 
@@ -84,8 +85,9 @@ export const AdsProvider = ({ children }) => {
   }, []);
 
   const getAdsByPosition = useCallback((position) => {
-    return ads
-      .filter((a) => a.position === position && isActive(a))
+    const safeAds = Array.isArray(ads) ? ads : [];
+    return safeAds
+      .filter((a) => a && a.position === position && isActive(a))
       .sort((a, b) => (b.priority || 0) - (a.priority || 0));
   }, [ads]);
 

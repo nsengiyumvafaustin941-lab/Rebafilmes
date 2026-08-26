@@ -18,7 +18,7 @@ export async function onRequest(context) {
     try {
       const data = await KV.get(key);
       if (data === null) {
-        return new Response(JSON.stringify({ found: false, data: null }), {
+        return new Response('null', {
           headers: { 'Content-Type': 'application/json' },
         });
       }
