@@ -66,13 +66,22 @@ export const AdsProvider = ({ children }) => {
   }, [mutate]);
 
   const trackClick = useCallback((id) => {
-    mutate((prev) => prev.map((a) => (a.id === id ? { ...a, clicks: (a.clicks || 0) + 1 } : a)));
-  }, [mutate]);
+    if (!id) return;
+    fetch('/api/ads/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, type: 'click' }),
+    }).catch((e) => console.warn('Ad click telemetry failed:', e));
+  }, []);
 
   const trackImpression = useCallback((id) => {
-    if (Math.random() > 0.3) return;
-    mutate((prev) => prev.map((a) => (a.id === id ? { ...a, impressions: (a.impressions || 0) + 1 } : a)));
-  }, [mutate]);
+    if (!id) return;
+    fetch('/api/ads/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, type: 'impression' }),
+    }).catch((e) => console.warn('Ad impression telemetry failed:', e));
+  }, []);
 
   const getAdsByPosition = useCallback((position) => {
     return ads

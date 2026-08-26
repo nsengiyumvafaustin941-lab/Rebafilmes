@@ -56,9 +56,24 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
+  async function loginWithGoogle(credential) {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ credential }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Google login failed');
+    setUser(data.user);
+    window.dispatchEvent(new Event('rebafilme_vip_updated'));
+    return data.user;
+  }
+
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     setUser(null);
+    window.dispatchEvent(new Event('rebafilme_vip_updated'));
   }
 
   function updateUser(newData) {
@@ -68,7 +83,7 @@ export function AuthProvider({ children }) {
   const isLoggedIn = Boolean(user);
 
   return (
-    <AuthContext.Provider value={{ user, loading, isLoggedIn, isOffline, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, isLoggedIn, isOffline, login, register, loginWithGoogle, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

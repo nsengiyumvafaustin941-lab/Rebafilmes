@@ -105,8 +105,39 @@
   text-align: center;
   font-size: .88rem;
   color: var(--text-secondary);
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   line-height: 1.5;
+}
+
+.login-google-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+
+.login-google-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.login-google-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #38bdf8;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 9999px;
+  width: 100%;
+  max-width: 320px;
 }
 
 .login-form { display: flex; flex-direction: column; gap: .85rem; }

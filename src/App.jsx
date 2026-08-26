@@ -12,6 +12,7 @@ import SearchPage from './pages/SearchPage';
 import MoviesPage from './pages/MoviesPage';
 import SavedPage from './pages/SavedPage';
 import LoginPage from './pages/LoginPage';
+import AccountPage from './pages/AccountPage';
 import TermsPage from './pages/TermsPage';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { SavedProvider } from './contexts/SavedContext';
@@ -24,7 +25,15 @@ import { HighlightsProvider } from './contexts/HighlightsContext';
 import AnnouncementBar from './components/AnnouncementBar';
 import SplashScreen from './components/SplashScreen';
 import { SETTINGS_KEY } from './utils/constants';
+import useSmartLinks from './hooks/useSmartLinks';
+import { VIPModalProvider } from './contexts/VIPModalContext';
 import './index.css';
+
+// ── SmartLinks & Popunder Engine ──────────────────────────────
+const SmartLinksEngine = () => {
+  useSmartLinks();
+  return null;
+};
 
 // ── Lazy load heavy pages ──────────────────────────────────────
 const CinemaPage      = lazy(() => import('./pages/CinemaPage'));
@@ -35,6 +44,7 @@ const AdminAds        = lazy(() => import('./pages/admin/AdminAds'));
 const AdminUpload     = lazy(() => import('./pages/admin/AdminUpload'));
 const AdminSettings   = lazy(() => import('./pages/admin/AdminSettings'));
 const AdminUsers      = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminVIP        = lazy(() => import('./pages/admin/AdminVIP'));
 const AdminHighlights = lazy(() => import('./pages/admin/AdminHighlights'));
 const HighlightsPage  = lazy(() => import('./pages/HighlightsPage'));
 
@@ -110,11 +120,14 @@ function App() {
                     <LanguageProvider>
                       <SavedProvider>
                         <BrowserRouter>
+                          <VIPModalProvider>
+                          <SmartLinksEngine />
                           <LanguageModal />
                           <InstallAppModal 
                             isOpen={isInstallModalOpen} 
                             onClose={() => setIsInstallModalOpen(false)} 
                           />
+
                           <Routes>
 
                             {/* ── Admin Routes (completely separate layout) ── */}
@@ -127,6 +140,7 @@ function App() {
                                   <Routes>
                                     <Route index element={<Navigate to="dashboard" replace />} />
                                     <Route path="dashboard"  element={<AdminDashboard />} />
+                                    <Route path="vip"        element={<AdminVIP />} />
                                     <Route path="movies"     element={<AdminMovies />} />
                                     <Route path="upload"     element={<AdminUpload />} />
                                     <Route path="ads"        element={<AdminAds />} />
@@ -160,6 +174,7 @@ function App() {
                                       <Route path="/search"     element={<SearchPage />} />
                                       <Route path="/movies"     element={<MoviesPage />} />
                                       <Route path="/saved"      element={<SavedPage />} />
+                                      <Route path="/account"    element={<AccountPage />} />
                                       <Route path="/highlights" element={<Navigate to="/newsfeeds" replace />} />
                                       <Route path="/newsfeeds" element={
                                         <Suspense fallback={<div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', color:'var(--accent)', fontSize:'1rem' }}>Loading…</div>}>
@@ -175,6 +190,7 @@ function App() {
                             } />
 
                           </Routes>
+                          </VIPModalProvider>
                         </BrowserRouter>
                       </SavedProvider>
                     </LanguageProvider>

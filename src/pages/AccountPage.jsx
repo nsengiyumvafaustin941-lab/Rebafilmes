@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import {
   User, Package, Bell, CreditCard, ChevronRight,
-  Home, Crown, Mail, Phone, Lock, CheckCircle, LogOut
+  Home, Crown, Mail, Phone, Lock, CheckCircle, LogOut,
+  Laptop, ShieldCheck, DownloadCloud, Sparkles
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useVIP } from '../hooks/useVIP';
+import { useVIPModal } from '../contexts/VIPModalContext';
 import logo from '../assets/logo.jpg';
 import './AccountPage.css';
 
@@ -103,8 +106,8 @@ const ProfilePanel = () => {
           <img src={logo} alt="RebaFilme Logo" className="profile-avatar-img" />
         </div>
         <div>
-          <h3 className="profile-name">{user?.name || 'RebaFilme'}</h3>
-          <p className="profile-email"><Mail size={13} /> {user?.email || 'info@rebafilme.com'}</p>
+          <h3 className="profile-name">{user?.name || 'RebaFilme User'}</h3>
+          <p className="profile-email"><Mail size={13} /> {user?.email || user?.phone || 'info@rebafilme.com'}</p>
         </div>
       </div>
 
@@ -186,41 +189,90 @@ const ProfilePanel = () => {
 
 const SubscriptionPanel = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const { isVip, daysRemaining, expiresAt, serverVip } = useVIP();
+  const { openVIPModal } = useVIPModal();
+
   return (
     <div className="panel">
-      <p className="panel-subtitle">{t('acc_manage_sub')}</p>
-      <div className="sub-card">
+      <h2 className="panel-heading">{t('acc_manage_sub')}</h2>
+      <p className="panel-subtitle">Cunga ifatabuguzi ryawe rya VIP rikora ku bikoresho byawe byose</p>
+
+      {/* Main Subscription Card */}
+      <div className={`sub-card ${isVip ? 'sub-card-vip' : ''}`}>
         <div className="sub-card-header">
           <div className="sub-card-left">
-            <div className="sub-icon"><Crown size={20}/></div>
+            <div className={`sub-icon ${isVip ? 'sub-icon-vip' : ''}`}>
+              {isVip ? <Crown size={22} color="#ffd700" /> : <Package size={20} />}
+            </div>
             <div>
-              <h3 className="sub-plan-name">Free Plan</h3>
-              <span className="sub-current">{t('acc_current_sub')}</span>
+              <h3 className="sub-plan-name">
+                {isVip ? `VIP & Premium (${serverVip?.plan ? serverVip.plan.toUpperCase() : 'ACTIVE'})` : 'Free Plan'}
+              </h3>
+              <span className="sub-current">
+                {isVip ? 'Ifatabuguzi ryishyuwe rirakora' : t('acc_current_sub')}
+              </span>
             </div>
           </div>
-          <span className="sub-active-badge"><CheckCircle size={14}/> ACTIVE</span>
+          <span className={`sub-active-badge ${isVip ? 'sub-badge-vip' : ''}`}>
+            <CheckCircle size={14}/> {isVip ? 'ACTIVE VIP 👑' : 'FREE ACTIVE'}
+          </span>
         </div>
+
         <div className="sub-stats">
           <div className="sub-stat">
             <span className="stat-label">📅 {t('acc_started')}</span>
-            <span className="stat-value">{t('acc_unlimited')}</span>
+            <span className="stat-value">{isVip ? 'Igihe kirakora' : t('acc_unlimited')}</span>
           </div>
           <div className="sub-stat">
-            <span className="stat-label">⏰ {t('acc_ends')}</span>
-            <span className="stat-value">{t('acc_unlimited')}</span>
+            <span className="stat-label">⏰ {isVip ? 'Isigaje / Izarangira' : t('acc_ends')}</span>
+            <span className="stat-value" style={{ color: isVip ? '#ffd700' : 'inherit' }}>
+              {isVip ? `${daysRemaining} Iminsi ${expiresAt ? `(${new Date(expiresAt).toLocaleDateString()})` : ''}` : t('acc_unlimited')}
+            </span>
           </div>
         </div>
-        <button className="btn-cancel">
-          <span>⊗</span> {t('acc_cancel_sub')}
-        </button>
+
+        {/* Multi-device info banner */}
+        <div className="sub-device-banner">
+          <Laptop size={18} color="#38bdf8" />
+          <span>
+            Iri fatabuguzi ryahuwe na <strong>{user?.email || user?.name}</strong>. Ushobora kwinjira na Email &amp; Password yawe kuri Telefone, Mudasobwa cyangwa Smart TV ugahita ureba nta mamaza!
+          </span>
+        </div>
+
+        <div style={{ marginTop: '1.25rem' }}>
+          <button 
+            className="btn btn-primary full-btn" 
+            style={{ 
+              background: 'linear-gradient(135deg, #ffd700, #ff8c00)', 
+              color: '#000', 
+              fontWeight: 800,
+              fontSize: '0.92rem' 
+            }}
+            onClick={openVIPModal}
+          >
+            <Sparkles size={16} />
+            <span>{isVip ? 'Ongera Igihe cya VIP (Renew / Extend)' : 'Gura VIP Nonaha (Upgrade to VIP)'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* History */}
-      <div className="history-section">
-        <h4 className="form-title"><span>⏱</span> {t('acc_history')}</h4>
-        <div className="history-empty">
-          <span className="history-icon">⏱</span>
-          <p>{t('acc_no_history')}</p>
+      {/* Perks summary */}
+      <div className="sub-perks-overview">
+        <h4 className="form-title"><span>✨</span> Ibyiza bya VIP kuri Konti yawe</h4>
+        <div className="sub-perks-list">
+          <div className="sub-perk-item">
+            <ShieldCheck size={18} color="#ffd700" />
+            <span>100% Nta mamaza, popups cyangwa ibikorwa birogoya</span>
+          </div>
+          <div className="sub-perk-item">
+            <DownloadCloud size={18} color="#00e676" />
+            <span>Direct 4K &amp; Full HD Fast Downloads</span>
+          </div>
+          <div className="sub-perk-item">
+            <Laptop size={18} color="#38bdf8" />
+            <span>Koresha ku bikoresho byose icyarimwe</span>
+          </div>
         </div>
       </div>
     </div>
@@ -244,14 +296,17 @@ const NotificationsPanel = () => {
 
 const BuyPlanPanel = () => {
   const { t } = useLanguage();
+  const { openVIPModal } = useVIPModal();
+
   return (
     <div className="panel">
       <h2 className="panel-heading">{t('account_buy')}</h2>
       <p className="panel-subtitle">{t('acc_buy_sub_sub')}</p>
       <div className="plan-options">
         {[
-          { name: 'Basic', price: '2,000 RWF', period: t('acc_month'), features: [t('acc_quality_hd'), t('acc_no_ads'), t('acc_new_episodes')] },
-          { name: 'Premium', price: '5,000 RWF', period: t('acc_month'), features: [t('acc_quality_4k'), t('acc_no_ads'), t('acc_new_episodes'), t('acc_downloads'), t('acc_support')], highlight: true },
+          { id: 'daily', name: 'Umunsi 1 (Daily)', price: '500 RWF', period: '/ 24 Hours', features: ['100% Zero Ads', 'Instant 1-Click USSD', 'Multi-device access'] },
+          { id: 'monthly', name: 'Ukwezi 1 (Monthly)', price: '2,000 RWF', period: '/ 30 Days', features: ['100% Zero Ads', 'Fast 4K Downloads', 'All movies & shows', 'Multi-device access'], highlight: true },
+          { id: 'yearly', name: 'Umwaka 1 (Yearly)', price: '20,000 RWF', period: '/ 365 Days', features: ['Best Value Discount', '365 Days VIP Access', 'Priority movie requests', 'Multi-device access'] },
         ].map(plan => (
           <div key={plan.name} className={`plan-option${plan.highlight ? ' highlighted' : ''}`}>
             <div className="plan-option-header">
@@ -263,7 +318,10 @@ const BuyPlanPanel = () => {
             <ul className="plan-option-features">
               {plan.features.map(f => <li key={f}>✅ {f}</li>)}
             </ul>
-            <button className={`btn ${plan.highlight ? 'btn-primary' : 'btn-ghost'} full-btn`}>
+            <button 
+              className={`btn ${plan.highlight ? 'btn-primary' : 'btn-ghost'} full-btn`}
+              onClick={openVIPModal}
+            >
               <CreditCard size={15}/> {t('account_buy')} {plan.name}
             </button>
           </div>
@@ -278,17 +336,18 @@ const BuyPlanPanel = () => {
 const AccountPage = () => {
   const { t } = useLanguage();
   const { user, isLoggedIn, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('profile');
+  const { isVip, daysRemaining } = useVIP();
+  const [activeTab, setActiveTab] = useState('subscription');
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
   }
 
   const TABS = [
-    { id: 'profile',       icon: User,       label: t('account_profile') },
     { id: 'subscription',  icon: Package,    label: t('account_subscription') },
-    { id: 'notifications', icon: Bell,       label: t('account_notifications') },
+    { id: 'profile',       icon: User,       label: t('account_profile') },
     { id: 'buy',           icon: CreditCard, label: t('account_buy') },
+    { id: 'notifications', icon: Bell,       label: t('account_notifications') },
   ];
 
   const renderPanel = () => {
@@ -297,7 +356,7 @@ const AccountPage = () => {
       case 'subscription':  return <SubscriptionPanel />;
       case 'notifications': return <NotificationsPanel />;
       case 'buy':           return <BuyPlanPanel />;
-      default:              return <ProfilePanel />;
+      default:              return <SubscriptionPanel />;
     }
   };
 
@@ -311,16 +370,18 @@ const AccountPage = () => {
         </Link>
 
         {/* Plan card */}
-        <div className="account-plan-card">
+        <div className={`account-plan-card ${isVip ? 'account-plan-card-vip' : ''}`}>
           <div className="account-plan-row">
-            <span className="plan-name">Free Plan</span>
-            <span className="plan-badge active">ACTIVE</span>
+            <span className="plan-name">{isVip ? 'VIP Premium' : 'Free Plan'}</span>
+            <span className={`plan-badge ${isVip ? 'active-vip' : 'active'}`}>
+              {isVip ? '👑 VIP' : 'ACTIVE'}
+            </span>
           </div>
           <div className="account-plan-stat">
-            <span>{t('acc_started')}</span> <strong>{t('acc_unlimited')}</strong>
+            <span>Status:</span> <strong>{isVip ? `${daysRemaining} Iminsi` : 'Free'}</strong>
           </div>
           <div className="account-plan-stat">
-            <span>{t('acc_ends')}</span> <strong>{t('acc_unlimited')}</strong>
+            <span>Device:</span> <strong>Multi-Sync 🌐</strong>
           </div>
         </div>
 
@@ -342,7 +403,7 @@ const AccountPage = () => {
         <div className="account-sidebar-footer">
           {isLoggedIn ? (
             <>
-              <p className="acc-user-name">{t('acc_logged_in_as')} <strong>{user?.name}</strong></p>
+              <p className="acc-user-name">{t('acc_logged_in_as')} <strong>{user?.name || user?.email}</strong></p>
               <button className="btn btn-ghost full-btn" onClick={logout}>
                 <LogOut size={15}/> {t('logout')}
               </button>
@@ -350,7 +411,7 @@ const AccountPage = () => {
           ) : (
             <Link to="/login" className="btn btn-primary injira-btn">{t('account_login')}</Link>
           )}
-          <span className="web-version">Web Version</span>
+          <span className="web-version">RebaFilme v2026</span>
         </div>
       </aside>
 

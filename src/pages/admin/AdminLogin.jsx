@@ -1,29 +1,80 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Eye, EyeOff } from 'lucide-react';
+import { Shield, AlertCircle, Loader2 } from 'lucide-react';
 import { useAdmin } from '../../contexts/AdminContext';
+import { GOOGLE_CLIENT_ID } from '../../utils/constants';
 import './AdminLayout.css';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
-  const { login, isAdmin, loginError, setLoginError } = useAdmin();
+  const { adminLoginWithGoogle, isAdmin, loginError, setLoginError } = useAdmin();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: '', password: '' });
-  const [showPw, setShowPw] = useState(false);
+  const googleBtnRef = useRef(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [sdkLoaded, setSdkLoaded] = useState(false);
 
   useEffect(() => {
-    if (isAdmin) navigate('/admin/dashboard', { replace: true });
+    if (isAdmin) {
+      navigate('/admin/dashboard', { replace: true });
+    }
   }, [isAdmin, navigate]);
 
-  const handleChange = (e) => {
-    setLoginError('');
-    setForm(p => ({ ...p, [e.target.name]: e.target.value }));
-  };
+  useEffect(() => {
+    let intervalId;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    login(form.username, form.password);
-  };
+    const setupGoogle = () => {
+      if (typeof window === 'undefined' || !window.google?.accounts?.id) {
+        return false;
+      }
+
+      setSdkLoaded(true);
+
+      try {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: async (response) => {
+            if (!response.credential) return;
+            setIsAuthenticating(true);
+            const ok = await adminLoginWithGoogle(response.credential);
+            setIsAuthenticating(false);
+            if (ok) {
+              navigate('/admin/dashboard', { replace: true });
+            }
+          },
+          auto_select: false,
+        });
+
+        if (googleBtnRef.current) {
+          googleBtnRef.current.innerHTML = '';
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            type: 'standard',
+            theme: 'filled_black',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'pill',
+            width: 280,
+            logo_alignment: 'left',
+          });
+        }
+        return true;
+      } catch (err) {
+        console.error('Failed to initialize Google Sign-In:', err);
+        return false;
+      }
+    };
+
+    if (!setupGoogle()) {
+      intervalId = setInterval(() => {
+        if (setupGoogle()) {
+          clearInterval(intervalId);
+        }
+      }, 200);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [adminLoginWithGoogle, navigate, setLoginError]);
 
   return (
     <div className="adm-login-page">
@@ -32,54 +83,40 @@ const AdminLogin = () => {
         <div className="adm-login-icon">
           <Shield size={32} />
         </div>
-        <h1 className="adm-login-title">Admin Panel</h1>
-        <p className="adm-login-sub">RebaFilme — Restricted Access</p>
 
-        <form onSubmit={handleSubmit} className="adm-login-form">
-          <div className="adm-form-group">
-            <label className="adm-form-label">Username</label>
-            <input
-              name="username"
-              type="text"
-              autoComplete="username"
-              className={`adm-input${loginError ? ' adm-input-error' : ''}`}
-              placeholder="admin"
-              value={form.username}
-              onChange={handleChange}
-              required
-              autoFocus
-            />
+        <h1 className="adm-login-title">Admin Portal</h1>
+        <p className="adm-login-sub">RebaFilme — Authorized Access Only</p>
+
+        {loginError && (
+          <div className="adm-login-error">
+            <AlertCircle size={16} />
+            <span>{loginError}</span>
           </div>
-          <div className="adm-form-group" style={{ position: 'relative' }}>
-            <label className="adm-form-label">Password</label>
-            <input
-              name="password"
-              type={showPw ? 'text' : 'password'}
-              autoComplete="current-password"
-              className={`adm-input${loginError ? ' adm-input-error' : ''}`}
-              placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-            <button
-              type="button"
-              className="adm-pw-toggle"
-              onClick={() => setShowPw(p => !p)}
-              tabIndex={-1}
-            >
-              {showPw ? <EyeOff size={16}/> : <Eye size={16}/>}
-            </button>
-          </div>
+        )}
 
-          {loginError && <p className="adm-login-error">{loginError}</p>}
+        <div className="adm-google-container">
+          {isAuthenticating ? (
+            <div className="adm-google-loading">
+              <Loader2 size={24} className="spin" />
+              <span>Verifying Admin Authorization…</span>
+            </div>
+          ) : (
+            <>
+              <div ref={googleBtnRef} className="adm-google-btn-slot" />
+              {!sdkLoaded && (
+                <div className="adm-google-placeholder">
+                  <Loader2 size={18} className="spin" />
+                  <span>Loading Google Auth…</span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
-          <button type="submit" className="adm-btn adm-btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '.5rem' }}>
-            Sign In
-          </button>
-        </form>
-
-        <p className="adm-login-hint">This panel is for authorized administrators only.</p>
+        <div className="adm-security-badge">
+          <Shield size={13} />
+          <span>Restricted to whitelisted administrator accounts</span>
+        </div>
       </div>
     </div>
   );

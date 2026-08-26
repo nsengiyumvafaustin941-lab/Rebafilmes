@@ -1,0 +1,950 @@
+/* ═════════════════════════════════════════════════════════════════════
+   VIPModal.css — RebaFilme VIP & Premium Progressive Flow UI (V3)
+   Clean, Modern, High-Converting Step-by-Step Payment Experience
+═════════════════════════════════════════════════════════════════════ */
+
+.vip-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 1rem;
+  animation: vipOverlayFade 0.2s ease-out;
+}
+
+@keyframes vipOverlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.vip-modal-container {
+  background: #0e131d;
+  background: linear-gradient(180deg, #121824 0%, #0a0d14 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 440px;
+  padding: 1.4rem 1.4rem 1.1rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.06);
+  color: #fff;
+  position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+}
+
+.vip-fade-in {
+  animation: vipStepFade 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes vipStepFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════════════════════ */
+.vip-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.1rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.vip-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.vip-back-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.vip-back-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  transform: translateX(-2px);
+}
+
+.vip-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.vip-crown-icon {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 158, 0, 0.06));
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.1);
+}
+
+.vip-modal-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.vip-step-indicator {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  display: block;
+  margin-top: 1px;
+}
+
+.vip-close-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.vip-close-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* ══════════════════════════════════════════════════════════
+   USER AUTHENTICATION BANNER
+══════════════════════════════════════════════════════════ */
+.vip-auth-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
+}
+
+.vip-auth-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.vip-auth-icon {
+  color: #ffd700;
+  flex-shrink: 0;
+}
+
+.vip-auth-info strong {
+  display: block;
+  font-size: 0.78rem;
+  color: #fff;
+  line-height: 1.25;
+}
+
+.vip-auth-info p {
+  margin: 1px 0 0;
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+.vip-auth-btn {
+  background: #ffd700;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.vip-auth-btn:hover {
+  background: #ffc400;
+  transform: translateY(-1px);
+}
+
+.vip-user-logged-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 230, 118, 0.06);
+  border: 1px solid rgba(0, 230, 118, 0.15);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-bottom: 0.85rem;
+}
+
+.vip-user-logged-banner strong {
+  color: #f1f5f9;
+}
+
+/* ══════════════════════════════════════════════════════════
+   ACTIVE VIP CARD
+══════════════════════════════════════════════════════════ */
+.vip-active-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 230, 118, 0.08);
+  border: 1px solid rgba(0, 230, 118, 0.2);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.vip-active-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.vip-badge-active {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #00e676;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vip-status-desc {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 1px 0 0;
+}
+
+.vip-cancel-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.vip-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+/* ══════════════════════════════════════════════════════════
+   STEP 1: CHOOSE PLAN
+══════════════════════════════════════════════════════════ */
+.vip-perks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.vip-perk-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.78rem;
+  color: #cbd5e1;
+}
+
+.vip-perk-item svg {
+  color: #ffd700;
+  flex-shrink: 0;
+}
+
+.vip-perk-item strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.vip-plans-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 1.1rem;
+}
+
+.vip-plan-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1.5px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+}
+
+.vip-plan-item:hover {
+  border-color: rgba(255, 215, 0, 0.35);
+  background: rgba(255, 215, 0, 0.02);
+}
+
+.vip-plan-item.active {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.06);
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.1);
+}
+
+.vip-plan-badge {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  background: #ff9e00;
+  color: #000;
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.vip-plan-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.vip-custom-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.vip-custom-radio.checked {
+  border-color: #ffd700;
+  background: #ffd700;
+}
+
+.vip-radio-inner {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #000;
+}
+
+.vip-plan-name {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+}
+
+.vip-plan-item-right {
+  text-align: right;
+}
+
+.vip-plan-price {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.vip-plan-item.active .vip-plan-price {
+  color: #ffd700;
+}
+
+.vip-plan-price-usd {
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
+.vip-voucher-jump {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.vip-link-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.74rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  transition: color 0.15s;
+}
+.vip-link-btn:hover {
+  color: #ffd700;
+}
+
+/* ══════════════════════════════════════════════════════════
+   STEP 2: SELECT PAYMENT METHOD
+══════════════════════════════════════════════════════════ */
+.vip-summary-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.85rem;
+}
+
+.vip-summary-label {
+  font-size: 0.68rem;
+  color: #64748b;
+  display: block;
+}
+
+.vip-summary-value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.vip-summary-price strong {
+  font-size: 0.95rem;
+  color: #ffd700;
+}
+
+.vip-summary-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.vip-section-label {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  margin: 0 0 0.6rem;
+  font-weight: 500;
+}
+
+.vip-methods-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+
+.vip-method-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.vip-method-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 215, 0, 0.35);
+  transform: translateX(2px);
+}
+
+.vip-method-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mtn-bg {
+  background: #ffcc00;
+}
+
+.airtel-bg {
+  background: #e60000;
+}
+
+.card-bg {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+}
+
+.crypto-bg {
+  background: linear-gradient(135deg, #059669, #0284c7);
+}
+
+.voucher-bg {
+  background: rgba(255, 215, 0, 0.15);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.vip-method-info {
+  flex: 1;
+}
+
+.vip-method-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+}
+
+.vip-method-desc {
+  font-size: 0.68rem;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.vip-method-tag {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 3px 6px;
+  border-radius: 6px;
+}
+
+.usd-tag {
+  color: #86efac;
+  background: rgba(0, 230, 118, 0.1);
+}
+
+/* ══════════════════════════════════════════════════════════
+   STEP 3: ENTER DETAILS
+══════════════════════════════════════════════════════════ */
+.vip-details-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.vip-input-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.vip-phone-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #141b28;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0 12px;
+  transition: all 0.15s;
+}
+
+.vip-phone-wrapper:focus-within {
+  border-color: #ffd700;
+  background: #182234;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.vip-phone-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.vip-phone-input {
+  width: 100%;
+  padding: 12px 0;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.vip-input-hint {
+  font-size: 0.7rem;
+  color: #64748b;
+  margin: -0.2rem 0 0.35rem;
+  line-height: 1.35;
+}
+
+.vip-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 0.2rem;
+}
+
+.vip-method-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 0.64rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+/* ══════════════════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════════════════ */
+.vip-primary-btn {
+  width: 100%;
+  background: #ffd700;
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  padding: 13px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.18s ease;
+  box-shadow: 0 4px 14px rgba(255, 215, 0, 0.25);
+  margin-top: 0.3rem;
+}
+
+.vip-primary-btn:hover {
+  background: #ffc400;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(255, 215, 0, 0.35);
+}
+
+.vip-primary-btn:active {
+  transform: translateY(0);
+}
+
+.vip-primary-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.card-pay-btn {
+  background: linear-gradient(135deg, #2563eb, #6366f1);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+.card-pay-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8, #4f46e5);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+}
+
+.vip-start-watching-btn {
+  background: #00e676;
+  color: #000;
+  box-shadow: 0 4px 14px rgba(0, 230, 118, 0.3);
+}
+.vip-start-watching-btn:hover {
+  background: #00c853;
+  box-shadow: 0 6px 18px rgba(0, 230, 118, 0.45);
+}
+
+.vip-btn-spinner-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   STEP 4: WAITING / USSD
+══════════════════════════════════════════════════════════ */
+.vip-waiting-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.2rem 0.5rem;
+}
+
+.vip-pulse-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  animation: vipPulse 2s infinite ease-in-out;
+}
+
+@keyframes vipPulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.3); }
+  70% { box-shadow: 0 0 0 16px rgba(255, 215, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+}
+
+.vip-waiting-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0 0 0.4rem;
+  color: #f8fafc;
+}
+
+.vip-waiting-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0 0 1.1rem;
+  line-height: 1.45;
+  max-width: 320px;
+}
+
+.vip-waiting-desc strong {
+  color: #ffd700;
+}
+
+.vip-reopen-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #2563eb;
+  color: #fff;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  margin-bottom: 1rem;
+  transition: background 0.15s;
+}
+.vip-reopen-link:hover {
+  background: #1d4ed8;
+}
+
+.vip-waiting-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+.vip-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00e676;
+  animation: vipBlink 1.4s infinite ease-in-out;
+}
+
+@keyframes vipBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.85); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   STEP 5: SUCCESS
+══════════════════════════════════════════════════════════ */
+.vip-success-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.2rem 0.5rem;
+}
+
+.vip-success-icon-wrap {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: rgba(0, 230, 118, 0.12);
+  border: 2px solid rgba(0, 230, 118, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.9rem;
+  animation: vipSuccessPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes vipSuccessPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.vip-success-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #00e676;
+  margin: 0 0 0.35rem;
+}
+
+.vip-success-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0 0 1.1rem;
+  line-height: 1.45;
+  max-width: 320px;
+}
+
+.vip-success-summary {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 0.65rem 0.9rem;
+  margin-bottom: 1.1rem;
+  text-align: left;
+}
+
+.vip-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  padding: 3px 0;
+}
+
+.vip-summary-row strong {
+  color: #fff;
+}
+
+.vip-active-text {
+  color: #00e676 !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FEEDBACK & FOOTER
+══════════════════════════════════════════════════════════ */
+.vip-feedback-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 0.85rem;
+  padding: 9px 11px;
+  border-radius: 10px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.4;
+  animation: vipStepFade 0.2s ease-out;
+}
+
+.vip-feedback-alert.error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+.vip-feedback-alert.success {
+  background: rgba(0, 230, 118, 0.12);
+  border: 1px solid rgba(0, 230, 118, 0.25);
+  color: #86efac;
+}
+
+.vip-feedback-alert.info {
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  color: #fde68a;
+}
+
+.vip-feedback-alert.warning {
+  background: rgba(251, 146, 60, 0.12);
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  color: #fdba74;
+  flex-wrap: wrap;
+}
+
+.vip-feedback-alert.warning .vip-feedback-link {
+  color: #fdba74;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.vip-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.vip-trust-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVENESS
+══════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .vip-modal-container {
+    padding: 1.1rem 1rem 0.9rem;
+    border-radius: 16px;
+    max-width: 100%;
+  }
+
+  .vip-modal-title {
+    font-size: 0.95rem;
+  }
+
+  .vip-plan-item {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .vip-method-card {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .vip-modal-footer {
+    gap: 0.8rem;
+  }
+}

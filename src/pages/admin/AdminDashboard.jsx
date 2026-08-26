@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Film, Megaphone, Plus, Send, Star, Download } from 'lucide-react';
+import { Film, Megaphone, Plus, Send, Star, Download, Crown } from 'lucide-react';
 import { useMovies } from '../../contexts/MoviesContext';
 import { useAds } from '../../contexts/AdsContext';
 import { useAnnouncements } from '../../contexts/AnnouncementsContext';
@@ -54,12 +54,15 @@ const AdminDashboard = () => {
         <div>
           <h1 className="adm-page-title">Dashboard</h1>
           <p className="adm-page-subtitle">
-            TMDB catalog · trailers · videodownloader redirects
+            TMDB catalog · trailers · videodownloader redirects · VIP monetization
             {loading && ' — loading catalog…'}
             {error && ` — fallback mode (${error})`}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '.75rem' }}>
+          <Link to="/admin/vip" className="adm-btn adm-btn-ghost" style={{ borderColor: 'rgba(255,215,0,0.3)', color: '#ffd700' }}>
+            <Crown size={16} /> VIP Requests
+          </Link>
           <Link to="/admin/movies" className="adm-btn adm-btn-primary">
             <Star size={16} /> Pin Featured
           </Link>

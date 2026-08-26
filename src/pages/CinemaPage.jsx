@@ -1,21 +1,28 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, Download, Star, Calendar, Globe } from 'lucide-react';
+import { ArrowLeft, Download, Star, Calendar, Globe, Crown, MessageCircle } from 'lucide-react';
 import StreamPlayer from '../components/StreamPlayer';
 import ContentGrid from '../components/ContentGrid';
 import AdBanner from '../components/AdBanner';
 import Footer from '../components/Footer';
+import { useVIPModal } from '../contexts/VIPModalContext';
 import { useMovies } from '../contexts/MoviesContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useVIP } from '../hooks/useVIP';
 import { moviePath, parseMovieId, getMovieOrTv } from '../utils/tmdb';
-import { buildDownloadUrl } from '../utils/settings';
+import { buildDownloadUrl, getSettings } from '../utils/settings';
 import './CinemaPage.css';
 
 const CinemaPage = () => {
   const { t } = useLanguage();
   const { allMovies } = useMovies();
+  const { isVip } = useVIP();
+  const { openVIPModal } = useVIPModal();
   const [params, setParams] = useSearchParams();
+  const settings = getSettings();
+
+
 
   const rawId = params.get('vd');
   const numericId = parseMovieId(rawId);
@@ -188,16 +195,50 @@ const CinemaPage = () => {
               </div>
             </div>
 
-            <a
-              href={downloadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-primary"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
-            >
-              <Download size={16} />
-              <span>Download Media</span>
-            </a>
+            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+              {!isVip && (
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={openVIPModal}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 170, 0, 0.1))',
+                    border: '1px solid rgba(255, 215, 0, 0.4)',
+                    color: '#ffd700',
+                    fontWeight: 700,
+                  }}
+                >
+                  <Crown size={16} color="#ffd700" />
+                  <span>👑 VIP Pass (Ad-Free)</span>
+                </button>
+              )}
+
+              <a
+                href={downloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+              >
+                <Download size={16} />
+                <span>Download Media</span>
+              </a>
+
+              <a
+                href={`https://wa.me/${settings.vipWhatsApp || settings.whatsapp || '250786934081'}?text=${encodeURIComponent(`Hello RebaFilme! I am watching ${item.title}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+                title="Request movie translation on WhatsApp"
+              >
+                <MessageCircle size={16} color="#25d366" />
+                <span>Saba Filime (WhatsApp)</span>
+              </a>
+            </div>
           </div>
 
           {item.description && <p className="cinema-meta-desc">{item.description}</p>}
@@ -221,4 +262,6 @@ const CinemaPage = () => {
   );
 };
 
+
 export default CinemaPage;
+

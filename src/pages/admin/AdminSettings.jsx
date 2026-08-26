@@ -125,6 +125,251 @@ const AdminSettings = () => {
           </div>
         </div>
 
+        {/* ── 💰 Pillar 1: SmartLinks & Popunders ── */}
+        <div className="adm-settings-section">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+            <div>
+              <h3 className="adm-settings-heading" style={{ margin: 0 }}>
+                💰 Ad Monetization — SmartLinks / Popunders
+              </h3>
+              <small style={{ color: '#888', fontSize: '.82rem' }}>
+                Rotates Adsterra, Monetag, PopAds or ClickAdu direct links when visitors click on the site.
+              </small>
+            </div>
+            <label className="adm-toggle">
+              <input type="checkbox" checked={!!settings.smartlinksEnabled} onChange={set('smartlinksEnabled')} />
+              <span className="adm-toggle-track" />
+            </label>
+          </div>
+
+          <div className="adm-form-grid">
+            <div className="adm-form-group">
+              <label className="adm-form-label">Cooldown Timer (seconds)</label>
+              <input
+                className="adm-input"
+                type="number"
+                min="5"
+                max="300"
+                value={settings.smartlinksCooldown ?? 45}
+                onChange={set('smartlinksCooldown')}
+                placeholder="45"
+              />
+              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>
+                Minimum time between popup triggers (e.g. 45s keeps visitors happy while earning).
+              </small>
+            </div>
+
+            <div className="adm-form-group">
+              <label className="adm-form-label">Native Grid Interval (cards)</label>
+              <input
+                className="adm-input"
+                type="number"
+                min="4"
+                max="24"
+                value={settings.nativeAdsInterval ?? 8}
+                onChange={set('nativeAdsInterval')}
+                placeholder="8"
+              />
+              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>
+                Show native sponsor / VIP cards every N items in movie grids.
+              </small>
+            </div>
+
+            <div className="adm-form-group full">
+              <label className="adm-form-label">Rotating SmartLink URLs (one per line)</label>
+              <textarea
+                className="adm-input"
+                rows={5}
+                value={settings.smartlinksList || ''}
+                onChange={set('smartlinksList')}
+                placeholder={`https://nickeldefiancepriest.com/your-adsterra-link-1\nhttps://omg10.com/4/your-monetag-link-1\nhttps://nickeldefiancepriest.com/your-adsterra-link-2`}
+                style={{ fontFamily: 'monospace', fontSize: '0.82rem', resize: 'vertical' }}
+              />
+              <small style={{ color: '#777', fontSize: '.75rem', marginTop: '.25rem' }}>
+                Paste direct links from Adsterra, Monetag, PopAds, or ClickAdu. The engine cycles through each link in order on valid user clicks.
+              </small>
+            </div>
+          </div>
+        </div>
+
+        {/* ── 🎬 Pillar 2: In-Stream Video Ads ── */}
+        <div className="adm-settings-section">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+            <div>
+              <h3 className="adm-settings-heading" style={{ margin: 0 }}>
+                🎬 In-Stream Video Ads (Pre-Roll Bumper)
+              </h3>
+              <small style={{ color: '#888', fontSize: '.82rem' }}>
+                Plays a short video ad bumper in the stream player before the main movie begins.
+              </small>
+            </div>
+            <label className="adm-toggle">
+              <input type="checkbox" checked={!!settings.videoAdsEnabled} onChange={set('videoAdsEnabled')} />
+              <span className="adm-toggle-track" />
+            </label>
+          </div>
+
+          <div className="adm-form-grid">
+            <div className="adm-form-group full">
+              <label className="adm-form-label">Video Ad Source URL (.mp4 / direct stream)</label>
+              <input
+                className="adm-input"
+                value={settings.videoAdUrl || ''}
+                onChange={set('videoAdUrl')}
+                placeholder="https://cdn.rebafilme.com/ad_bumper.mp4"
+              />
+            </div>
+            <div className="adm-form-group">
+              <label className="adm-form-label">Click-through SmartLink / Sponsor Link</label>
+              <input
+                className="adm-input"
+                value={settings.videoAdLink || ''}
+                onChange={set('videoAdLink')}
+                placeholder="https://nickeldefiancepriest.com/your-smartlink"
+              />
+            </div>
+            <div className="adm-form-group">
+              <label className="adm-form-label">Ad Duration / Skip Time (seconds)</label>
+              <input
+                className="adm-input"
+                type="number"
+                min="3"
+                max="60"
+                value={settings.videoAdDuration ?? 10}
+                onChange={set('videoAdDuration')}
+                placeholder="10"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── 👑 Pillar 4: Direct MTN MoMo & Airtel VIP Pass ── */}
+        <div className="adm-settings-section">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+            <div>
+              <h3 className="adm-settings-heading" style={{ margin: 0, color: '#ffd700' }}>
+                👑 MTN MoMo &amp; Airtel VIP Membership System
+              </h3>
+              <small style={{ color: '#888', fontSize: '.82rem' }}>
+                Charge local subscribers via Mobile Money in Rwanda/DRC/Uganda for 100% ad-free streaming &amp; fast downloads.
+              </small>
+            </div>
+            <label className="adm-toggle">
+              <input type="checkbox" checked={!!settings.vipEnabled} onChange={set('vipEnabled')} />
+              <span className="adm-toggle-track" />
+            </label>
+          </div>
+
+          <div className="adm-form-grid">
+            <div className="adm-form-group">
+              <label className="adm-form-label">VIP Daily Price (RWF)</label>
+              <input
+                className="adm-input"
+                type="number"
+                min="100"
+                max="50000"
+                value={settings.vipPriceDaily ?? 1000}
+                onChange={set('vipPriceDaily')}
+                placeholder="1000"
+              />
+              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>1 Day Access</small>
+            </div>
+            <div className="adm-form-group">
+              <label className="adm-form-label">VIP Monthly Price (RWF)</label>
+              <input
+                className="adm-input"
+                type="number"
+                min="500"
+                max="50000"
+                value={typeof settings.vipPriceMonthly === 'number' ? settings.vipPriceMonthly : parseInt(String(settings.vipPriceMonthly || '5000').replace(/\D/g, ''), 10) || 5000}
+                onChange={set('vipPriceMonthly')}
+                placeholder="5000"
+              />
+              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>30 Days Access (Standard)</small>
+            </div>
+            <div className="adm-form-group">
+              <label className="adm-form-label">VIP Yearly Price (RWF)</label>
+              <input
+                className="adm-input"
+                type="number"
+                min="5000"
+                max="500000"
+                value={settings.vipPriceYearly ?? 45000}
+                onChange={set('vipPriceYearly')}
+                placeholder="45000"
+              />
+              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>365 Days Access (Best Value)</small>
+            </div>
+
+            {/* 💳 Global Card & Crypto Prices (USD) */}
+            <div className="adm-form-group">
+              <label className="adm-form-label">VIP Daily Price (USD — Cards &amp; Crypto)</label>
+              <input
+                className="adm-input"
+                type="number"
+                step="0.01"
+                min="0.10"
+                max="100"
+                value={settings.vipPriceUsdDaily ?? 0.99}
+                onChange={set('vipPriceUsdDaily')}
+                placeholder="0.99"
+              />
+              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>Visa, Mastercard &amp; USDT</small>
+            </div>
+            <div className="adm-form-group">
+              <label className="adm-form-label">VIP Monthly Price (USD — Cards &amp; Crypto)</label>
+              <input
+                className="adm-input"
+                type="number"
+                step="0.01"
+                min="0.50"
+                max="200"
+                value={settings.vipPriceUsdMonthly ?? 3.99}
+                onChange={set('vipPriceUsdMonthly')}
+                placeholder="3.99"
+              />
+              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>Standard Monthly Pass in USD</small>
+            </div>
+            <div className="adm-form-group">
+              <label className="adm-form-label">VIP Yearly Price (USD — Cards &amp; Crypto)</label>
+              <input
+                className="adm-input"
+                type="number"
+                step="0.01"
+                min="5.00"
+                max="1000"
+                value={settings.vipPriceUsdYearly ?? 34.99}
+                onChange={set('vipPriceUsdYearly')}
+                placeholder="34.99"
+              />
+              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>Annual Pass in USD</small>
+            </div>
+            <div className="adm-form-group">
+              <label className="adm-form-label">VIP Support WhatsApp</label>
+              <input className="adm-input" value={settings.vipWhatsApp || '250786934081'} onChange={set('vipWhatsApp')} placeholder="250786934081" />
+            </div>
+            <div className="adm-form-group">
+              <label className="adm-form-label">MTN MoMo Number</label>
+              <input className="adm-input" value={settings.vipMomoNumber || '0786934081'} onChange={set('vipMomoNumber')} placeholder="0786934081" />
+            </div>
+            <div className="adm-form-group">
+              <label className="adm-form-label">MTN MoMo Account Name</label>
+              <input className="adm-input" value={settings.vipMomoName || 'RebaFilme Media'} onChange={set('vipMomoName')} placeholder="RebaFilme Media" />
+            </div>
+            <div className="adm-form-group">
+              <label className="adm-form-label">Airtel Money Number</label>
+              <input className="adm-input" value={settings.vipAirtelNumber || '0738000000'} onChange={set('vipAirtelNumber')} placeholder="0738000000" />
+            </div>
+            <div className="adm-form-group full">
+              <label className="adm-form-label">Active VIP Passcodes (comma-separated)</label>
+              <input className="adm-input" value={settings.vipPasscodes || ''} onChange={set('vipPasscodes')} placeholder="REBAVIP,MOMO2026,VIPPASS" />
+              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>
+                Visitors can type these codes into the VIP modal for instant 30-day activation.
+              </small>
+            </div>
+          </div>
+        </div>
+
         <div className="adm-settings-section">
           <h3 className="adm-settings-heading">Sponsors &amp; Ads</h3>
           <div className="adm-form-grid">
@@ -184,6 +429,7 @@ const AdminSettings = () => {
             </label>
           </div>
         </div>
+
 
         <div className="adm-settings-section adm-danger-zone">
           <h3 className="adm-settings-heading" style={{ color: '#ef4444' }}>Danger Zone</h3>

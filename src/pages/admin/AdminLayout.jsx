@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Film, Megaphone, Settings, LogOut, Shield, Users, Menu, X, PlayCircle, Image } from 'lucide-react';
+import { LayoutDashboard, Film, Megaphone, Settings, LogOut, Shield, Users, Menu, X, PlayCircle, Image, Crown } from 'lucide-react';
 import { useAdmin } from '../../contexts/AdminContext';
 import './AdminLayout.css';
 
 const ADMIN_NAV = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/admin/movies',    icon: Film,             label: 'Catalog'   },
-  { to: '/admin/ads',       icon: Megaphone,        label: 'Sponsors'  },
-  { to: '/admin/upload',   icon: Image,            label: 'Media'     },
-  { to: '/admin/highlights', icon: PlayCircle,      label: 'Highlights' },
-  { to: '/admin/users',     icon: Users,            label: 'Users'     },
-  { to: '/admin/settings',  icon: Settings,         label: 'Settings'  },
+  { to: '/admin/vip',       icon: Crown,           label: 'VIP Subscriptions' },
+  { to: '/admin/movies',    icon: Film,            label: 'Catalog'   },
+  { to: '/admin/ads',       icon: Megaphone,       label: 'Sponsors'  },
+  { to: '/admin/upload',    icon: Image,           label: 'Media'     },
+  { to: '/admin/highlights',icon: PlayCircle,      label: 'Highlights' },
+  { to: '/admin/users',     icon: Users,           label: 'Users'     },
+  { to: '/admin/settings',  icon: Settings,        label: 'Settings'  },
 ];
 
 const AdminLayout = ({ children }) => {

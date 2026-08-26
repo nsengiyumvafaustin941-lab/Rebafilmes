@@ -2,15 +2,21 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   Compass, PlaySquare, Search, Heart, Globe, 
-  ChevronRight, Newspaper, X, Smartphone, Download
+  ChevronRight, Newspaper, X, Smartphone, Download, Crown, User
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useVIP } from '../hooks/useVIP';
+import { useVIPModal } from '../contexts/VIPModalContext';
+import { useAuth } from '../contexts/AuthContext';
 import SearchAutocomplete from './SearchAutocomplete';
 import logo from '../assets/logo.jpg';
 import './Sidebar.css';
 
 const Sidebar = ({ onOpenInstallModal }) => {
   const { t, setIsModalOpen } = useLanguage();
+  const { isVip } = useVIP();
+  const { openVIPModal } = useVIPModal();
+  const { user, isLoggedIn } = useAuth();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(true);
   const [searchQ, setSearchQ] = useState('');
@@ -112,9 +118,47 @@ const Sidebar = ({ onOpenInstallModal }) => {
           ))}
         </nav>
 
-        {/* Settings & Apps section */}
-        <div className="sidebar-section-label">App & Settings</div>
+        {/* VIP Pass Section */}
+        <div className="sidebar-section-label">Membership</div>
         <div className="sidebar-nav">
+          <button
+            className={`sidebar-link vip-sidebar-btn ${isVip ? 'is-vip-active' : ''}`}
+            title={collapsed ? (isVip ? 'VIP Active 👑' : 'VIP Pass (Ad-Free)') : undefined}
+            onClick={() => {
+              openVIPModal();
+              setCollapsed(true);
+            }}
+          >
+            <span className="sidebar-icon-wrap vip-icon-glow">
+              <Crown size={20} color="#ffd700" />
+            </span>
+            <span className="sidebar-label" style={{ color: '#ffd700', fontWeight: 700 }}>
+              {isVip ? 'VIP Active 👑' : 'VIP Pass'}
+            </span>
+            {!collapsed && !isVip && (
+              <span className="vip-badge-mini">Ad-Free</span>
+            )}
+          </button>
+        </div>
+
+        {/* Settings & Apps section */}
+        <div className="sidebar-section-label">App &amp; Settings</div>
+        <div className="sidebar-nav">
+          <NavLink
+            to={isLoggedIn ? "/account" : "/login"}
+            className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+            title={collapsed ? (isLoggedIn ? (user?.name || "Konti") : "Injira / Login") : undefined}
+            onClick={() => setCollapsed(true)}
+          >
+            <span className="sidebar-icon-wrap" style={{ color: isLoggedIn ? '#38bdf8' : 'inherit' }}>
+              <User size={20} />
+            </span>
+            <span className="sidebar-label">
+              {isLoggedIn ? (user?.name || 'Konti yawe') : 'Injira / Konti'}
+            </span>
+            {!collapsed && <ChevronRight size={12} className="sidebar-link-arrow" />}
+          </NavLink>
+
           <button
             className="sidebar-link app-download-link"
             title={collapsed ? "Get Mobile App" : undefined}
@@ -164,18 +208,27 @@ const Sidebar = ({ onOpenInstallModal }) => {
           </NavLink>
         ))}
         <button 
-          className="bottom-link bottom-app-btn" 
-          onClick={() => {
-            if (onOpenInstallModal) onOpenInstallModal();
-          }}
+          className="bottom-link bottom-vip-btn" 
+          onClick={() => openVIPModal()}
+          title="VIP Pass"
         >
-          <span className="bottom-icon-wrap"><Smartphone size={21} /></span>
-          <span>App</span>
+          <span className="bottom-icon-wrap"><Crown size={21} color="#ffd700" /></span>
+          <span style={{ color: '#ffd700', fontWeight: 700 }}>VIP</span>
         </button>
+        <NavLink 
+          to={isLoggedIn ? "/account" : "/login"}
+          className={({ isActive }) => `bottom-link${isActive ? ' active' : ''}`}
+          title="Account"
+        >
+          <span className="bottom-icon-wrap"><User size={21} /></span>
+          <span>{isLoggedIn ? 'Konti' : 'Injira'}</span>
+        </NavLink>
       </nav>
+
     </>
   );
 };
 
 export default Sidebar;
+
 

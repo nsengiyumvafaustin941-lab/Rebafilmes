@@ -13,5 +13,11 @@ database_id = "87cfbd94-c4a0-4bad-a2a7-b13d42f6d9a3"
 binding = "KV"
 id = "96569a303d5e4a9d8a5a51f506f02c29"
 
-# Set TMDB_API_KEY in Cloudflare Pages → Settings → Environment variables
-# For local: create .dev.vars with TMDB_API_KEY=your_key
+[vars]
+GOOGLE_CLIENT_ID = "212693926603-492fgvn9fa0sqe1769pivtio7hnvgvqt.apps.googleusercontent.com"
+ADMIN_EMAIL = "nsengiyumvafaustin941@gmail.com"
+ADMIN_EMAILS = "nsengiyumvafaustin941@gmail.com"
+NOWPAYMENTS_PUBLIC_KEY = "24554a3e-c1bf-4fb0-a799-70305d8895a2"
+# NOWPAYMENTS_API_KEY and NOWPAYMENTS_IPN_SECRET must be set as Cloudflare secrets (never in [vars]):
+#   wrangler secret put NOWPAYMENTS_API_KEY
+#   wrangler secret put NOWPAYMENTS_IPN_SECRET

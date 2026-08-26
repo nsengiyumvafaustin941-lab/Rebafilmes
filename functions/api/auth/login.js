@@ -69,6 +69,35 @@ export async function onRequestPost({ request, env }) {
       return jsonError('Invalid email or password', 401);
     }
 
+    let userPlan = user.plan || 'free';
+
+    // Auto-sync active VIP subscription if exists
+    try {
+      const activeSub = await env.DB.prepare(
+        `SELECT id, plan FROM vip_subscriptions
+         WHERE (user_id = ? OR (phone IS NOT NULL AND phone != '' AND (phone = ? OR phone = ?)))
+           AND status = 'approved'
+           AND (expires_at IS NULL OR expires_at > datetime('now'))
+         ORDER BY id DESC LIMIT 1`
+      ).bind(user.id, user.phone || 'none', searchPhone || 'none').first();
+
+      if (activeSub) {
+        userPlan = 'vip';
+        if (user.plan !== 'vip') {
+          await env.DB.prepare(
+            `UPDATE users SET plan = 'vip', updated_at = datetime('now') WHERE id = ?`
+          ).bind(user.id).run();
+        }
+        if (activeSub.id) {
+          await env.DB.prepare(
+            `UPDATE vip_subscriptions SET user_id = ?, updated_at = datetime('now') WHERE id = ?`
+          ).bind(user.id, activeSub.id).run();
+        }
+      }
+    } catch (e) {
+      console.warn('[auth/login] VIP sync warning:', e);
+    }
+
     const token = generateToken();
     const expiresAt = new Date(Date.now() + SESSION_DURATION_SECONDS * 1000).toISOString();
 
@@ -86,7 +115,15 @@ export async function onRequestPost({ request, env }) {
     }
 
     return new Response(
-      JSON.stringify({ user: { id: user.id, email: user.email, name: user.name, plan: user.plan } }),
+      JSON.stringify({
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          phone: user.phone || null,
+          plan: userPlan,
+        },
+      }),
       {
         status: 200,
         headers: {

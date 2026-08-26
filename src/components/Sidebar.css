@@ -378,6 +378,43 @@
   }
 }
 
+/* ── VIP Sidebar Button Styles ────────────────────────── */
+.vip-sidebar-btn {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 170, 0, 0.03)) !important;
+  border: 1px solid rgba(255, 215, 0, 0.22) !important;
+  margin-bottom: 0.35rem;
+}
+
+.vip-sidebar-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.18), rgba(255, 170, 0, 0.08)) !important;
+  border-color: rgba(255, 215, 0, 0.45) !important;
+}
+
+.vip-sidebar-btn.is-vip-active {
+  background: linear-gradient(135deg, rgba(0, 230, 118, 0.12), rgba(0, 230, 118, 0.04)) !important;
+  border-color: rgba(0, 230, 118, 0.35) !important;
+}
+
+.vip-icon-glow {
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5));
+}
+
+.vip-badge-mini {
+  margin-left: auto;
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.bottom-vip-btn {
+  color: #ffd700 !important;
+}
+
 @media (max-width: 480px) {
   .bottom-link,
   .bottom-lang-btn {
@@ -386,3 +423,4 @@
     min-width: 44px;
   }
 }
+

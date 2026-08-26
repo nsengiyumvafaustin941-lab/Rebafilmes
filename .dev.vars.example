@@ -1,3 +1,9 @@
 # Local secrets for `wrangler pages dev` / `npm run dev:full`
 # Get a free key at https://www.themoviedb.org/settings/api
 TMDB_API_KEY=
+# Google OAuth Integration (Admin Google Sign-In)
+GOOGLE_CLIENT_ID=212693926603-492fgvn9fa0sqe1769pivtio7hnvgvqt.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=
+# Admin whitelist (comma-separated for multiple admins)
+ADMIN_EMAIL=
+ADMIN_EMAILS=

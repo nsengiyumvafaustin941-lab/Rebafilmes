@@ -3,38 +3,57 @@ import { ADMIN_SESSION_KEY } from '../utils/constants';
 
 const AdminContext = createContext();
 
-const ADMIN_CREDENTIALS  = { username: 'admin', password: 'rebafilme2026' };
-
 export const AdminProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(() => {
     try { return Boolean(localStorage.getItem(ADMIN_SESSION_KEY)); } catch { return false; }
   });
   const [loginError, setLoginError] = useState('');
 
-  const login = useCallback((username, password) => {
-    if (
-      username.trim() === ADMIN_CREDENTIALS.username &&
-      password        === ADMIN_CREDENTIALS.password
-    ) {
-      localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ username, token: password, at: Date.now() }));
+  const adminLoginWithGoogle = useCallback(async (credential) => {
+    setLoginError('');
+    try {
+      const res = await fetch('/api/admin/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ credential }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setLoginError(data.error || 'Google admin sign-in failed');
+        return false;
+      }
+      localStorage.setItem(
+        ADMIN_SESSION_KEY,
+        JSON.stringify({ username: data.user || 'admin', token: 'google_session', at: Date.now() })
+      );
       setIsAdmin(true);
-      setLoginError('');
       return true;
+    } catch {
+      setLoginError('Network error. Please try again.');
+      return false;
     }
-    setLoginError('Invalid username or password');
-    return false;
   }, []);
 
   const logout = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+        window.google.accounts.id.disableAutoSelect();
+      }
+    } catch (e) {
+      console.warn('Google auto-select reset error:', e);
+    }
     localStorage.removeItem(ADMIN_SESSION_KEY);
     setIsAdmin(false);
+    setLoginError('');
   }, []);
 
   return (
-    <AdminContext.Provider value={{ isAdmin, login, logout, loginError, setLoginError }}>
+    <AdminContext.Provider value={{ isAdmin, adminLoginWithGoogle, logout, loginError, setLoginError }}>
       {children}
     </AdminContext.Provider>
   );
 };
 
 export const useAdmin = () => useContext(AdminContext);
+

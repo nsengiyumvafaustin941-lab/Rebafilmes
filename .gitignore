@@ -27,3 +27,6 @@ upload-to-r2.mjs
 
 # Wrangler state
 .wrangler
+
+# Local IDE/Assistant files
+.kilo/

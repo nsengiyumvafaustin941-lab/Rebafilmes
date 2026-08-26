@@ -10,10 +10,16 @@ import {
   Layers,
   Film,
   Download,
+  Crown,
+  ExternalLink,
 } from 'lucide-react';
+
 import { STREAM_PROVIDERS, buildStreamUrl } from '../utils/streamProviders';
 import { getTvSeason, getTvShow } from '../utils/tmdb';
-import { buildDownloadUrl } from '../utils/settings';
+import { buildDownloadUrl, getSettings } from '../utils/settings';
+import { useVIP } from '../hooks/useVIP';
+import { useVIPModal } from '../contexts/VIPModalContext';
+import { useAds } from '../contexts/AdsContext';
 import './StreamPlayer.css';
 
 export const StreamPlayer = ({
@@ -24,6 +30,11 @@ export const StreamPlayer = ({
   onEpisodeChange,
   onServerChange,
 }) => {
+  const { isVip } = useVIP();
+  const { openVIPModal } = useVIPModal();
+  const { trackImpression, trackClick } = useAds();
+  const settings = getSettings();
+
   const [activeServerIdx, setActiveServerIdx] = useState(
     initialServer >= 0 && initialServer < STREAM_PROVIDERS.length ? initialServer : 0
   );
@@ -37,12 +48,53 @@ export const StreamPlayer = ({
   const [reloadNonce, setReloadNonce] = useState(0);
   const [tvDetail, setTvDetail] = useState(null);
 
+  // In-Stream Video Ad state
+  const [playingVideoAd, setPlayingVideoAd] = useState(false);
+  const [adSecondsLeft, setAdSecondsLeft] = useState(0);
+  const [canSkipAd, setCanSkipAd] = useState(false);
+  const adVideoRef = useRef(null);
+  const adTrackedRef = useRef(false);
+
   const iframeRef = useRef(null);
   const playerContainerRef = useRef(null);
 
   const isSeries = item?.type === 'series' || item?.type === 'tv';
   const currentProvider = STREAM_PROVIDERS[activeServerIdx] || STREAM_PROVIDERS[0];
   const tmdbId = item?.tmdbId || item?.id;
+
+  const handleVideoAdPlay = () => {
+    if (!adTrackedRef.current) {
+      adTrackedRef.current = true;
+      if (trackImpression) trackImpression('video_preroll_global');
+      try {
+        window.dispatchEvent(new CustomEvent('rebafilme_video_ad_impression', {
+          detail: { url: settings.videoAdUrl, timestamp: Date.now() }
+        }));
+      } catch {}
+    }
+  };
+
+  const handleSponsorClick = () => {
+    if (trackClick) trackClick('video_preroll_global');
+    try {
+      window.dispatchEvent(new CustomEvent('rebafilme_video_ad_click', {
+        detail: { link: settings.videoAdLink, timestamp: Date.now() }
+      }));
+    } catch {}
+  };
+
+  const triggerPlay = () => {
+    if (!isVip && settings.videoAdsEnabled && settings.videoAdUrl && settings.videoAdUrl.trim()) {
+      setPlayingVideoAd(true);
+      setAdSecondsLeft(Number(settings.videoAdDuration) || 10);
+      setCanSkipAd(false);
+      adTrackedRef.current = false;
+    } else {
+      setPlayingVideoAd(false);
+    }
+    setIsPlaying(true);
+  };
+
 
   // Build active stream URL
   const embedUrl = buildStreamUrl(
@@ -252,6 +304,25 @@ export const StreamPlayer = ({
     ? `/api/download?url=${encodeURIComponent(item.videoUrl)}&title=${encodeURIComponent(item.title)}`
     : buildDownloadUrl(item?.title || '');
 
+  // Video Ad Countdown & Skip logic
+  useEffect(() => {
+    if (!playingVideoAd) return;
+    const interval = setInterval(() => {
+      setAdSecondsLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setPlayingVideoAd(false);
+          return 0;
+        }
+        if (prev <= 6) {
+          setCanSkipAd(true);
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [playingVideoAd]);
+
   return (
     <div
       ref={playerContainerRef}
@@ -271,7 +342,7 @@ export const StreamPlayer = ({
             style={{
               backgroundImage: `url(${item?.backdrop || item?.poster})`,
             }}
-            onClick={() => setIsPlaying(true)}
+            onClick={triggerPlay}
           >
             <div className="stream-facade-overlay" />
             <div className="stream-facade-content">
@@ -286,6 +357,64 @@ export const StreamPlayer = ({
                 <span>{isSeries ? `Season ${currentSeason} · Episode ${currentEpisode}` : item?.year || 'Full Movie'}</span>
                 <span>•</span>
                 <span style={{ color: '#00e676', fontWeight: 600 }}>14 Servers Available</span>
+              </div>
+            </div>
+          </div>
+        ) : playingVideoAd && settings.videoAdUrl && !isVip ? (
+          <div className="stream-video-ad-container">
+            <video
+              ref={adVideoRef}
+              src={settings.videoAdUrl}
+              autoPlay
+              playsInline
+              onPlay={handleVideoAdPlay}
+              onEnded={() => setPlayingVideoAd(false)}
+              className="stream-video-ad-element"
+            />
+            {/* Ad Overlay Controls */}
+            <div className="stream-video-ad-overlay">
+              <div className="stream-video-ad-top">
+                <span className="stream-ad-badge">SPONSORED AD</span>
+                {settings.videoAdLink && (
+                  <a
+                    href={settings.videoAdLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleSponsorClick}
+                    className="stream-ad-visit-btn"
+                  >
+                    <span>Visit Sponsor</span>
+                    <ExternalLink size={13} />
+                  </a>
+                )}
+                <button
+                  type="button"
+                  className="stream-ad-vip-btn"
+                  onClick={openVIPModal}
+                  title="Remove ads with MoMo VIP"
+                >
+                  <Crown size={14} color="#ffd700" />
+                  <span>Remove Ads (VIP)</span>
+                </button>
+              </div>
+
+              <div className="stream-video-ad-bottom">
+                <span className="stream-ad-timer">
+                  Ad playing ({adSecondsLeft}s remaining)
+                </span>
+                {canSkipAd ? (
+                  <button
+                    className="stream-ad-skip-btn active"
+                    onClick={() => setPlayingVideoAd(false)}
+                  >
+                    <span>Skip Ad</span>
+                    <SkipForward size={14} />
+                  </button>
+                ) : (
+                  <span className="stream-ad-skip-btn disabled">
+                    Skip in {Math.max(1, adSecondsLeft - 5)}s
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -365,6 +494,17 @@ export const StreamPlayer = ({
         </div>
 
         <div className="stream-toolbar-right">
+          {!isVip && (
+            <button
+              className="stream-tool-btn stream-vip-cta-btn"
+              onClick={() => setVipModalOpen(true)}
+              title="Activate VIP: Ad-free & Direct Downloads"
+            >
+              <Crown size={14} color="#ffd700" />
+              <span>👑 VIP Pass</span>
+            </button>
+          )}
+
           {item?.trailerKey && (
             <button
               className={`stream-tool-btn ${isTrailerMode ? 'active' : ''}`}
@@ -400,6 +540,8 @@ export const StreamPlayer = ({
           </button>
         </div>
       </div>
+
+
 
       {/* ── 14-Server Selection Section ───────────────────────────── */}
       <div className="stream-server-box">

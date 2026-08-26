@@ -5,3 +5,7 @@ export const LANG_KEY = 'rebafilme_lang';
 export const PROGRESS_KEY = 'rebafilme_progress';
 export const ANNOUNCEMENTS_KEY = 'rebafilme_announcement';
 export const DISMISSED_KEY = 'rebafilme_announcement_dismissed';
+export const VIP_KEY = 'rebafilme_vip';
+export const LAST_POP_KEY = 'rebafilme_last_pop';
+export const POP_INDEX_KEY = 'rebafilme_ad_idx';
+export const GOOGLE_CLIENT_ID = '212693926603-492fgvn9fa0sqe1769pivtio7hnvgvqt.apps.googleusercontent.com';

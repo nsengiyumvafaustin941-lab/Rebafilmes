@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, User, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, User, AlertCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useMovies } from '../contexts/MoviesContext';
+import { GOOGLE_CLIENT_ID } from '../utils/constants';
 import logo from '../assets/logo.jpg';
 import './LoginPage.css';
 
 const LoginPage = () => {
   const { t } = useLanguage();
-  const { login, register } = useAuth();
+  const { login, register, loginWithGoogle } = useAuth();
   const [showPw, setShowPw] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
   const [isForgot, setIsForgot] = useState(false);
@@ -18,7 +19,92 @@ const LoginPage = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const googleBtnRef = useRef(null);
+
+  const searchParams = new URLSearchParams(location.search);
+  const redirectTarget = searchParams.get('redirect') || '/account';
+  const planParam = searchParams.get('plan') || '';
+
+  const handleAuthSuccess = useCallback((selectedPlan = planParam) => {
+    if (redirectTarget === 'vip') {
+      const plan = selectedPlan || sessionStorage.getItem('rebafilme_pending_plan') || 'monthly';
+      try {
+        sessionStorage.setItem('rebafilme_pending_plan', plan);
+        sessionStorage.setItem('rebafilme_auto_open_vip', 'true');
+      } catch {}
+      navigate(`/?vip=1&plan=${encodeURIComponent(plan)}`, { replace: true });
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('rebafilme_open_vip', { detail: { plan } }));
+      }, 100);
+    } else {
+      navigate(redirectTarget, { replace: true });
+    }
+  }, [planParam, redirectTarget, navigate]);
+
+  // Setup Google One-Tap / Sign-In button
+  useEffect(() => {
+    let intervalId;
+
+    const setupGoogle = () => {
+      if (typeof window === 'undefined' || !window.google?.accounts?.id) {
+        return false;
+      }
+
+      try {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: async (response) => {
+            if (!response.credential) return;
+            setGoogleLoading(true);
+            setError('');
+            try {
+              await loginWithGoogle(response.credential);
+              handleAuthSuccess(planParam);
+            } catch (err) {
+              setError(err.message || 'Google sign-in failed');
+            } finally {
+              setGoogleLoading(false);
+            }
+          },
+          auto_select: false,
+        });
+
+        if (googleBtnRef.current) {
+          googleBtnRef.current.innerHTML = '';
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            type: 'standard',
+            theme: 'filled_blue',
+            size: 'large',
+            text: 'continue_with',
+            shape: 'pill',
+            width: 320,
+            logo_alignment: 'left',
+          });
+        }
+        return true;
+      } catch (err) {
+        console.error('Failed to initialize Google Sign-In:', err);
+        return false;
+      }
+    };
+
+    if (!setupGoogle()) {
+      intervalId = setInterval(() => {
+        if (!setupGoogle()) {
+          // keep trying until window.google is ready
+        } else {
+          clearInterval(intervalId);
+        }
+      }, 200);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [loginWithGoogle, handleAuthSuccess, planParam]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,15 +173,14 @@ const LoginPage = () => {
           phone: formData.phone,
           password: formData.password
         });
+        handleAuthSuccess(planParam);
       } else {
         const identifier = formData.email || formData.phone;
         if (!identifier || !formData.password) {
           throw new Error('Please enter your email or phone number, and password.');
         }
         await login(identifier, formData.password);
-      }
-      if (!isForgot && !isReset) {
-        navigate('/account');
+        handleAuthSuccess(planParam);
       }
     } catch (err) {
       setError(err.message);
@@ -147,16 +232,37 @@ const LoginPage = () => {
             {isForgot ? 'Enter your details to get a recovery code.' : isReset ? 'Enter code and choose a new password.' : isRegister ? t('register_sub') : t('login_sub')}
           </p>
 
+
           {error && (
             <div className="login-error" style={{ 
               background: error.includes('sent') || error.includes('success') ? 'rgba(76,175,80,0.1)' : 'rgba(239,68,68,0.1)', 
               border: error.includes('sent') || error.includes('success') ? '1px solid rgba(76,175,80,0.3)' : '1px solid rgba(239,68,68,0.3)', 
               padding: '0.75rem', borderRadius: '8px', 
               color: error.includes('sent') || error.includes('success') ? '#4caf50' : '#ef4444', 
-              fontSize: '0.85rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' 
+              fontSize: '0.85rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' 
             }}>
               <AlertCircle size={16} />
               <span style={{ flex: 1 }}>{error}</span>
+            </div>
+          )}
+
+          {/* 1-Click Google Sign-In Container */}
+          {!isForgot && !isReset && (
+            <div className="login-google-section">
+              <div className="login-google-wrap">
+                {googleLoading ? (
+                  <div className="login-google-loading">
+                    <Loader2 size={20} className="spin" />
+                    <span>Injira na Google...</span>
+                  </div>
+                ) : (
+                  <div ref={googleBtnRef} className="login-google-btn-slot" />
+                )}
+              </div>
+
+              <div className="login-or" style={{ margin: '1.25rem 0' }}>
+                <span>CYANGWA NA EMAIL / TELEFONE</span>
+              </div>
             </div>
           )}
 
