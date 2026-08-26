@@ -105,7 +105,12 @@ export async function getPaypackToken(env) {
     }
 
     const data = await res.json();
-    const token = data.access_token;
+    const token = data.access || data.access_token || data.token;
+
+    if (!token) {
+      console.error('[paypack] No access token in response:', data);
+      return null;
+    }
 
     // Cache in KV for 15 minutes (token usually expires in 30-60 mins)
     if (token && env.KV) {
