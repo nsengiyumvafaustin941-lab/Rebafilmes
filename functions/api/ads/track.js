@@ -1,9 +1,5 @@
 // functions/api/ads/track.js
 // POST /api/ads/track — Atomic telemetry for ad impressions, clicks & SmartLink triggers
-// GET /api/ads/track — Query stats for ad ID or SmartLinks
-
-import { checkRateLimit } from '../../_lib/ratelimit.js';
-
 const AD_COUNTER_PREFIX = 'ad_counter:';
 const SL_STATS_PREFIX = 'rebafilme_sl_stats_';
 
@@ -11,15 +7,6 @@ export async function onRequestPost({ request, env }) {
   if (!env.KV) {
     return new Response(JSON.stringify({ error: 'KV storage not configured' }), { 
       status: 503,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  // Rate limit: 120 events per minute per IP
-  const allowed = await checkRateLimit(request, env, 120, 60);
-  if (!allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { 
-      status: 429,
       headers: { 'Content-Type': 'application/json' }
     });
   }

@@ -32,6 +32,118 @@ const TRIGGER_SELECTORS = [
   '.content-card',
 ].join(',');
 
+export const SMARTLINKS_RR_KEY = 'rebafilme_sl_rr_idx';
+
+/**
+ * Parses raw newline-separated SmartLinks text into structured items with weights & percentages.
+ * Supports syntax: `https://example.com/link | 70%` or `https://example.com/link | 70` or `https://example.com/link`
+ */
+export function parseSmartLinks(rawList) {
+  if (!rawList || typeof rawList !== 'string') return [];
+
+  const lines = rawList
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0 && !l.startsWith('#'));
+
+  const parsed = [];
+
+  for (const line of lines) {
+    let url = line;
+    let weight = 1;
+    let hasInvalidWeight = false;
+
+    if (line.includes('|')) {
+      const parts = line.split('|');
+      url = parts[0].trim();
+      const rawWeight = parts[1].trim().replace('%', '');
+      const parsedNum = parseFloat(rawWeight);
+      if (!isNaN(parsedNum) && parsedNum > 0) {
+        weight = parsedNum;
+      } else {
+        hasInvalidWeight = true;
+        weight = 1; // Graceful fallback
+      }
+    }
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      let domain = '';
+      try {
+        domain = new URL(url).hostname;
+      } catch {
+        domain = 'ad-network';
+      }
+
+      parsed.push({
+        url,
+        weight,
+        domain,
+        hasInvalidWeight,
+        raw: line,
+      });
+    }
+  }
+
+  const totalWeight = parsed.reduce((sum, item) => sum + item.weight, 0);
+  if (totalWeight <= 0 || parsed.length === 0) return [];
+
+  // Calculate percentages and ensure exact 100% total sum without rounding artifacts
+  let runningSum = 0;
+  return parsed.map((item, index) => {
+    let percentage;
+    if (index === parsed.length - 1) {
+      percentage = Math.max(0, 100 - runningSum);
+    } else {
+      percentage = Math.round((item.weight / totalWeight) * 100);
+      runningSum += percentage;
+    }
+
+    return {
+      ...item,
+      percentage,
+    };
+  });
+}
+
+/**
+ * Picks a SmartLink according to the chosen load balancing strategy.
+ */
+export function pickSmartLink(links, strategy = 'weighted') {
+  if (!links || links.length === 0) return null;
+
+  if (links.length === 1) return { link: links[0], nextIndex: 0 };
+
+  if (strategy === 'random') {
+    const randomIndex = Math.floor(Math.random() * links.length);
+    return { link: links[randomIndex], nextIndex: randomIndex };
+  }
+
+  if (strategy === 'round_robin') {
+    const lastIdx = parseInt(
+      localStorage.getItem(SMARTLINKS_RR_KEY) || localStorage.getItem(POP_INDEX_KEY) || '0',
+      10
+    );
+    const nextIdx = (lastIdx + 1) % links.length;
+    localStorage.setItem(SMARTLINKS_RR_KEY, nextIdx.toString());
+    localStorage.setItem(POP_INDEX_KEY, nextIdx.toString());
+    return { link: links[lastIdx % links.length], nextIndex: nextIdx };
+  }
+
+  // Default: 'weighted' (Weighted Reservoir Selection)
+  const totalWeight = links.reduce((sum, item) => sum + item.weight, 0);
+  let random = Math.random() * (totalWeight || 1);
+
+  for (let i = 0; i < links.length; i++) {
+    const item = links[i];
+    if (random < item.weight) {
+      return { link: item, nextIndex: i };
+    }
+    random -= item.weight;
+  }
+
+  return { link: links[0], nextIndex: 0 };
+}
+
 export function useSmartLinks() {
   const { isVip } = useVIP();
   const { isAdmin } = useAdmin();
@@ -72,12 +184,9 @@ export function useSmartLinks() {
       if (!settings.smartlinksEnabled || settings.disableMonetization) return;
 
       const rawList = settings.smartlinksList || '';
-      const links = rawList
-        .split('\n')
-        .map((l) => l.trim())
-        .filter((l) => l.startsWith('http://') || l.startsWith('https://'));
+      const parsedLinks = parseSmartLinks(rawList);
 
-      if (links.length === 0) return;
+      if (parsedLinks.length === 0) return;
 
       // 4. Cooldown and Session Frequency Cap check
       const cooldownMs = (Number(settings.smartlinksCooldown) || 45) * 1000;
@@ -90,35 +199,40 @@ export function useSmartLinks() {
       const maxPerSession = Number(settings.smartlinksMaxPerSession) || 6;
       if (sessionPopCount >= maxPerSession) return;
 
-      // 5. Fire — record before opening to prevent double-fire on slow clicks
+      // 5. Pick URL via Load Balancer (Weighted, Round-Robin, or Random)
+      const strategy = settings.smartlinksStrategy || 'weighted';
+      const picked = pickSmartLink(parsedLinks, strategy);
+      if (!picked || !picked.link) return;
+
+      const { url: targetUrl, domain: targetDomain } = picked.link;
+      const idx = picked.nextIndex;
+
+      // Record before opening to prevent double-fire on slow clicks
       localStorage.setItem(LAST_POP_KEY, now.toString());
       sessionStorage.setItem('rebafilme_session_pop_count', (sessionPopCount + 1).toString());
-
-      const idx = parseInt(localStorage.getItem(POP_INDEX_KEY) || '0', 10);
-      const targetUrl = links[idx % links.length];
-      localStorage.setItem(POP_INDEX_KEY, ((idx + 1) % links.length).toString());
 
       try {
         const win = window.open(targetUrl, '_blank', 'noopener,noreferrer');
         if (!win || win.closed || typeof win.closed === 'undefined') {
           window.dispatchEvent(new CustomEvent('rebafilme_popunder_blocked', {
-            detail: { url: targetUrl, timestamp: now }
+            detail: { url: targetUrl, domain: targetDomain, timestamp: now }
           }));
         } else {
           window.dispatchEvent(new CustomEvent('rebafilme_popunder_opened', {
-            detail: { url: targetUrl, index: idx, timestamp: now }
+            detail: { url: targetUrl, domain: targetDomain, index: idx, strategy, timestamp: now }
           }));
 
           // Persist telemetry to /api/ads/track
           try {
-            const domain = new URL(targetUrl).hostname.replace(/[^a-zA-Z0-9]/g, '_');
+            const cleanDomain = String(targetDomain).replace(/[^a-zA-Z0-9]/g, '_');
             fetch('/api/ads/track', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 type: 'smartlink_trigger',
                 targetUrl,
-                targetDomain: domain,
+                targetDomain: cleanDomain,
+                strategy,
               }),
             }).catch(() => {});
           } catch {}
@@ -137,3 +251,4 @@ export function useSmartLinks() {
 }
 
 export default useSmartLinks;
+

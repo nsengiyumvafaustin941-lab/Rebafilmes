@@ -19,11 +19,12 @@ export const DEFAULT_SETTINGS = {
 
   // 💰 Monetization Pillar 1: SmartLinks & Popunders
   smartlinksEnabled: true,
-  smartlinksList: `https://nickeldefiancepriest.com/adsterra-direct-link-1
-https://omg10.com/4/monetag-direct-link-1
-https://nickeldefiancepriest.com/adsterra-direct-link-2
-https://clickadu.com/smartlink-direct-link-1`,
+  smartlinksStrategy: 'weighted', // 'weighted' | 'round_robin' | 'random'
+  smartlinksList: `https://nickeldefiancepriest.com/adsterra-direct-link-1 | 60%
+https://omg10.com/4/monetag-direct-link-1 | 30%
+https://clickadu.com/smartlink-direct-link-1 | 10%`,
   smartlinksCooldown: 45, // in seconds
+  smartlinksMaxPerSession: 6, // max popunders per browser session
 
   // 🎬 Monetization Pillar 2: In-Stream Video Ads (Pre-Roll)
   videoAdsEnabled: false,

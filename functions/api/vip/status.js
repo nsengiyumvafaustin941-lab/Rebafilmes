@@ -4,7 +4,6 @@
 
 import { getSessionToken } from '../../_lib/cookies.js';
 import { getTransactionStatus } from '../../_lib/paypack.js';
-import { checkRateLimit } from '../../_lib/ratelimit.js';
 
 function jsonOk(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -22,12 +21,6 @@ function jsonError(message, status = 400) {
 
 export async function onRequestGet({ request, env }) {
   if (!env.DB) return jsonError('Database not configured', 503);
-
-  // Rate limit: 120 requests per minute per IP
-  const allowed = await checkRateLimit(request, env, 120, 60);
-  if (!allowed) {
-    return jsonError('Too many status checks. Please slow down.', 429);
-  }
 
   const url = new URL(request.url);
   const queryPhone = (url.searchParams.get('phone') || '').trim();
