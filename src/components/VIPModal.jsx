@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   X, ChevronLeft, ArrowRight, ShieldCheck, Zap, 
   CheckCircle2, AlertCircle, RefreshCw, Smartphone, 
-  CreditCard, ExternalLink, Lock, Ticket, Globe
+  CreditCard, ExternalLink, Lock, Ticket
 } from 'lucide-react';
 import { useVIPModal } from '../contexts/VIPModalContext';
 import { useVIP } from '../hooks/useVIP';

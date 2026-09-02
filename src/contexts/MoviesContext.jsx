@@ -1,11 +1,64 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { getTrending, getTopRated, getPopular, getPopularTv, getTopRatedTv, getMovieOrTv } from '../utils/tmdb';
 import { api } from '../utils/api';
+import { ALL_CONTENT } from '../data/mockData';
 
 const MoviesContext = createContext();
 
 const ADMIN_MOVIES_KEY = 'rebafilme_admin_movies';
 const CURATED_KEY = 'rebafilme_curated';
+const CATALOG_SNAPSHOT_KEY = 'rebafilme_catalog_snapshot_v1';
+
+function saveCatalogSnapshot(movies) {
+  if (!Array.isArray(movies) || movies.length === 0) return;
+  try {
+    // Only cache essential fields to prevent localStorage overflow
+    const compact = movies.slice(0, 80).map((m) => ({
+      id: m.id,
+      tmdbId: m.tmdbId || m.id,
+      title: m.title,
+      type: m.type || 'movie',
+      genre: m.genre || 'Action',
+      year: m.year,
+      rating: m.rating,
+      poster: m.poster,
+      backdrop: m.backdrop,
+      description: m.description,
+      badge: m.badge,
+      featured: m.featured,
+      popular: m.popular,
+      source: m.source || 'snapshot',
+      seasons: m.seasons,
+      episodes: m.episodes,
+      videoUrl: m.videoUrl,
+      trailerKey: m.trailerKey,
+    }));
+    localStorage.setItem(CATALOG_SNAPSHOT_KEY, JSON.stringify(compact));
+  } catch (e) {
+    console.warn('[MoviesContext] Snapshot write error:', e);
+  }
+}
+
+function loadCatalogSnapshot() {
+  try {
+    const raw = localStorage.getItem(CATALOG_SNAPSHOT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function getAutonomousSeedCatalog() {
+  if (Array.isArray(ALL_CONTENT) && ALL_CONTENT.length > 0) {
+    return ALL_CONTENT.map((m) => ({
+      ...m,
+      source: 'seed',
+    }));
+  }
+  return [];
+}
 
 function applyCurated(movies, curated) {
   if (!Array.isArray(movies)) return [];
@@ -21,84 +74,128 @@ export const MoviesProvider = ({ children }) => {
   const [curatedMap, setCuratedMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isOfflineFallback, setIsOfflineFallback] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const moviesRef = useRef([]);
 
   useEffect(() => {
     moviesRef.current = allMovies;
   }, [allMovies]);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(async (isSilentRevalidate = false) => {
+    if (!isSilentRevalidate) {
       setLoading(true);
-      setError(null);
-      try {
-        const curated = await api.get(CURATED_KEY, {});
-        setCuratedMap(curated && typeof curated === 'object' && !Array.isArray(curated) ? curated : {});
+    }
+    setError(null);
+    try {
+      const curated = await api.get(CURATED_KEY, {});
+      const safeCurated = curated && typeof curated === 'object' && !Array.isArray(curated) ? curated : {};
+      setCuratedMap(safeCurated);
 
-        // Fetch from 5 diverse TMDB sources in parallel for a mixed catalogue
-        const [
-          trend1, trend2,       // This week's trending (movies + TV mixed)
-          topRated1, topRated2, // All-time top rated movies (classics + modern)
-          popular1,             // Popular movies of all time
-          popularTv1,           // Popular TV shows
-          topRatedTv1,          // Top-rated TV shows
-        ] = await Promise.allSettled([
-          getTrending(1),
-          getTrending(2),
-          getTopRated(1),
-          getTopRated(2),
-          getPopular(1),
-          getPopularTv(1),
-          getTopRatedTv(1),
-        ]);
+      // Fetch from 5 diverse TMDB sources in parallel for a mixed catalogue
+      const [
+        trend1, trend2,       // This week's trending (movies + TV mixed)
+        topRated1, topRated2, // All-time top rated movies (classics + modern)
+        popular1,             // Popular movies of all time
+        popularTv1,           // Popular TV shows
+        topRatedTv1,          // Top-rated TV shows
+      ] = await Promise.allSettled([
+        getTrending(1),
+        getTrending(2),
+        getTopRated(1),
+        getTopRated(2),
+        getPopular(1),
+        getPopularTv(1),
+        getTopRatedTv(1),
+      ]);
 
-        // Collect successful results and ensure only valid arrays
-        const sources = [trend1, trend2, topRated1, topRated2, popular1, popularTv1, topRatedTv1]
-          .filter((r) => r.status === 'fulfilled' && Array.isArray(r.value))
-          .map((r) => r.value);
+      // Collect successful results and ensure only valid arrays
+      const sources = [trend1, trend2, topRated1, topRated2, popular1, popularTv1, topRatedTv1]
+        .filter((r) => r.status === 'fulfilled' && Array.isArray(r.value))
+        .map((r) => r.value);
 
-        // Interleave sources so home page shows variety (not all trending first)
-        const merged = [];
-        const seen = new Set();
-        const maxLen = sources.length > 0 ? Math.max(...sources.map((s) => s.length)) : 0;
-        for (let i = 0; i < maxLen; i++) {
-          for (const src of sources) {
-            if (i < src.length) {
-              const m = src[i];
-              if (m && m.id && !seen.has(m.id)) {
-                seen.add(m.id);
-                merged.push({ ...m, source: 'tmdb' });
-              }
-            }
-          }
-        }
-
-        // Add admin-uploaded movies (always included, not deduplicated away)
-        const customMovies = await api.get(ADMIN_MOVIES_KEY, []);
-        if (Array.isArray(customMovies)) {
-          for (const m of customMovies) {
+      // Interleave sources so home page shows variety (not all trending first)
+      const merged = [];
+      const seen = new Set();
+      const maxLen = sources.length > 0 ? Math.max(...sources.map((s) => s.length)) : 0;
+      for (let i = 0; i < maxLen; i++) {
+        for (const src of sources) {
+          if (i < src.length) {
+            const m = src[i];
             if (m && m.id && !seen.has(m.id)) {
               seen.add(m.id);
-              merged.push({ ...m, source: 'admin' });
+              merged.push({ ...m, source: 'tmdb' });
             }
           }
         }
-
-        setAllMovies(applyCurated(merged, curated));
-      } catch (err) {
-        console.warn('TMDB fetch failed, falling back to admin movies', err);
-        setError(err.message);
-        const fetchedMovies = await api.get(ADMIN_MOVIES_KEY, []);
-        const curated = await api.get(CURATED_KEY, {});
-        setCuratedMap(curated && typeof curated === 'object' && !Array.isArray(curated) ? curated : {});
-        const safeFetched = Array.isArray(fetchedMovies) ? fetchedMovies : [];
-        setAllMovies(applyCurated(safeFetched.map((m) => ({ ...m, source: 'admin' })), curated));
-      } finally {
-        setLoading(false);
       }
-    };
-    fetchData();
+
+      // Add admin-uploaded movies (always included, not deduplicated away)
+      const customMovies = await api.get(ADMIN_MOVIES_KEY, []);
+      if (Array.isArray(customMovies)) {
+        for (const m of customMovies) {
+          if (m && m.id && !seen.has(m.id)) {
+            seen.add(m.id);
+            merged.push({ ...m, source: 'admin' });
+          }
+        }
+      }
+
+      // If we got valid merged results, apply curated and save snapshot
+      if (merged.length > 0) {
+        const finalMovies = applyCurated(merged, safeCurated);
+        setAllMovies(finalMovies);
+        saveCatalogSnapshot(finalMovies);
+        setIsOfflineFallback(false);
+        setLastSyncedAt(new Date().toISOString());
+        return;
+      }
+
+      // If online fetch produced 0 items, engage autonomous fallback
+      throw new Error('Online catalog returned 0 items');
+    } catch (err) {
+      console.warn('[MoviesContext] Online fetch failed, engaging autonomous fallback:', err);
+      setError(err.message);
+
+      // 1. Try admin movies from KV
+      const fetchedMovies = await api.get(ADMIN_MOVIES_KEY, []).catch(() => []);
+      const curated = await api.get(CURATED_KEY, {}).catch(() => ({}));
+      const safeCurated = curated && typeof curated === 'object' && !Array.isArray(curated) ? curated : {};
+      setCuratedMap(safeCurated);
+
+      if (Array.isArray(fetchedMovies) && fetchedMovies.length > 0) {
+        setAllMovies(applyCurated(fetchedMovies.map((m) => ({ ...m, source: 'admin' })), safeCurated));
+        setIsOfflineFallback(true);
+        return;
+      }
+
+      // 2. Try persistent localStorage snapshot
+      const cachedSnapshot = loadCatalogSnapshot();
+      if (cachedSnapshot && cachedSnapshot.length > 0) {
+        setAllMovies(applyCurated(cachedSnapshot, safeCurated));
+        setIsOfflineFallback(true);
+        return;
+      }
+
+      // 3. Guaranteed zero-empty autonomous seed fallback
+      const seedData = getAutonomousSeedCatalog();
+      setAllMovies(applyCurated(seedData, safeCurated));
+      setIsOfflineFallback(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+
+    // Auto-revalidate when browser comes back online
+    const handleOnline = () => {
+      fetchData(true);
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [fetchData]);
 
   const fetchMovieById = useCallback(async (id) => {
     const numericId = Number(id);
@@ -196,6 +293,9 @@ export const MoviesProvider = ({ children }) => {
         isMock,
         loading,
         error,
+        isOfflineFallback,
+        lastSyncedAt,
+        refetchCatalog: fetchData,
         fetchMovieById,
       }}
     >

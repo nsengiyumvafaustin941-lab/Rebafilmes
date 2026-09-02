@@ -12,6 +12,8 @@ import {
   Download,
   Crown,
   ExternalLink,
+  Zap,
+  X,
 } from 'lucide-react';
 
 import { STREAM_PROVIDERS, buildStreamUrl } from '../utils/streamProviders';
@@ -23,6 +25,8 @@ import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { useVIPModal } from '../contexts/VIPModalContext';
 import { useAds } from '../contexts/AdsContext';
 import './StreamPlayer.css';
+
+const AUTONOMOUS_FAILOVER_TIMEOUT_MS = 8500; // 8.5 seconds watchdog timeout
 
 export const StreamPlayer = ({
   item,
@@ -52,6 +56,22 @@ export const StreamPlayer = ({
   const [reloadNonce, setReloadNonce] = useState(0);
   const [tvDetail, setTvDetail] = useState(null);
 
+  // ⚡ Autonomous Server Failover Engine State
+  const [autoFailover, setAutoFailover] = useState(() => {
+    try {
+      const saved = localStorage.getItem('rebafilme_auto_failover');
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+  const [failedServers, setFailedServers] = useState([]);
+  const [streamHealthy, setStreamHealthy] = useState(false);
+  const [hudNotification, setHudNotification] = useState(null);
+  const consecutiveFailuresRef = useRef(0);
+  const failoverTimerRef = useRef(null);
+  const hudTimeoutRef = useRef(null);
+
   // In-Stream Video Ad state
   const [playingVideoAd, setPlayingVideoAd] = useState(false);
   const [adSecondsLeft, setAdSecondsLeft] = useState(0);
@@ -66,14 +86,24 @@ export const StreamPlayer = ({
   const currentProvider = STREAM_PROVIDERS[activeServerIdx] || STREAM_PROVIDERS[0];
   const tmdbId = item?.tmdbId || item?.id;
 
+  const showHudMessage = useCallback((message, type = 'info', duration = 4500) => {
+    if (hudTimeoutRef.current) clearTimeout(hudTimeoutRef.current);
+    setHudNotification({ message, type, id: Date.now() });
+    hudTimeoutRef.current = setTimeout(() => {
+      setHudNotification(null);
+    }, duration);
+  }, []);
+
   const handleVideoAdPlay = () => {
     if (!adTrackedRef.current) {
       adTrackedRef.current = true;
       if (trackImpression) trackImpression('video_preroll_global');
       try {
-        window.dispatchEvent(new CustomEvent('rebafilme_video_ad_impression', {
-          detail: { url: settings.videoAdUrl, timestamp: Date.now() }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('rebafilme_video_ad_impression', {
+            detail: { url: settings.videoAdUrl, timestamp: Date.now() },
+          })
+        );
       } catch {}
     }
   };
@@ -81,14 +111,23 @@ export const StreamPlayer = ({
   const handleSponsorClick = () => {
     if (trackClick) trackClick('video_preroll_global');
     try {
-      window.dispatchEvent(new CustomEvent('rebafilme_video_ad_click', {
-        detail: { link: settings.videoAdLink, timestamp: Date.now() }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('rebafilme_video_ad_click', {
+          detail: { link: settings.videoAdLink, timestamp: Date.now() },
+        })
+      );
     } catch {}
   };
 
   const triggerPlay = () => {
-    if (!isVip && !isAdmin && monetizationEnabled && settings.videoAdsEnabled && settings.videoAdUrl && settings.videoAdUrl.trim()) {
+    if (
+      !isVip &&
+      !isAdmin &&
+      monetizationEnabled &&
+      settings.videoAdsEnabled &&
+      settings.videoAdUrl &&
+      settings.videoAdUrl.trim()
+    ) {
       setPlayingVideoAd(true);
       setAdSecondsLeft(Number(settings.videoAdDuration) || 10);
       setCanSkipAd(false);
@@ -98,7 +137,6 @@ export const StreamPlayer = ({
     }
     setIsPlaying(true);
   };
-
 
   // Build active stream URL
   const embedUrl = buildStreamUrl(
@@ -170,30 +208,108 @@ export const StreamPlayer = ({
     };
   }, [isSeries, tmdbId, currentSeason, item]);
 
-  // Episode Selection
-  const handleEpisodeSelect = useCallback((epNum, sNum = currentSeason) => {
-    setCurrentSeason(sNum);
-    setCurrentEpisode(epNum);
-    setIsPlaying(true);
-    setIsTrailerMode(false);
-    setReloadNonce((n) => n + 1);
-    if (onEpisodeChange) onEpisodeChange(sNum, epNum);
-  }, [currentSeason, onEpisodeChange]);
-
-  // Handle Server Switching
-  const handleServerSelect = (idx) => {
+  // Handle Server Switching (Manual or Autonomous)
+  const handleServerSelect = useCallback((idx, isAutonomous = false) => {
     setActiveServerIdx(idx);
     setIsPlaying(true);
     setIsTrailerMode(false);
+    setStreamHealthy(false);
     setReloadNonce((n) => n + 1);
+    if (!isAutonomous) {
+      consecutiveFailuresRef.current = 0;
+    }
     if (onServerChange) onServerChange(idx);
+  }, [onServerChange]);
+
+  // Autonomous Next Server Failover Action
+  const triggerAutonomousFailover = useCallback(() => {
+    const currentFailedId = STREAM_PROVIDERS[activeServerIdx]?.id;
+    const currentName = STREAM_PROVIDERS[activeServerIdx]?.name || `Server ${activeServerIdx + 1}`;
+    
+    setFailedServers((prev) => (currentFailedId ? [...new Set([...prev, currentFailedId])] : prev));
+    consecutiveFailuresRef.current += 1;
+
+    if (consecutiveFailuresRef.current >= STREAM_PROVIDERS.length) {
+      showHudMessage(`⚠️ All 14 servers tested. Try reloading or using Direct Download below.`, 'error', 6000);
+      return;
+    }
+
+    const nextIdx = (activeServerIdx + 1) % STREAM_PROVIDERS.length;
+    const nextProvider = STREAM_PROVIDERS[nextIdx];
+
+    showHudMessage(
+      `⚡ ${currentName} unresponsive · Autonomously switched to Server ${nextIdx + 1} (${nextProvider.name})`,
+      'failover',
+      4500
+    );
+
+    handleServerSelect(nextIdx, true);
+  }, [activeServerIdx, handleServerSelect, showHudMessage]);
+
+  // Manual Next Server
+  const handleNextServer = () => {
+    consecutiveFailuresRef.current = 0;
+    const nextIdx = (activeServerIdx + 1) % STREAM_PROVIDERS.length;
+    handleServerSelect(nextIdx, false);
   };
 
-  // Next Server Fallback
-  const handleNextServer = () => {
-    const nextIdx = (activeServerIdx + 1) % STREAM_PROVIDERS.length;
-    handleServerSelect(nextIdx);
+  // Toggle Auto-Failover Watchdog
+  const toggleAutoFailover = () => {
+    const next = !autoFailover;
+    setAutoFailover(next);
+    try {
+      localStorage.setItem('rebafilme_auto_failover', JSON.stringify(next));
+    } catch {}
+    showHudMessage(
+      next ? '⚡ Autonomous Failover Enabled' : '⏸️ Autonomous Failover Disabled (Manual Mode)',
+      'info',
+      2500
+    );
   };
+
+  // ⚡ Watchdog Timer: Runs when embed iframe is active
+  useEffect(() => {
+    if (!isPlaying || isTrailerMode || playingVideoAd || !autoFailover) {
+      if (failoverTimerRef.current) clearTimeout(failoverTimerRef.current);
+      return;
+    }
+
+    // Set watchdog timer to trigger auto-failover if stream is dead / buffering indefinitely
+    failoverTimerRef.current = setTimeout(() => {
+      if (!streamHealthy) {
+        triggerAutonomousFailover();
+      }
+    }, AUTONOMOUS_FAILOVER_TIMEOUT_MS);
+
+    return () => {
+      if (failoverTimerRef.current) clearTimeout(failoverTimerRef.current);
+    };
+  }, [
+    isPlaying,
+    isTrailerMode,
+    playingVideoAd,
+    autoFailover,
+    activeServerIdx,
+    reloadNonce,
+    streamHealthy,
+    triggerAutonomousFailover,
+  ]);
+
+  // Episode Selection
+  const handleEpisodeSelect = useCallback(
+    (epNum, sNum = currentSeason) => {
+      setCurrentSeason(sNum);
+      setCurrentEpisode(epNum);
+      setIsPlaying(true);
+      setIsTrailerMode(false);
+      setStreamHealthy(false);
+      consecutiveFailuresRef.current = 0;
+      setFailedServers([]);
+      setReloadNonce((n) => n + 1);
+      if (onEpisodeChange) onEpisodeChange(sNum, epNum);
+    },
+    [currentSeason, onEpisodeChange]
+  );
 
   // If item is a series and doesn't have seasons loaded, fetch full TV details
   useEffect(() => {
@@ -229,7 +345,11 @@ export const StreamPlayer = ({
     }
 
     // 2. TMDB seasons
-    const seasonsSource = item?.seasons?.length ? item.seasons : tvDetail?.seasons?.length ? tvDetail.seasons : null;
+    const seasonsSource = item?.seasons?.length
+      ? item.seasons
+      : tvDetail?.seasons?.length
+        ? tvDetail.seasons
+        : null;
     if (seasonsSource && seasonsSource.length > 0) {
       return seasonsSource.map((s, idx) => ({
         seasonNumber: s.seasonNumber || s.season_number || idx + 1,
@@ -271,13 +391,36 @@ export const StreamPlayer = ({
     }
   };
 
-  // Cross-Window HTML5 postMessage Auto-Next Listener (MoviesJoy Pattern)
+  // Cross-Window HTML5 postMessage Listener (Auto-Next & Autonomous Stream Health Detection)
   useEffect(() => {
     const handleMessage = (ev) => {
       try {
         const d = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
         if (!d) return;
+
         const action = (d.event || d.type || d.action || '').toString().toLowerCase();
+
+        // Detect successful stream playback signals
+        if (
+          action.includes('play') ||
+          action.includes('timeupdate') ||
+          action.includes('progress') ||
+          action.includes('loaded') ||
+          action.includes('ready')
+        ) {
+          setStreamHealthy(true);
+          consecutiveFailuresRef.current = 0;
+          if (failoverTimerRef.current) clearTimeout(failoverTimerRef.current);
+        }
+
+        // Detect stream error events -> immediate failover
+        if (action.includes('error') || action.includes('fatal') || d.error) {
+          if (autoFailover) {
+            triggerAutonomousFailover();
+          }
+        }
+
+        // Auto-next on video complete
         if (action.includes('end') || d.ended === true) {
           if (isSeries) {
             handleNextEpisode();
@@ -290,9 +433,9 @@ export const StreamPlayer = ({
 
     window.addEventListener('message', handleMessage, false);
     return () => window.removeEventListener('message', handleMessage);
-  }, [isSeries, handleNextEpisode]);
+  }, [isSeries, handleNextEpisode, autoFailover, triggerAutonomousFailover]);
 
-  // Keyboard shortcut listener (F = Focus, N = Next Episode)
+  // Keyboard shortcut listener (F = Focus)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -340,6 +483,24 @@ export const StreamPlayer = ({
 
       {/* ── Viewport Frame ────────────────────────────────────────── */}
       <div className="stream-viewport-wrapper">
+        {/* Autonomous Failover HUD Overlay Banner */}
+        {hudNotification && (
+          <div className={`stream-autonomous-hud ${hudNotification.type}`}>
+            <div className="stream-autonomous-hud-inner">
+              <Zap size={15} className="hud-zap-icon" />
+              <span className="hud-text">{hudNotification.message}</span>
+              <button
+                type="button"
+                className="hud-close-btn"
+                onClick={() => setHudNotification(null)}
+                aria-label="Close notification"
+              >
+                <X size={13} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {!isPlaying ? (
           <div
             className="stream-facade"
@@ -350,17 +511,20 @@ export const StreamPlayer = ({
           >
             <div className="stream-facade-overlay" />
             <div className="stream-facade-content">
-              <button
-                className="stream-play-trigger"
-                aria-label="Start Video Playback"
-              >
+              <button className="stream-play-trigger" aria-label="Start Video Playback">
                 <Play size={40} fill="#ffffff" />
               </button>
               <div className="stream-facade-title">{item?.title}</div>
               <div className="stream-facade-subtitle">
-                <span>{isSeries ? `Season ${currentSeason} · Episode ${currentEpisode}` : item?.year || 'Full Movie'}</span>
+                <span>
+                  {isSeries
+                    ? `Season ${currentSeason} · Episode ${currentEpisode}`
+                    : item?.year || 'Full Movie'}
+                </span>
                 <span>•</span>
-                <span style={{ color: '#00e676', fontWeight: 600 }}>14 Servers Available</span>
+                <span style={{ color: '#00e676', fontWeight: 600 }}>
+                  ⚡ 14 Autonomous Servers
+                </span>
               </div>
             </div>
           </div>
@@ -458,9 +622,28 @@ export const StreamPlayer = ({
             <span>{isTrailerMode ? 'Official Trailer' : currentProvider.name}</span>
           </div>
 
+          {/* Autonomous Failover Toggle */}
+          <button
+            type="button"
+            className={`stream-tool-btn stream-auto-toggle-btn ${autoFailover ? 'active' : ''}`}
+            onClick={toggleAutoFailover}
+            title={
+              autoFailover
+                ? 'Autonomous Failover: Active (Auto-switches to next server if stream hangs)'
+                : 'Autonomous Failover: Off (Manual mode)'
+            }
+          >
+            <Zap size={14} className={autoFailover ? 'icon-pulse' : ''} />
+            <span>Auto-Failover: {autoFailover ? 'ON' : 'OFF'}</span>
+          </button>
+
           <button
             className="stream-tool-btn"
-            onClick={() => setReloadNonce((n) => n + 1)}
+            onClick={() => {
+              setReloadNonce((n) => n + 1);
+              setStreamHealthy(false);
+              showHudMessage(`🔄 Reloading stream node...`, 'info', 2000);
+            }}
             title="Reload Video Stream"
           >
             <RotateCw size={14} />
@@ -547,33 +730,50 @@ export const StreamPlayer = ({
         </div>
       </div>
 
-
-
       {/* ── 14-Server Selection Section ───────────────────────────── */}
       <div className="stream-server-box">
         <div className="stream-server-header">
           <div className="stream-server-title">
             <Server size={17} color="var(--accent, #e50914)" />
             <span>Streaming Servers ({STREAM_PROVIDERS.length})</span>
+            {autoFailover && (
+              <span className="stream-autonomous-badge">
+                <Zap size={11} />
+                <span>Autonomous Failover Active</span>
+              </span>
+            )}
           </div>
           <span className="stream-server-tip">
-            If current server buffers or errors, click another server below
+            {failedServers.length > 0
+              ? `${failedServers.length} server(s) skipped · Auto-failover routes to working nodes`
+              : 'Auto-failover constantly monitors and routes to responsive nodes'}
           </span>
         </div>
 
         <div className="stream-server-grid">
-          {STREAM_PROVIDERS.map((provider, idx) => (
-            <button
-              key={provider.id}
-              className={`server-pill-btn ${idx === activeServerIdx && !isTrailerMode ? 'active' : ''}`}
-              onClick={() => handleServerSelect(idx)}
-            >
-              <div className="server-name-row">
-                <span className="server-name">{provider.name}</span>
-                <span className="server-badge-tag">{provider.badge}</span>
-              </div>
-            </button>
-          ))}
+          {STREAM_PROVIDERS.map((provider, idx) => {
+            const isActive = idx === activeServerIdx && !isTrailerMode;
+            const isFailed = failedServers.includes(provider.id);
+
+            return (
+              <button
+                key={provider.id}
+                className={`server-pill-btn ${isActive ? 'active' : ''} ${isFailed && !isActive ? 'failed' : ''}`}
+                onClick={() => handleServerSelect(idx, false)}
+              >
+                <div className="server-name-row">
+                  <span className="server-name">{provider.name}</span>
+                  {isActive ? (
+                    <span className="server-badge-tag server-badge-active">Active 🟢</span>
+                  ) : isFailed ? (
+                    <span className="server-badge-tag server-badge-failed">Skipped ⚠️</span>
+                  ) : (
+                    <span className="server-badge-tag">{provider.badge}</span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -585,9 +785,7 @@ export const StreamPlayer = ({
               <Layers size={17} color="var(--accent, #e50914)" />
               <span>Episodes · Season {currentSeason}</span>
             </div>
-            <span className="stream-server-tip">
-              Click any episode to stream immediately
-            </span>
+            <span className="stream-server-tip">Click any episode to stream immediately</span>
           </div>
 
           {/* Season Switcher Tabs */}
@@ -611,7 +809,13 @@ export const StreamPlayer = ({
 
           {/* Episodes List Grid */}
           {loadingEpisodes ? (
-            <div style={{ color: 'var(--text-secondary)', padding: '1.5rem', textAlign: 'center' }}>
+            <div
+              style={{
+                color: 'var(--text-secondary)',
+                padding: '1.5rem',
+                textAlign: 'center',
+              }}
+            >
               Loading season episodes…
             </div>
           ) : (
