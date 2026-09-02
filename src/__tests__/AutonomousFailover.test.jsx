@@ -79,7 +79,7 @@ describe('Autonomous Server Engine & Stream Providers', () => {
     expect(directBuild).toContain('550');
   });
 
-  it('renders StreamPlayer with 14 autonomous server pills and Auto-Failover toggle', () => {
+  it('renders StreamPlayer with 14 streaming server nodes and active node highlight', () => {
     const mockItem = {
       id: 550,
       tmdbId: 550,
@@ -90,31 +90,13 @@ describe('Autonomous Server Engine & Stream Providers', () => {
 
     render(<StreamPlayer item={mockItem} />);
 
-    const autoToggleBtn = screen.getByRole('button', { name: /Auto-Failover: ON/i });
-    expect(autoToggleBtn).toBeDefined();
-
     STREAM_PROVIDERS.forEach((provider) => {
       const els = screen.getAllByText(provider.name);
       expect(els.length).toBeGreaterThan(0);
     });
 
-    expect(screen.getByText(/Active 🟢/i)).toBeDefined();
-  });
-
-  it('allows toggling Autonomous Failover ON and OFF', () => {
-    const mockItem = {
-      id: 550,
-      title: 'Fight Club',
-      type: 'movie',
-    };
-
-    render(<StreamPlayer item={mockItem} />);
-
-    const autoToggleBtn = screen.getByRole('button', { name: /Auto-Failover: ON/i });
-    fireEvent.click(autoToggleBtn);
-
-    expect(screen.getByRole('button', { name: /Auto-Failover: OFF/i })).toBeDefined();
-    expect(localStorage.getItem('rebafilme_auto_failover')).toBe('false');
+    expect(screen.getByText('Active')).toBeDefined();
+    expect(screen.getByText('14 Servers Available')).toBeDefined();
   });
 });
 

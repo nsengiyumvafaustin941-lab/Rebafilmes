@@ -224,13 +224,12 @@ export const StreamPlayer = ({
   // Autonomous Next Server Failover Action
   const triggerAutonomousFailover = useCallback(() => {
     const currentFailedId = STREAM_PROVIDERS[activeServerIdx]?.id;
-    const currentName = STREAM_PROVIDERS[activeServerIdx]?.name || `Server ${activeServerIdx + 1}`;
     
     setFailedServers((prev) => (currentFailedId ? [...new Set([...prev, currentFailedId])] : prev));
     consecutiveFailuresRef.current += 1;
 
     if (consecutiveFailuresRef.current >= STREAM_PROVIDERS.length) {
-      showHudMessage(`⚠️ All 14 servers tested. Try reloading or using Direct Download below.`, 'error', 6000);
+      showHudMessage(`All servers checked. Try reloading or download below.`, 'error', 5000);
       return;
     }
 
@@ -238,9 +237,9 @@ export const StreamPlayer = ({
     const nextProvider = STREAM_PROVIDERS[nextIdx];
 
     showHudMessage(
-      `⚡ ${currentName} unresponsive · Autonomously switched to Server ${nextIdx + 1} (${nextProvider.name})`,
+      `Switching to Server ${nextIdx + 1} (${nextProvider.name})…`,
       'failover',
-      4500
+      3500
     );
 
     handleServerSelect(nextIdx, true);
@@ -251,20 +250,6 @@ export const StreamPlayer = ({
     consecutiveFailuresRef.current = 0;
     const nextIdx = (activeServerIdx + 1) % STREAM_PROVIDERS.length;
     handleServerSelect(nextIdx, false);
-  };
-
-  // Toggle Auto-Failover Watchdog
-  const toggleAutoFailover = () => {
-    const next = !autoFailover;
-    setAutoFailover(next);
-    try {
-      localStorage.setItem('rebafilme_auto_failover', JSON.stringify(next));
-    } catch {}
-    showHudMessage(
-      next ? '⚡ Autonomous Failover Enabled' : '⏸️ Autonomous Failover Disabled (Manual Mode)',
-      'info',
-      2500
-    );
   };
 
   // ⚡ Watchdog Timer: Runs when embed iframe is active
@@ -523,7 +508,7 @@ export const StreamPlayer = ({
                 </span>
                 <span>•</span>
                 <span style={{ color: '#00e676', fontWeight: 600 }}>
-                  ⚡ 14 Autonomous Servers
+                  14 Servers Available
                 </span>
               </div>
             </div>
@@ -621,21 +606,6 @@ export const StreamPlayer = ({
             <span className="stream-status-dot" />
             <span>{isTrailerMode ? 'Official Trailer' : currentProvider.name}</span>
           </div>
-
-          {/* Autonomous Failover Toggle */}
-          <button
-            type="button"
-            className={`stream-tool-btn stream-auto-toggle-btn ${autoFailover ? 'active' : ''}`}
-            onClick={toggleAutoFailover}
-            title={
-              autoFailover
-                ? 'Autonomous Failover: Active (Auto-switches to next server if stream hangs)'
-                : 'Autonomous Failover: Off (Manual mode)'
-            }
-          >
-            <Zap size={14} className={autoFailover ? 'icon-pulse' : ''} />
-            <span>Auto-Failover: {autoFailover ? 'ON' : 'OFF'}</span>
-          </button>
 
           <button
             className="stream-tool-btn"
@@ -736,17 +706,9 @@ export const StreamPlayer = ({
           <div className="stream-server-title">
             <Server size={17} color="var(--accent, #e50914)" />
             <span>Streaming Servers ({STREAM_PROVIDERS.length})</span>
-            {autoFailover && (
-              <span className="stream-autonomous-badge">
-                <Zap size={11} />
-                <span>Autonomous Failover Active</span>
-              </span>
-            )}
           </div>
           <span className="stream-server-tip">
-            {failedServers.length > 0
-              ? `${failedServers.length} server(s) skipped · Auto-failover routes to working nodes`
-              : 'Auto-failover constantly monitors and routes to responsive nodes'}
+            If current server buffers, click another server below
           </span>
         </div>
 
@@ -764,9 +726,9 @@ export const StreamPlayer = ({
                 <div className="server-name-row">
                   <span className="server-name">{provider.name}</span>
                   {isActive ? (
-                    <span className="server-badge-tag server-badge-active">Active 🟢</span>
+                    <span className="server-badge-tag server-badge-active">Active</span>
                   ) : isFailed ? (
-                    <span className="server-badge-tag server-badge-failed">Skipped ⚠️</span>
+                    <span className="server-badge-tag server-badge-failed">Skipped</span>
                   ) : (
                     <span className="server-badge-tag">{provider.badge}</span>
                   )}

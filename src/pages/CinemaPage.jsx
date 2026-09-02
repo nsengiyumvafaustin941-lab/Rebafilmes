@@ -107,8 +107,8 @@ const CinemaPage = () => {
   if (loading) {
     return (
       <div className="cinema-page">
-        <div className="cinema-error page">
-          <p>Loading streaming server infrastructure…</p>
+        <div className="cinema-loading-wrap">
+          <div className="cinema-loading-spinner" />
         </div>
       </div>
     );
