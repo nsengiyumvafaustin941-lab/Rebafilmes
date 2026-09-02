@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import {
   User, Package, Bell, CreditCard, ChevronRight,
-  Home, Crown, Mail, Phone, Lock, CheckCircle, LogOut,
+  Home, Mail, Phone, Lock, CheckCircle, LogOut,
   Laptop, ShieldCheck, DownloadCloud, Sparkles
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -206,7 +206,7 @@ const SubscriptionPanel = () => {
         <div className="sub-card-header">
           <div className="sub-card-left">
             <div className={`sub-icon ${isVip ? 'sub-icon-vip' : ''}`}>
-              {isVip ? <Crown size={22} color="#ffd700" /> : <Package size={20} />}
+              {isVip ? <Sparkles size={22} color="#ffd700" /> : <Package size={20} />}
             </div>
             <div>
               <h3 className="sub-plan-name">
@@ -218,7 +218,7 @@ const SubscriptionPanel = () => {
             </div>
           </div>
           <span className={`sub-active-badge ${isVip ? 'sub-badge-vip' : ''}`}>
-            <CheckCircle size={14}/> {isVip ? 'ACTIVE VIP 👑' : 'FREE ACTIVE'}
+            <CheckCircle size={14}/> {isVip ? 'ACTIVE VIP' : 'FREE ACTIVE'}
           </span>
         </div>
 
@@ -340,7 +340,7 @@ const BuyPlanPanel = () => {
         {planOptions.map(plan => (
           <div key={plan.name} className={`plan-option${plan.highlight ? ' highlighted' : ''}`}>
             <div className="plan-option-header">
-              <Crown size={18} />
+              <Sparkles size={18} color="#ffd700" />
               <h3>{plan.name}</h3>
               {plan.highlight && <span className="plan-popular">Popular</span>}
             </div>
@@ -407,7 +407,7 @@ const AccountPage = () => {
           <div className="account-plan-row">
             <span className="plan-name">{isVip ? 'VIP Premium' : 'Free Plan'}</span>
             <span className={`plan-badge ${isVip ? 'active-vip' : 'active'}`}>
-              {isVip ? '👑 VIP' : 'ACTIVE'}
+              {isVip ? 'VIP' : 'ACTIVE'}
             </span>
           </div>
           <div className="account-plan-stat">

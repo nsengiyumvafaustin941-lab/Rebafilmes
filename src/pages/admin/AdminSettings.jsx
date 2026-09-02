@@ -378,12 +378,12 @@ const AdminSettings = () => {
           </div>
         </div>
 
-        {/* ── 👑 Pillar 4: Direct MTN MoMo & Airtel VIP Pass ── */}
+        {/* ── Pillar 4: Direct MTN MoMo & Airtel VIP Pass ── */}
         <div className="adm-settings-section">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
             <div>
               <h3 className="adm-settings-heading" style={{ margin: 0, color: '#ffd700' }}>
-                👑 MTN MoMo &amp; Airtel VIP Membership System
+                MTN MoMo &amp; Airtel VIP Membership System
               </h3>
               <small style={{ color: '#888', fontSize: '.82rem' }}>
                 Charge local subscribers via Mobile Money in Rwanda/DRC/Uganda for 100% ad-free streaming &amp; fast downloads.
@@ -573,7 +573,7 @@ const AdminSettings = () => {
                 Disable All Ads & Hide VIP Pass
               </span>
               <small style={{ display: 'block', color: '#555', fontSize: '.78rem' }}>
-                Master kill switch: hides 👑 VIP icons/buttons and stops all ads (banners, native, video, popunders)
+                Master kill switch: hides VIP icons/buttons and stops all ads (banners, native, video, popunders)
               </small>
             </div>
             <label className="adm-toggle">

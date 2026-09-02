@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   Compass, PlaySquare, Search, Heart, Globe, 
-  ChevronRight, Newspaper, X, Smartphone, Download, Crown, User
+  ChevronRight, Newspaper, X, Smartphone, Download, Sparkles, User
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useVIP } from '../hooks/useVIP';
@@ -127,17 +127,17 @@ const Sidebar = ({ onOpenInstallModal }) => {
             <div className="sidebar-nav">
               <button
                 className={`sidebar-link vip-sidebar-btn ${isVip ? 'is-vip-active' : ''}`}
-                title={collapsed ? (isVip ? 'VIP Active 👑' : 'VIP Pass (Ad-Free)') : undefined}
+                title={collapsed ? (isVip ? 'VIP Active' : 'VIP Pass (Ad-Free)') : undefined}
                 onClick={() => {
                   openVIPModal();
                   setCollapsed(true);
                 }}
               >
                 <span className="sidebar-icon-wrap vip-icon-glow">
-                  <Crown size={20} color="#ffd700" />
+                  <Sparkles size={20} color="#ffd700" />
                 </span>
                 <span className="sidebar-label" style={{ color: '#ffd700', fontWeight: 700 }}>
-                  {isVip ? 'VIP Active 👑' : 'VIP Pass'}
+                  {isVip ? 'VIP Active' : 'VIP Pass'}
                 </span>
                 {!collapsed && !isVip && (
                   <span className="vip-badge-mini">Ad-Free</span>
@@ -219,7 +219,7 @@ const Sidebar = ({ onOpenInstallModal }) => {
             onClick={() => openVIPModal()}
             title="VIP Pass"
           >
-            <span className="bottom-icon-wrap"><Crown size={21} color="#ffd700" /></span>
+            <span className="bottom-icon-wrap"><Sparkles size={21} color="#ffd700" /></span>
             <span style={{ color: '#ffd700', fontWeight: 700 }}>VIP</span>
           </button>
         )}

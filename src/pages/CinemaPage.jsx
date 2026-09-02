@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, Download, Star, Calendar, Globe, Crown, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Download, Star, Calendar, Globe } from 'lucide-react';
 import StreamPlayer from '../components/StreamPlayer';
 import ContentGrid from '../components/ContentGrid';
 import AdBanner from '../components/AdBanner';
@@ -13,7 +13,7 @@ import { useVIP } from '../hooks/useVIP';
 import { useAdmin } from '../contexts/AdminContext';
 import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { moviePath, parseMovieId, getMovieOrTv } from '../utils/tmdb';
-import { buildDownloadUrl, getSettings } from '../utils/settings';
+import { buildDownloadUrl } from '../utils/settings';
 import './CinemaPage.css';
 
 const CinemaPage = () => {
@@ -24,7 +24,6 @@ const CinemaPage = () => {
   const vipVisible = useMonetizationEnabled();
   const { openVIPModal } = useVIPModal();
   const [params, setParams] = useSearchParams();
-  const settings = getSettings();
 
 
 
@@ -215,8 +214,7 @@ const CinemaPage = () => {
                     fontWeight: 700,
                   }}
                 >
-                  <Crown size={16} color="#ffd700" />
-                  <span>👑 VIP Pass (Ad-Free)</span>
+                  <span>VIP Pass (Ad-Free)</span>
                 </button>
               )}
 
@@ -229,18 +227,6 @@ const CinemaPage = () => {
               >
                 <Download size={16} />
                 <span>Download Media</span>
-              </a>
-
-              <a
-                href={`https://wa.me/${settings.vipWhatsApp || settings.whatsapp || '250786934081'}?text=${encodeURIComponent(`Hello RebaFilme! I am watching ${item.title}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-ghost"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
-                title="Request movie translation on WhatsApp"
-              >
-                <MessageCircle size={16} color="#25d366" />
-                <span>Saba Filime (WhatsApp)</span>
               </a>
             </div>
           </div>

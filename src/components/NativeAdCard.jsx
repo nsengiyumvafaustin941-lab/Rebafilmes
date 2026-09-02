@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { ExternalLink, Crown, Megaphone } from 'lucide-react';
+import { ExternalLink, Sparkles, Megaphone } from 'lucide-react';
 import { useAds } from '../contexts/AdsContext';
 import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { getSettings } from '../utils/settings';
@@ -61,11 +61,11 @@ const NativeAdCard = ({ ad, onOpenVIP }) => {
       >
         <div className="card-poster native-ad-poster vip-gradient">
           <div className="vip-card-icon-center">
-            <Crown size={42} color="#ffd700" />
+            <Sparkles size={42} color="#ffd700" />
           </div>
           <span className="card-badge badge badge-gold">VIP PASS</span>
           <div className="card-overlay">
-            <span className="native-ad-cta-btn">Upgrade 👑</span>
+            <span className="native-ad-cta-btn">Upgrade</span>
           </div>
         </div>
         <div className="card-info">

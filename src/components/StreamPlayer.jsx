@@ -10,7 +10,6 @@ import {
   Layers,
   Film,
   Download,
-  Crown,
   ExternalLink,
   Zap,
   X,
@@ -553,7 +552,6 @@ export const StreamPlayer = ({
                     onClick={openVIPModal}
                     title="Remove ads with MoMo VIP"
                   >
-                    <Crown size={14} color="#ffd700" />
                     <span>Remove Ads (VIP)</span>
                   </button>
                 )}
@@ -665,8 +663,7 @@ export const StreamPlayer = ({
               onClick={openVIPModal}
               title="Activate VIP: Ad-free & Direct Downloads"
             >
-              <Crown size={14} color="#ffd700" />
-              <span>👑 VIP Pass</span>
+              <span>VIP Pass</span>
             </button>
           )}
 
