@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { STREAM_PROVIDERS, buildStreamUrl, getProviderById } from '../utils/streamProviders';
 import { StreamPlayer } from '../components/StreamPlayer';
 import { MoviesProvider, useMovies } from '../contexts/MoviesContext';

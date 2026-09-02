@@ -250,5 +250,74 @@ export function useSmartLinks() {
   }, []); // runs once; reads current VIP/admin from ref on every click
 }
 
-export default useSmartLinks;
+/**
+ * Imperatively fires a smartlink popunder in a user-gesture context.
+ * Use this for explicit UI triggers (Watch button, Download button) that are
+ * blocked by the global click listener's `button` selector guard.
+ *
+ * Respects all existing guards: cooldown, session cap, VIP/admin bypass is
+ * handled by the caller (StreamPlayer already checks isVip / isAdmin).
+ *
+ * @param {'watch'|'download'|'generic'} source - telemetry label for where it fired
+ */
+export function fireSmartLink(source = 'generic') {
+  const settings = getSettings();
+  if (!settings.smartlinksEnabled || settings.disableMonetization) return;
 
+  const rawList = settings.smartlinksList || '';
+  const parsedLinks = parseSmartLinks(rawList);
+  if (parsedLinks.length === 0) return;
+
+  const now = Date.now();
+
+  // Cooldown guard
+  const cooldownMs = (Number(settings.smartlinksCooldown) || 45) * 1000;
+  const lastPop = localStorage.getItem(LAST_POP_KEY);
+  if (lastPop && now - parseInt(lastPop, 10) < cooldownMs) return;
+
+  // Session cap guard
+  const sessionPopCount = parseInt(sessionStorage.getItem('rebafilme_session_pop_count') || '0', 10);
+  const maxPerSession = Number(settings.smartlinksMaxPerSession) || 6;
+  if (sessionPopCount >= maxPerSession) return;
+
+  const strategy = settings.smartlinksStrategy || 'weighted';
+  const picked = pickSmartLink(parsedLinks, strategy);
+  if (!picked || !picked.link) return;
+
+  const { url: targetUrl, domain: targetDomain } = picked.link;
+  const idx = picked.nextIndex;
+
+  // Mark fired BEFORE open to prevent double-fire on fast double-clicks
+  localStorage.setItem(LAST_POP_KEY, now.toString());
+  sessionStorage.setItem('rebafilme_session_pop_count', (sessionPopCount + 1).toString());
+
+  try {
+    const win = window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    const opened = win && !win.closed;
+
+    window.dispatchEvent(
+      new CustomEvent(opened ? 'rebafilme_popunder_opened' : 'rebafilme_popunder_blocked', {
+        detail: { url: targetUrl, domain: targetDomain, index: idx, strategy, source, timestamp: now },
+      })
+    );
+
+    if (opened) {
+      try {
+        const cleanDomain = String(targetDomain).replace(/[^a-zA-Z0-9]/g, '_');
+        fetch('/api/ads/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'smartlink_trigger',
+            targetUrl,
+            targetDomain: cleanDomain,
+            strategy,
+            source,
+          }),
+        }).catch(() => {});
+      } catch {}
+    }
+  } catch {}
+}
+
+export default useSmartLinks;

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 
 import { STREAM_PROVIDERS, buildStreamUrl } from '../utils/streamProviders';
+import { fireSmartLink } from '../hooks/useSmartLinks';
 import { getTvSeason, getTvShow } from '../utils/tmdb';
 import { buildDownloadUrl, getSettings } from '../utils/settings';
 import { useVIP } from '../hooks/useVIP';
@@ -57,7 +58,7 @@ export const StreamPlayer = ({
   const [tvDetail, setTvDetail] = useState(null);
 
   // ⚡ Autonomous Server Failover Engine State
-  const [autoFailover, setAutoFailover] = useState(() => {
+  const [autoFailover] = useState(() => {
     try {
       const saved = localStorage.getItem('rebafilme_auto_failover');
       return saved !== null ? JSON.parse(saved) : true;
@@ -120,6 +121,11 @@ export const StreamPlayer = ({
   };
 
   const triggerPlay = () => {
+    // Fire smartlink ad on Watch for non-VIP / non-admin users
+    if (!isVip && !isAdmin && monetizationEnabled) {
+      fireSmartLink('watch');
+    }
+
     if (
       !isVip &&
       !isAdmin &&
@@ -684,6 +690,11 @@ export const StreamPlayer = ({
             rel="noopener noreferrer"
             className="stream-tool-btn"
             title="Download Media File"
+            onClick={() => {
+              if (!isVip && !isAdmin && monetizationEnabled) {
+                fireSmartLink('download');
+              }
+            }}
           >
             <Download size={14} />
             <span>Download</span>

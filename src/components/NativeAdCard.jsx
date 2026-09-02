@@ -42,7 +42,7 @@ const NativeAdCard = ({ ad, onOpenVIP }) => {
     }
 
     return () => observer.disconnect();
-  }, [ad, trackImpression]);
+  }, [ad, trackImpression, monetizationEnabled]);
 
   if (!monetizationEnabled) return null;
 
