@@ -1,0 +1,25 @@
+# Robots.txt for RebaFilmes
+# Canonical Domain: https://www.rebafilmes.com
+
+User-agent: *
+Allow: /
+Allow: /movies
+Allow: /newsfeeds
+Allow: /search
+Allow: /terms
+Allow: /movie/*
+Allow: /cinema*
+
+# Disallow administrative, authenticated, and private routes
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /login
+Disallow: /account
+Disallow: /saved
+Disallow: /api/*
+
+# Crawl Delay
+Crawl-delay: 1
+
+# Sitemap Location
+Sitemap: https://www.rebafilmes.com/sitemap.xml
