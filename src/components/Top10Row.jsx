@@ -65,7 +65,7 @@ const Top10Row = ({ title = 'Top 10 in RebaFilme Today' }) => {
           {top10.map((item, idx) => (
             <Link
               key={item.id}
-              to={moviePath(item.id, item.title)}
+              to={moviePath(item.id, item.title, item.type)}
               className="top10-item"
             >
               <span className="top10-number" data-num={idx + 1}>

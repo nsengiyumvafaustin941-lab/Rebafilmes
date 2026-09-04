@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
   Play,
@@ -28,9 +28,17 @@ const MovieDetailPage = () => {
   const { isSaved, toggleSaved } = useSaved();
   const { allMovies, fetchMovieById } = useMovies();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const numericId = parseMovieId(id);
+  const hintedType = searchParams.get('type') || null;
 
-  const cached = allMovies.find((c) => c.id === numericId);
+  const cached = allMovies.find((c) => {
+    if (c.id !== numericId) return false;
+    if (!hintedType) return true;
+    const isTv = c.type === 'series' || c.type === 'tv';
+    const targetIsTv = hintedType === 'series' || hintedType === 'tv';
+    return isTv === targetIsTv;
+  });
   const [item, setItem] = useState(cached || null);
   const [fetching, setFetching] = useState(!cached);
   const [selectedSeason, setSelectedSeason] = useState(1);
@@ -42,7 +50,7 @@ const MovieDetailPage = () => {
   useEffect(() => {
     let isCancelled = false;
 
-    const isTv = cached?.type === 'series' || cached?.type === 'tv';
+    const isTv = cached?.type === 'series' || cached?.type === 'tv' || hintedType === 'series' || hintedType === 'tv';
     if (cached && (!isTv || (cached.seasons && cached.seasons.length > 0))) {
       setItem(cached);
       setFetching(false);
@@ -50,7 +58,7 @@ const MovieDetailPage = () => {
     }
 
     setFetching(!cached);
-    fetchMovieById(numericId).then((result) => {
+    fetchMovieById(id, hintedType).then((result) => {
       if (!isCancelled && result) {
         setItem(result);
         setFetching(false);
@@ -60,15 +68,21 @@ const MovieDetailPage = () => {
     return () => {
       isCancelled = true;
     };
-  }, [numericId, cached, fetchMovieById]);
+  }, [id, numericId, cached, hintedType, fetchMovieById]);
 
   // Keep in sync if allMovies changes
   useEffect(() => {
-    const fresh = allMovies.find((c) => c.id === numericId);
+    const fresh = allMovies.find((c) => {
+      if (c.id !== numericId) return false;
+      if (!hintedType) return true;
+      const isTv = c.type === 'series' || c.type === 'tv';
+      const targetIsTv = hintedType === 'series' || hintedType === 'tv';
+      return isTv === targetIsTv;
+    });
     if (fresh && fresh.seasons && fresh.seasons.length > 0) {
       setItem(fresh);
     }
-  }, [allMovies, numericId]);
+  }, [allMovies, numericId, hintedType]);
 
   const isSeries = item?.type === "series" || item?.type === "tv";
 
@@ -303,7 +317,7 @@ const MovieDetailPage = () => {
 
             <div className="detail-actions">
               <Link
-                to={`/cinema?vd=${item.id}${isSeries ? `&type=series&s=${selectedSeason}&e=1` : ''}`}
+                to={`/cinema?vd=${item.id}&type=${isSeries ? 'series' : 'movie'}${isSeries ? `&s=${selectedSeason}&e=1` : ''}`}
                 className="btn btn-primary"
               >
                 <Play size={17} fill="currentColor" /> {t("movie_watch") || "Watch Stream"}

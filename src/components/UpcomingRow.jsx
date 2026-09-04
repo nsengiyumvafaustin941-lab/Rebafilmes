@@ -127,7 +127,7 @@ const UpcomingRow = ({ title = 'Upcoming Calendar' }) => {
 
             return (
               <div key={item.id} className="scroll-item upcoming-item">
-                <Link to={moviePath(item.id, item.title)} className="card upcoming-card">
+                <Link to={moviePath(item.id, item.title, item.type)} className="card upcoming-card">
                   <div className="card-poster">
                     <img src={item.poster} alt={item.title} loading="lazy" />
                     <div className="card-overlay">

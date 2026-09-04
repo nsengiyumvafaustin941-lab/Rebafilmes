@@ -151,7 +151,7 @@ const AIAssistant = () => {
                     {results.suggestions.map(movie => (
                       <NavLink
                         key={movie.id}
-                        to={moviePath(movie.id, movie.title)}
+                        to={moviePath(movie.id, movie.title, movie.type)}
                         className="ai-movie-card"
                         onClick={() => setOpen(false)}
                       >

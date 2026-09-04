@@ -191,7 +191,7 @@ const NewsfeedsPage = () => {
             {sidebarTrending.map((item) => (
               <Link
                 key={item.id}
-                to={moviePath(item.id, item.title)}
+                to={moviePath(item.id, item.title, item.type)}
                 className="nf-trending-item"
               >
                 <img

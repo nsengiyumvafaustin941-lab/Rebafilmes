@@ -99,6 +99,7 @@ const SearchPage = () => {
 
   const searchInputRef = useRef(null);
   const resultsTopRef = useRef(null);
+  const searchSeqRef = useRef(0);
 
   useEffect(() => {
     setQuery(params.get('q') || '');
@@ -122,6 +123,7 @@ const SearchPage = () => {
 
   // Load single page of 20 items (replacing previous page items)
   const loadTitles = useCallback(async (targetPage = 1) => {
+    const seq = ++searchSeqRef.current;
     setLoading(true);
 
     try {
@@ -134,16 +136,21 @@ const SearchPage = () => {
         sort: sortFilter,
       });
 
+      if (seq !== searchSeqRef.current) return;
+
       // Display ONLY the 20 titles for targetPage (previous page disappears)
       setResults(response.results || []);
       setPage(targetPage);
       setTotalPages(response.totalPages || 1);
       setTotalResults(response.totalResults || 0);
     } catch (err) {
+      if (seq !== searchSeqRef.current) return;
       console.warn('TMDB search query failed', err);
       setResults([]);
     } finally {
-      setLoading(false);
+      if (seq === searchSeqRef.current) {
+        setLoading(false);
+      }
     }
   }, [query, typeFilter, genreFilter, yearFilter, sortFilter]);
 

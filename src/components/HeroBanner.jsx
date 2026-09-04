@@ -33,10 +33,13 @@ const HeroBanner = ({ items }) => {
         <h1 className="hero-title">{item.title}</h1>
         <p className="hero-desc">{item.description}</p>
         <div className="hero-actions">
-          <Link to={`/cinema?vd=${item.id}`} className="btn btn-primary">
+          <Link
+            to={`/cinema?vd=${item.id}&type=${item.type === 'series' || item.type === 'tv' ? 'series&s=1&e=1' : 'movie'}`}
+            className="btn btn-primary"
+          >
             <Play size={17} fill="currentColor" /> {t('movie_watch')}
           </Link>
-          <Link to={moviePath(item.id, item.title)} className="btn btn-ghost">
+          <Link to={moviePath(item.id, item.title, item.type)} className="btn btn-ghost">
             <Info size={17} /> {t('movie_description')}
           </Link>
         </div>

@@ -9,7 +9,7 @@ const MovieCard = ({ item, progress }) => {
   const ratingDisplay = item.rating > 0 ? Number(item.rating).toFixed(1) : null;
 
   return (
-  <Link to={moviePath(item.id, item.title)} className="card">
+  <Link to={moviePath(item.id, item.title, item.type)} className="card">
     <div className="card-poster">
       <img src={item.poster} alt={item.title} loading="lazy" />
       <div className="card-overlay">

@@ -47,7 +47,13 @@ const CinemaPage = () => {
       }
 
       setLoading(true);
-      const cached = allMovies.find((m) => m.id === numericId);
+      const cached = allMovies.find((m) => {
+        if (m.id !== numericId) return false;
+        if (!hintedType) return true;
+        const isTv = m.type === 'series' || m.type === 'tv';
+        const targetIsTv = hintedType === 'series' || hintedType === 'tv';
+        return isTv === targetIsTv;
+      });
       const isTv = cached?.type === 'series' || cached?.type === 'tv' || hintedType === 'series' || hintedType === 'tv';
       if (cached && (!isTv || (cached.seasons && cached.seasons.length > 0))) {
         if (!isCancelled) {
@@ -57,7 +63,7 @@ const CinemaPage = () => {
         return;
       }
 
-      const fetched = await getMovieOrTv(numericId, hintedType || cached?.type);
+      const fetched = await getMovieOrTv(rawId || numericId, hintedType || cached?.type);
       if (!isCancelled) {
         setItem(fetched || cached || null);
         setLoading(false);
@@ -69,7 +75,7 @@ const CinemaPage = () => {
     return () => {
       isCancelled = true;
     };
-  }, [numericId, hintedType, allMovies]);
+  }, [rawId, numericId, hintedType, allMovies]);
 
   // Handle URL sync when episode/season/server changes inside player
   const handleEpisodeChange = (sNum, epNum) => {
@@ -148,7 +154,7 @@ const CinemaPage = () => {
 
       {/* Topbar */}
       <header className="cinema-topbar">
-        <Link to={moviePath(item.id, item.title)} className="back-btn">
+        <Link to={moviePath(item.id, item.title, item.type)} className="back-btn">
           <ArrowLeft size={19} />
           <span>{item.title}</span>
         </Link>

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { getTrending, getTopRated, getPopular, getPopularTv, getTopRatedTv, getMovieOrTv } from '../utils/tmdb';
+import { getTrending, getTopRated, getPopular, getPopularTv, getTopRatedTv, getMovieOrTv, parseMovieId } from '../utils/tmdb';
 import { api } from '../utils/api';
 import { ALL_CONTENT } from '../data/mockData';
 
@@ -197,9 +197,16 @@ export const MoviesProvider = ({ children }) => {
     return () => window.removeEventListener('online', handleOnline);
   }, [fetchData]);
 
-  const fetchMovieById = useCallback(async (id) => {
-    const numericId = Number(id);
-    const cached = moviesRef.current.find((m) => m.id === numericId);
+  const fetchMovieById = useCallback(async (id, hintedType = null) => {
+    const numericId = parseMovieId(id) || Number(id);
+    const cached = moviesRef.current.find((m) => {
+      if (m.id !== numericId) return false;
+      if (!hintedType) return true;
+      const isTv = m.type === 'series' || m.type === 'tv';
+      const targetIsTv = hintedType === 'series' || hintedType === 'tv';
+      return isTv === targetIsTv;
+    });
+
     if (cached) {
       const isTv = cached.type === 'series' || cached.type === 'tv';
       if (!isTv && (cached.trailerKey || cached.videos)) return cached;
@@ -207,13 +214,13 @@ export const MoviesProvider = ({ children }) => {
     }
 
     try {
-      const movie = await getMovieOrTv(numericId, cached?.type);
+      const movie = await getMovieOrTv(id, hintedType || cached?.type);
       if (!movie) return cached || null;
       const withSource = { ...movie, source: 'tmdb', ...curatedMap[numericId] };
       setAllMovies((prev) => {
-        const exists = prev.some((m) => m.id === movie.id);
+        const exists = prev.some((m) => m.id === movie.id && (m.type || 'movie') === (movie.type || 'movie'));
         return exists
-          ? prev.map((m) => (m.id === movie.id ? { ...m, ...withSource } : m))
+          ? prev.map((m) => (m.id === movie.id && (m.type || 'movie') === (movie.type || 'movie') ? { ...m, ...withSource } : m))
           : [...prev, withSource];
       });
       return withSource;

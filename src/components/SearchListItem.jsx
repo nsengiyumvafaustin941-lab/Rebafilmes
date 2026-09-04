@@ -9,7 +9,7 @@ const SearchListItem = ({ item }) => {
 
   return (
     <div className="list-item">
-      <Link to={moviePath(item.id, item.title)} className="list-item-backdrop-wrap">
+      <Link to={moviePath(item.id, item.title, item.type)} className="list-item-backdrop-wrap">
         <img
           src={item.backdrop || item.poster}
           alt={item.title}
@@ -22,7 +22,7 @@ const SearchListItem = ({ item }) => {
       </Link>
 
       <div className="list-item-info">
-        <Link to={moviePath(item.id, item.title)} className="list-item-title">
+        <Link to={moviePath(item.id, item.title, item.type)} className="list-item-title">
           {item.title}
         </Link>
 
@@ -48,10 +48,13 @@ const SearchListItem = ({ item }) => {
         )}
 
         <div className="list-item-actions">
-          <Link to={`/cinema?vd=${item.id}`} className="list-item-stream-btn">
+          <Link
+            to={`/cinema?vd=${item.id}&type=${item.type === 'series' || item.type === 'tv' ? 'series&s=1&e=1' : 'movie'}`}
+            className="list-item-stream-btn"
+          >
             <Play size={14} fill="currentColor" /> Stream Now
           </Link>
-          <Link to={moviePath(item.id, item.title)} className="list-item-detail-btn">
+          <Link to={moviePath(item.id, item.title, item.type)} className="list-item-detail-btn">
             Details
           </Link>
         </div>

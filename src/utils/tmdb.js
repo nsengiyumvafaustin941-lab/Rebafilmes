@@ -52,14 +52,26 @@ export function movieSlug(id, title) {
   return `${slugify(title)}-${id}`;
 }
 
-export function moviePath(id, title) {
-  return `/movie/${movieSlug(id, title)}`;
+export function moviePath(id, title, type = null) {
+  const isTv = type === 'series' || type === 'tv';
+  return `/movie/${movieSlug(id, title)}${isTv ? '?type=series' : ''}`;
+}
+
+export function parseMovieSlugTitle(slug) {
+  if (!slug) return '';
+  const clean = String(slug).split('?')[0].split('#')[0].trim();
+  const match = clean.match(/^(.*?)(?:-(\d+))?$/);
+  if (match && match[1] && match[2]) {
+    return match[1].replace(/-/g, ' ').trim();
+  }
+  return '';
 }
 
 export function parseMovieId(slug) {
   if (!slug) return null;
-  const match = String(slug).match(/(?:^|-)(\d+)$/);
-  return match ? Number(match[1]) : Number(slug);
+  const clean = String(slug).split('?')[0].split('#')[0].trim();
+  const match = clean.match(/(?:^|-)(\d+)$/);
+  return match ? Number(match[1]) : (Number(clean) || null);
 }
 
 export function mapGenreIds(ids = []) {
@@ -313,26 +325,58 @@ export async function getMovieOrTv(id, hintedType = null) {
   const cleanId = parseMovieId(id);
   if (!cleanId) return null;
 
+  const slugTitle = typeof id === 'string' ? parseMovieSlugTitle(id) : '';
+
+  // 1. If type is explicitly hinted, honor it first!
   if (hintedType === 'series' || hintedType === 'tv') {
     try {
-      return await getTvShow(cleanId);
+      const tv = await getTvShow(cleanId);
+      if (tv?.title) return tv;
     } catch {
-      return await getMovie(cleanId);
+      return await getMovie(cleanId).catch(() => null);
     }
   }
 
-  try {
-    const movie = await getMovie(cleanId);
-    if (movie?.title) return movie;
-  } catch {
-    // Try TV fallback
+  if (hintedType === 'movie') {
+    try {
+      const movie = await getMovie(cleanId);
+      if (movie?.title) return movie;
+    } catch {
+      return await getTvShow(cleanId).catch(() => null);
+    }
   }
 
-  try {
-    return await getTvShow(cleanId);
-  } catch {
-    return null;
+  // 2. Disambiguate when no hintedType is given (TMDB movie and TV IDs overlap!)
+  const [movieRes, tvRes] = await Promise.allSettled([
+    getMovie(cleanId),
+    getTvShow(cleanId),
+  ]);
+
+  const movie = movieRes.status === 'fulfilled' && movieRes.value?.title ? movieRes.value : null;
+  const tv = tvRes.status === 'fulfilled' && tvRes.value?.title ? tvRes.value : null;
+
+  if (movie && !tv) return movie;
+  if (tv && !movie) return tv;
+  if (!movie && !tv) return null;
+
+  // Both movie and TV show exist with this ID! Disambiguate with slug title if available
+  if (slugTitle) {
+    const targetSlug = slugify(slugTitle);
+    const movieSlugStr = slugify(movie.title);
+    const tvSlugStr = slugify(tv.title);
+
+    if (tvSlugStr === targetSlug || tvSlugStr.includes(targetSlug) || targetSlug.includes(tvSlugStr)) {
+      return tv;
+    }
+    if (movieSlugStr === targetSlug || movieSlugStr.includes(targetSlug) || targetSlug.includes(movieSlugStr)) {
+      return movie;
+    }
   }
+
+  // Fallback to popularity / rating score (the more prominent title is almost certainly intended)
+  const tvScore = (tv.popularity || 0) * (tv.vote_average || 1);
+  const movieScore = (movie.popularity || 0) * (movie.vote_average || 1);
+  return tvScore > movieScore ? tv : movie;
 }
 
 /**
@@ -350,12 +394,17 @@ export async function searchWithPagination({
 
   // 1. Text Query Search Mode
   if (cleanQ) {
-    const searchEndpoint = type === 'movie' ? 'search' : type === 'series' || type === 'tv' ? 'tv' : 'multi';
+    const isTvSearch = type === 'series' || type === 'tv';
+    const isMovieSearch = type === 'movie';
+    const searchEndpoint = isMovieSearch ? 'search' : isTvSearch ? 'tv' : 'multi';
     const data = await tmdbFetch(searchEndpoint, { query: cleanQ, page: String(page) });
 
     const results = (data.results || [])
       .filter((m) => m.media_type !== 'person')
-      .map(mapTmdbMovie)
+      .map((m) => {
+        const inferredMediaType = m.media_type || (isTvSearch ? 'tv' : isMovieSearch ? 'movie' : undefined);
+        return mapTmdbMovie(inferredMediaType ? { ...m, media_type: inferredMediaType } : m);
+      })
       .filter(Boolean);
 
     return {
@@ -449,7 +498,7 @@ export async function getSearchSuggest(query) {
       rating: item.rating,
       poster: item.poster,
       genre: item.genre,
-      url: moviePath(item.id, item.title),
+      url: moviePath(item.id, item.title, item.type),
     }));
 
     suggestCache.set(q, suggestions);
