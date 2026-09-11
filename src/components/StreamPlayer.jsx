@@ -58,7 +58,7 @@ export const StreamPlayer = ({
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [reloadNonce, setReloadNonce] = useState(0);
   const [tvDetail, setTvDetail] = useState(null);
-  const [serversOpen, setServersOpen] = useState(true);
+  const [serversOpen, setServersOpen] = useState(false);
 
   // ⚡ Autonomous Server Failover Engine State
   const [autoFailover] = useState(() => {
