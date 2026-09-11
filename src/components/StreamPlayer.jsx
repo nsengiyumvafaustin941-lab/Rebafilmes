@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Zap,
   X,
+  ChevronDown,
 } from 'lucide-react';
 
 import { STREAM_PROVIDERS, buildStreamUrl } from '../utils/streamProviders';
@@ -23,10 +24,11 @@ import { useVIP } from '../hooks/useVIP';
 import { useAdmin } from '../contexts/AdminContext';
 import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { useVIPModal } from '../contexts/VIPModalContext';
+import { useContentLocker } from '../contexts/ContentLockerContext';
 import { useAds } from '../contexts/AdsContext';
 import './StreamPlayer.css';
 
-const AUTONOMOUS_FAILOVER_TIMEOUT_MS = 8500; // 8.5 seconds watchdog timeout
+const AUTONOMOUS_FAILOVER_TIMEOUT_MS = 15000; // 15 seconds watchdog timeout
 
 export const StreamPlayer = ({
   item,
@@ -40,6 +42,7 @@ export const StreamPlayer = ({
   const { isAdmin } = useAdmin();
   const monetizationEnabled = useMonetizationEnabled();
   const { openVIPModal } = useVIPModal();
+  const { openContentLocker } = useContentLocker();
   const { trackImpression, trackClick } = useAds();
   const settings = getSettings();
 
@@ -55,6 +58,7 @@ export const StreamPlayer = ({
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [reloadNonce, setReloadNonce] = useState(0);
   const [tvDetail, setTvDetail] = useState(null);
+  const [serversOpen, setServersOpen] = useState(true);
 
   // ⚡ Autonomous Server Failover Engine State
   const [autoFailover] = useState(() => {
@@ -681,21 +685,25 @@ export const StreamPlayer = ({
             </button>
           )}
 
-          <a
-            href={downloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             className="stream-tool-btn"
             title="Download Media File"
             onClick={() => {
-              if (!isVip && !isAdmin && monetizationEnabled) {
-                fireSmartLink('download');
-              }
+              openContentLocker({
+                title: isSeries ? `${item?.title} (S${currentSeason} E${currentEpisode})` : item?.title,
+                videoUrl: item?.videoUrl,
+                downloadUrl: downloadUrl,
+                poster: item?.poster || item?.backdrop,
+                isSeries,
+                season: currentSeason,
+                episode: currentEpisode,
+              });
             }}
           >
             <Download size={14} />
             <span>Download</span>
-          </a>
+          </button>
 
           <button
             className={`stream-tool-btn ${focusMode ? 'active' : ''}`}
@@ -710,41 +718,67 @@ export const StreamPlayer = ({
 
       {/* ── 14-Server Selection Section ───────────────────────────── */}
       <div className="stream-server-box">
-        <div className="stream-server-header">
+        <div
+          className="stream-server-header stream-server-toggle-header"
+          onClick={() => setServersOpen((prev) => !prev)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setServersOpen((prev) => !prev);
+            }
+          }}
+          aria-expanded={serversOpen}
+        >
           <div className="stream-server-title">
             <Server size={17} color="var(--accent, #e50914)" />
             <span>Streaming Servers ({STREAM_PROVIDERS.length})</span>
+            {!serversOpen && (
+              <span className="server-collapsed-badge">
+                Active: {STREAM_PROVIDERS[activeServerIdx]?.name || 'Server'}
+              </span>
+            )}
           </div>
-          <span className="stream-server-tip">
-            If current server buffers, click another server below
-          </span>
+          <div className="stream-server-header-right">
+            <span className="stream-server-tip">
+              {serversOpen
+                ? 'If current server buffers, click another server below'
+                : 'Click to choose another server'}
+            </span>
+            <div className={`stream-collapse-btn ${serversOpen ? 'open' : ''}`} title={serversOpen ? 'Hide servers' : 'Show servers'}>
+              <ChevronDown size={17} />
+            </div>
+          </div>
         </div>
 
-        <div className="stream-server-grid">
-          {STREAM_PROVIDERS.map((provider, idx) => {
-            const isActive = idx === activeServerIdx && !isTrailerMode;
-            const isFailed = failedServers.includes(provider.id);
+        {serversOpen && (
+          <div className="stream-server-grid">
+            {STREAM_PROVIDERS.map((provider, idx) => {
+              const isActive = idx === activeServerIdx && !isTrailerMode;
+              const isFailed = failedServers.includes(provider.id);
 
-            return (
-              <button
-                key={provider.id}
-                className={`server-pill-btn ${isActive ? 'active' : ''} ${isFailed && !isActive ? 'failed' : ''}`}
-                onClick={() => handleServerSelect(idx, false)}
-              >
-                <div className="server-name-row">
-                  <span className="server-name">{provider.name}</span>
-                  {isActive ? (
-                    <span className="server-badge-tag server-badge-active">Active</span>
-                  ) : isFailed ? (
-                    <span className="server-badge-tag server-badge-failed">Skipped</span>
-                  ) : (
-                    <span className="server-badge-tag">{provider.badge}</span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+              return (
+                <button
+                  key={provider.id}
+                  className={`server-pill-btn ${isActive ? 'active' : ''} ${isFailed && !isActive ? 'failed' : ''}`}
+                  onClick={() => handleServerSelect(idx, false)}
+                >
+                  <div className="server-name-row">
+                    <span className="server-name">{provider.name}</span>
+                    {isActive ? (
+                      <span className="server-badge-tag server-badge-active">Active</span>
+                    ) : isFailed ? (
+                      <span className="server-badge-tag server-badge-failed">Skipped</span>
+                    ) : (
+                      <span className="server-badge-tag">{provider.badge}</span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── TV Shows Season & Episode Selector ────────────────────── */}

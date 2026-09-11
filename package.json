@@ -9,6 +9,7 @@
     "build": "vite build",
     "deploy": "npm run build && wrangler deploy",
     "lint": "oxlint",
+    "test": "vitest run",
     "preview": "vite preview"
   },
   "dependencies": {

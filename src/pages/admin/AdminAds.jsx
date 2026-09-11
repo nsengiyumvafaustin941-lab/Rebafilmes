@@ -26,6 +26,39 @@ const EMPTY_AD = {
   priority: 0,
 };
 
+const AFFILIATE_PRESETS = [
+  {
+    label: '⚽ 1xBet Sports (200% Bonus)',
+    title: 'Get 200% Welcome Bonus on Your 1st Deposit — Use Promo Code: REBA26',
+    sponsorName: '1xBet Sportsbook',
+    adKind: 'sponsor',
+    position: 'cinema_top',
+    priority: 10,
+    imageUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=800&q=80',
+    linkUrl: 'https://refpa.top/L?tag=d_YOUR_ID&p=/registration/',
+  },
+  {
+    label: '⚡ Surfshark VPN (No Buffering)',
+    title: 'Stream in Ultra 4K with Zero Buffering & Geo-blocks (82% Off + 3 Months Free)',
+    sponsorName: 'Surfshark VPN',
+    adKind: 'sponsor',
+    position: 'cinema_top',
+    priority: 8,
+    imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=800&q=80',
+    linkUrl: 'https://surfshark.club/friend/YOUR_AFFILIATE_LINK',
+  },
+  {
+    label: '💬 SmartLink / Chat (CPA Signup)',
+    title: 'Connect & Chat with Local Verified Singles Right Now (100% Free)',
+    sponsorName: 'VIP Singles Club',
+    adKind: 'sponsor',
+    position: 'home_mid',
+    priority: 5,
+    imageUrl: 'https://images.unsplash.com/photo-1516251193007-45ef944ab0c6?auto=format&fit=crop&w=800&q=80',
+    linkUrl: 'https://your-smartlink-cpa-link.com/',
+  },
+];
+
 const useToast = () => {
   const [toast, setToast] = useState(null);
   const show = useCallback((msg, type = 'success') => {
@@ -48,6 +81,35 @@ const AdModal = ({ initial, onSave, onClose, title }) => {
         <div className="adm-modal-header">
           <h2 className="adm-modal-title">{title}</h2>
           <button className="adm-modal-close" onClick={onClose}><X size={16} /></button>
+        </div>
+
+        {/* 1-Click High-Converting Affiliate Presets */}
+        <div style={{ padding: '0.75rem 1.25rem', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', marginBottom: '0.45rem', letterSpacing: '0.5px' }}>
+            ⚡ 1-Click High-Converting CPA Presets
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {AFFILIATE_PRESETS.map((p, idx) => (
+              <button
+                key={idx}
+                type="button"
+                className="adm-btn adm-btn-ghost"
+                style={{ fontSize: '0.75rem', padding: '4px 10px', background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.2)' }}
+                onClick={() => setForm((prev) => ({
+                  ...prev,
+                  title: p.title,
+                  sponsorName: p.sponsorName,
+                  adKind: p.adKind,
+                  position: p.position,
+                  priority: p.priority,
+                  imageUrl: p.imageUrl,
+                  linkUrl: p.linkUrl,
+                }))}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="adm-form-grid">

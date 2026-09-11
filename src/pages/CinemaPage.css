@@ -1,8 +1,8 @@
 .cinema-page {
-  background: #08080c;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .cinema-topbar {
@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.85rem 1.5rem;
-  background: rgba(10, 10, 14, 0.9);
+  background: rgba(10, 10, 14, 0.85);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: sticky;
@@ -43,7 +43,6 @@
   padding: 1.5rem 1.25rem;
   display: flex;
   justify-content: center;
-  background: radial-gradient(circle at top, rgba(20, 22, 32, 0.8) 0%, rgba(8, 8, 12, 1) 100%);
 }
 
 .cinema-details-wrap {

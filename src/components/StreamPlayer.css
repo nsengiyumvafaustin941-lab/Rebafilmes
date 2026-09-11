@@ -222,13 +222,32 @@
 
 /* ─── 14-Server Selection Section ────────────────────────────────────── */
 .stream-server-box {
-  background: #0d0e13;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(13, 14, 19, 0.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg, 10px);
-  padding: 1rem 1.25rem;
+  padding: 0.9rem 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  transition: all 0.25s ease;
+}
+
+.stream-server-toggle-header {
+  cursor: pointer;
+  user-select: none;
+  border-radius: 6px;
+  padding: 0.2rem 0.25rem;
+  transition: background 0.2s ease;
+}
+
+.stream-server-toggle-header:hover .stream-server-title span {
+  color: #fff;
+}
+
+.stream-server-toggle-header:focus-visible {
+  outline: 2px solid var(--accent, #e50914);
+  outline-offset: 4px;
 }
 
 .stream-server-header {
@@ -248,9 +267,50 @@
   color: #fff;
 }
 
+.server-collapsed-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #00e676;
+  background: rgba(0, 230, 118, 0.12);
+  border: 1px solid rgba(0, 230, 118, 0.25);
+  padding: 0.18rem 0.55rem;
+  border-radius: 50px;
+  margin-left: 0.35rem;
+}
+
+.stream-server-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .stream-server-tip {
   font-size: 0.78rem;
   color: var(--text-secondary, #7e8299);
+}
+
+.stream-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, border-color 0.2s ease;
+}
+
+.stream-server-toggle-header:hover .stream-collapse-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.stream-collapse-btn.open {
+  transform: rotate(180deg);
 }
 
 .stream-server-grid {

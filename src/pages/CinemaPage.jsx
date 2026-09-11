@@ -14,6 +14,7 @@ import { useAdmin } from '../contexts/AdminContext';
 import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
 import { moviePath, parseMovieId, getMovieOrTv } from '../utils/tmdb';
 import { buildDownloadUrl } from '../utils/settings';
+import { useContentLocker } from '../contexts/ContentLockerContext';
 import './CinemaPage.css';
 
 const CinemaPage = () => {
@@ -23,6 +24,7 @@ const CinemaPage = () => {
   const { isAdmin } = useAdmin();
   const vipVisible = useMonetizationEnabled();
   const { openVIPModal } = useVIPModal();
+  const { openContentLocker } = useContentLocker();
   const [params, setParams] = useSearchParams();
 
 
@@ -112,6 +114,7 @@ const CinemaPage = () => {
   if (loading) {
     return (
       <div className="cinema-page">
+        <div className="bg-logo-pattern" />
         <div className="cinema-loading-wrap">
           <div className="cinema-loading-spinner" />
         </div>
@@ -122,6 +125,7 @@ const CinemaPage = () => {
   if (!item) {
     return (
       <div className="cinema-page">
+        <div className="bg-logo-pattern" />
         <div className="cinema-error page">
           <h2>{t('cinema_error') || 'Content Not Found'}</h2>
           <Link to="/" className="btn btn-primary" style={{ marginTop: '1.25rem' }}>
@@ -224,16 +228,23 @@ const CinemaPage = () => {
                 </button>
               )}
 
-              <a
-                href={downloadUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
                 className="btn btn-primary"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer' }}
+                onClick={() => openContentLocker({
+                  title: isSeries ? `${item.title} (S${paramSeason} E${paramEpisode})` : item.title,
+                  videoUrl: item.videoUrl,
+                  downloadUrl: downloadUrl,
+                  poster: item.poster || item.backdrop,
+                  isSeries,
+                  season: paramSeason,
+                  episode: paramEpisode,
+                })}
               >
                 <Download size={16} />
                 <span>Download Media</span>
-              </a>
+              </button>
             </div>
           </div>
 

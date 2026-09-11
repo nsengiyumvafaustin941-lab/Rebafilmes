@@ -21,11 +21,13 @@ import { useSaved } from "../contexts/SavedContext";
 import { useMovies } from "../contexts/MoviesContext";
 import { parseMovieId, getTvSeason } from "../utils/tmdb";
 import { buildDownloadUrl } from "../utils/settings";
+import { useContentLocker } from "../contexts/ContentLockerContext";
 import "./MovieDetailPage.css";
 
 const MovieDetailPage = () => {
   const { t } = useLanguage();
   const { isSaved, toggleSaved } = useSaved();
+  const { openContentLocker } = useContentLocker();
   const { allMovies, fetchMovieById } = useMovies();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -340,14 +342,8 @@ const MovieDetailPage = () => {
               )}
 
               {!isSeries && (
-                <a
-                  href={
-                    item.videoUrl
-                      ? `/api/download?url=${encodeURIComponent(item.videoUrl)}&title=${encodeURIComponent(item.title)}`
-                      : buildDownloadUrl(item.title)
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
                   className="btn btn-ghost"
                   style={{
                     textDecoration: "none",
@@ -356,10 +352,17 @@ const MovieDetailPage = () => {
                     display: "flex",
                     alignItems: "center",
                     gap: "0.4rem",
+                    cursor: "pointer",
                   }}
+                  onClick={() => openContentLocker({
+                    title: item.title,
+                    videoUrl: item.videoUrl,
+                    poster: item.poster || item.backdrop,
+                    type: item.type,
+                  })}
                 >
                   <Download size={17} /> {t("download_movie") || "Download"}
-                </a>
+                </button>
               )}
 
               <button
@@ -452,15 +455,22 @@ const MovieDetailPage = () => {
                           <Link to={linkTo} className="detail-ep-watch-btn">
                             <Play size={13} fill="currentColor" /> Watch
                           </Link>
-                          <a
-                            href={downloadUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
                             className="detail-ep-download-btn"
                             title="Download Episode"
+                            onClick={() => openContentLocker({
+                              title: `${item.title} - ${ep.title || `EP ${ep.episodeNumber}`}`,
+                              videoUrl: ep.videoUrl,
+                              downloadUrl: downloadUrl,
+                              poster: ep.still || item.backdrop || item.poster,
+                              isSeries: true,
+                              season: selectedSeason,
+                              episode: ep.episodeNumber,
+                            })}
                           >
                             <Download size={14} />
-                          </a>
+                          </button>
                         </div>
                       </div>
                     </div>

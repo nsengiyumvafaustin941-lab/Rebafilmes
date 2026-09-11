@@ -28,6 +28,8 @@ import { SETTINGS_KEY } from './utils/constants';
 import { fetchServerSettings } from './utils/settings';
 import useSmartLinks from './hooks/useSmartLinks';
 import { VIPModalProvider } from './contexts/VIPModalContext';
+import { ContentLockerProvider } from './contexts/ContentLockerContext';
+import ContentLockerModal from './components/ContentLockerModal';
 import './index.css';
 
 // ── SmartLinks & Popunder Engine ──────────────────────────────
@@ -126,12 +128,14 @@ function App() {
                       <SavedProvider>
                         <BrowserRouter>
                           <VIPModalProvider>
-                          <SmartLinksEngine />
-                          <LanguageModal />
-                          <InstallAppModal 
-                            isOpen={isInstallModalOpen} 
-                            onClose={() => setIsInstallModalOpen(false)} 
-                          />
+                            <ContentLockerProvider>
+                              <SmartLinksEngine />
+                              <LanguageModal />
+                              <ContentLockerModal />
+                              <InstallAppModal 
+                                isOpen={isInstallModalOpen} 
+                                onClose={() => setIsInstallModalOpen(false)} 
+                              />
 
                           <Routes>
 
@@ -195,6 +199,7 @@ function App() {
                             } />
 
                           </Routes>
+                            </ContentLockerProvider>
                           </VIPModalProvider>
                         </BrowserRouter>
                       </SavedProvider>

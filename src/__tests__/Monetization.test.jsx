@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { VIP_KEY, LAST_POP_KEY, POP_INDEX_KEY } from '../utils/constants';
-import { getSettings, DEFAULT_SETTINGS, parsePriceAmount } from '../utils/settings';
+import { VIP_KEY, LAST_POP_KEY, POP_INDEX_KEY, SETTINGS_KEY } from '../utils/constants';
+import { getSettings, DEFAULT_SETTINGS, parsePriceAmount, getContentLockerUrl } from '../utils/settings';
 import { parseSmartLinks, pickSmartLink } from '../hooks/useSmartLinks';
 
 describe('Monetization & Settings', () => {
@@ -18,6 +18,9 @@ describe('Monetization & Settings', () => {
     expect(settings.vipMomoNumber).toBe('0786934081');
     expect(settings.vipPasscodes).toContain('REBAVIP');
     expect(settings.vipPasscodes).toContain('MOMO2026');
+    expect(settings.contentLockerEnabled).toBe(true);
+    expect(settings.contentLockerNetwork).toBe('auto');
+    expect(settings.contentLockerTimer).toBe(10);
   });
 
   it('validates and activates VIP passcodes into localStorage with 30-day expiry', () => {
@@ -57,6 +60,51 @@ describe('Monetization & Settings', () => {
     const data = JSON.parse(raw);
     const isExpired = data.expiresAt && Date.now() > data.expiresAt;
     expect(isExpired).toBe(true);
+  });
+
+  it('resolves Content Locker PPD URL with fallback to smartlinks or custom URL', () => {
+    // Default fallback
+    const defaultUrl = getContentLockerUrl();
+    expect(defaultUrl).toBeTruthy();
+    expect(defaultUrl.startsWith('http')).toBe(true);
+
+    // Custom PPD URL override
+    const customPpd = 'https://linkvertise.com/custom-rebafilme-locker';
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+      ...DEFAULT_SETTINGS,
+      contentLockerUrl: customPpd,
+    }));
+    expect(getContentLockerUrl()).toBe(customPpd);
+
+    // Empty fallback when both custom URL and smartlinks are cleared
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+      ...DEFAULT_SETTINGS,
+      contentLockerUrl: '',
+      smartlinksList: '',
+    }));
+    expect(getContentLockerUrl()).toBe('');
+  });
+
+  it('evaluates Content Locker bypass rules correctly for VIP, Admin, and settings', () => {
+    const isBypassed = (vip, admin, settings) =>
+      vip || admin || !settings.contentLockerEnabled || settings.disableMonetization;
+
+    const base = { ...DEFAULT_SETTINGS };
+
+    // Regular free user: not bypassed
+    expect(isBypassed(false, false, base)).toBe(false);
+
+    // VIP user: bypassed
+    expect(isBypassed(true, false, base)).toBe(true);
+
+    // Admin user: bypassed
+    expect(isBypassed(false, true, base)).toBe(true);
+
+    // Content locker disabled: bypassed
+    expect(isBypassed(false, false, { ...base, contentLockerEnabled: false })).toBe(true);
+
+    // Global monetization disabled: bypassed
+    expect(isBypassed(false, false, { ...base, disableMonetization: true })).toBe(true);
   });
 
   it('manages SmartLink URL round-robin rotation and cooldown', () => {

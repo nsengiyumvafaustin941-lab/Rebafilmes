@@ -141,6 +141,80 @@ const AdminSettings = () => {
           </div>
         </div>
 
+        {/* ── 🔒 Pillar 5: Content Locker & Pay-Per-Download (PPD) ── */}
+        <div className="adm-settings-section">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+            <div>
+              <h3 className="adm-settings-heading" style={{ margin: 0 }}>
+                🔒 Monetization Pillar 5 — Content Locker &amp; Pay-Per-Download (PPD)
+              </h3>
+              <small style={{ color: '#888', fontSize: '.82rem' }}>
+                Monetize file downloads via Linkvertise, CPAGrip, or Monetag SmartLinks before unlocking high-speed video files. VIPs skip automatically.
+              </small>
+            </div>
+            <label className="adm-toggle">
+              <input type="checkbox" checked={!!settings.contentLockerEnabled} onChange={set('contentLockerEnabled')} />
+              <span className="adm-toggle-track" />
+            </label>
+          </div>
+
+          <div className="adm-form-grid">
+            <div className="adm-form-group full">
+              <label className="adm-form-label">Content Locker / PPD Sponsor URL</label>
+              <input 
+                className="adm-input" 
+                value={settings.contentLockerUrl || ''} 
+                onChange={set('contentLockerUrl')} 
+                placeholder="https://linkvertise.com/your-locker-link (Leave blank to use SmartLink balancer)" 
+              />
+              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>
+                Paste your Linkvertise, CPAGrip, or Monetag Direct Link. If left blank, it automatically defaults to your highest-weight SmartLink.
+              </small>
+            </div>
+
+            <div className="adm-form-group">
+              <label className="adm-form-label">Verification Timer (seconds)</label>
+              <input
+                className="adm-input"
+                type="number"
+                min="5"
+                max="60"
+                value={settings.contentLockerTimer ?? 10}
+                onChange={set('contentLockerTimer')}
+                placeholder="10"
+              />
+              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>
+                Countdown duration displayed to visitors while completing the sponsor task (10s recommended).
+              </small>
+            </div>
+
+            <div className="adm-form-group">
+              <label className="adm-form-label">Locker Network</label>
+              <select
+                className="adm-select"
+                value={settings.contentLockerNetwork || 'auto'}
+                onChange={set('contentLockerNetwork')}
+              >
+                <option value="auto">🌐 Auto / SmartLink Fallback</option>
+                <option value="linkvertise">🔗 Linkvertise</option>
+                <option value="cpagrip">🔒 CPAGrip</option>
+                <option value="monetag">⚡ Monetag Direct</option>
+                <option value="custom">🛠️ Custom PPD Provider</option>
+              </select>
+            </div>
+
+            <div className="adm-form-group">
+              <label className="adm-form-label">Locker Modal Title</label>
+              <input
+                className="adm-input"
+                value={settings.contentLockerTitle || 'Unlock High-Speed HD Download'}
+                onChange={set('contentLockerTitle')}
+                placeholder="Unlock High-Speed HD Download"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* ── 💰 Pillar 1: SmartLinks & Load Balancing ── */}
         <div className="adm-settings-section">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>

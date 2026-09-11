@@ -48,6 +48,13 @@ https://clickadu.com/smartlink-direct-link-1 | 10%`,
 
   // 🖼️ Monetization Pillar 3: Native Grid Banners
   nativeAdsInterval: 8,
+
+  // 🔒 Monetization Pillar 5: Content Locker & Pay-Per-Download (PPD)
+  contentLockerEnabled: true,
+  contentLockerUrl: '',
+  contentLockerNetwork: 'auto', // 'auto' | 'linkvertise' | 'cpagrip' | 'monetag' | 'custom'
+  contentLockerTimer: 10,
+  contentLockerTitle: 'Unlock High-Speed HD Download',
 };
 
 export function getSettings() {
@@ -149,4 +156,18 @@ export function buildDownloadUrl(title) {
   const { downloadBaseUrl } = getSettings();
   const base = (downloadBaseUrl || DEFAULT_SETTINGS.downloadBaseUrl).replace(/\/$/, '');
   return `${base}/?q=${encodeURIComponent(title)}`;
+}
+
+export function getContentLockerUrl() {
+  const s = getSettings();
+  if (s.contentLockerUrl && typeof s.contentLockerUrl === 'string' && s.contentLockerUrl.trim()) {
+    return s.contentLockerUrl.trim();
+  }
+  if (s.smartlinksList && typeof s.smartlinksList === 'string') {
+    const firstLine = s.smartlinksList.split('\n').map((l) => l.trim()).find((l) => l.startsWith('http'));
+    if (firstLine) {
+      return firstLine.split('|')[0].trim();
+    }
+  }
+  return '';
 }
