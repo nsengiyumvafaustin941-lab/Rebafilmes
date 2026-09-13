@@ -11,7 +11,7 @@ import { useMovies } from '../contexts/MoviesContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useVIP } from '../hooks/useVIP';
 import { useAdmin } from '../contexts/AdminContext';
-import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
+import { useVIPEnabled } from '../hooks/useMonetizationEnabled';
 import { moviePath, parseMovieId, getMovieOrTv } from '../utils/tmdb';
 import { buildDownloadUrl } from '../utils/settings';
 import { useContentLocker } from '../contexts/ContentLockerContext';
@@ -22,7 +22,7 @@ const CinemaPage = () => {
   const { allMovies } = useMovies();
   const { isVip } = useVIP();
   const { isAdmin } = useAdmin();
-  const vipVisible = useMonetizationEnabled();
+  const vipVisible = useVIPEnabled();
   const { openVIPModal } = useVIPModal();
   const { openContentLocker } = useContentLocker();
   const [params, setParams] = useSearchParams();

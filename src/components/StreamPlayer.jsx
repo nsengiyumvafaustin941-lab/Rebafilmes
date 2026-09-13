@@ -25,7 +25,7 @@ import { getTvSeason, getTvShow } from '../utils/tmdb';
 import { buildDownloadUrl, getSettings } from '../utils/settings';
 import { useVIP } from '../hooks/useVIP';
 import { useAdmin } from '../contexts/AdminContext';
-import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
+import { useMonetizationEnabled, useVIPEnabled } from '../hooks/useMonetizationEnabled';
 import { useVIPModal } from '../contexts/VIPModalContext';
 import { useContentLocker } from '../contexts/ContentLockerContext';
 import { useAds } from '../contexts/AdsContext';
@@ -44,10 +44,23 @@ export const StreamPlayer = ({
   const { isVip } = useVIP();
   const { isAdmin } = useAdmin();
   const monetizationEnabled = useMonetizationEnabled();
+  const vipEnabled = useVIPEnabled();
   const { openVIPModal } = useVIPModal();
   const { openContentLocker } = useContentLocker();
   const { trackImpression, trackClick } = useAds();
-  const settings = getSettings();
+  const [settings, setSettings] = useState(() => getSettings());
+
+  useEffect(() => {
+    const onSettingsUpdate = (e) => {
+      setSettings(e?.detail || getSettings());
+    };
+    window.addEventListener('rebafilme_settings_updated', onSettingsUpdate);
+    window.addEventListener('storage', onSettingsUpdate);
+    return () => {
+      window.removeEventListener('rebafilme_settings_updated', onSettingsUpdate);
+      window.removeEventListener('storage', onSettingsUpdate);
+    };
+  }, []);
 
   const [activeServerIdx, setActiveServerIdx] = useState(
     initialServer >= 0 && initialServer < STREAM_PROVIDERS.length ? initialServer : 0
@@ -669,7 +682,7 @@ export const StreamPlayer = ({
                     <ExternalLink size={13} />
                   </a>
                 )}
-                {monetizationEnabled && (
+                {vipEnabled && (
                   <button
                     type="button"
                     className="stream-ad-vip-btn"
@@ -813,7 +826,7 @@ export const StreamPlayer = ({
         </div>
 
         <div className="stream-toolbar-right">
-          {!isVip && !isAdmin && monetizationEnabled && (
+          {!isVip && !isAdmin && vipEnabled && (
             <button
               className="stream-tool-btn stream-vip-cta-btn"
               onClick={openVIPModal}

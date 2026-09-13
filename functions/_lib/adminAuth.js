@@ -20,7 +20,7 @@ export function getAdminSessionToken(request) {
 }
 
 export async function verifyAdminRequest(request, env) {
-  // 1. Header token check (e.g. x-admin-token)
+  // 1. Header token check against ADMIN_PASSWORD
   const headerToken = request.headers.get('x-admin-token');
   if (headerToken && env.ADMIN_PASSWORD && headerToken === env.ADMIN_PASSWORD) {
     return { authorized: true, user: 'admin' };
@@ -28,11 +28,13 @@ export async function verifyAdminRequest(request, env) {
 
   // 2. Cookie session check (admin_session HttpOnly cookie in D1)
   const cookieToken = getAdminSessionToken(request);
-  if (cookieToken && env.DB) {
+  const activeToken = cookieToken || headerToken;
+
+  if (activeToken && env.DB) {
     try {
       const session = await env.DB.prepare(
         'SELECT username FROM admin_sessions WHERE token = ? AND expires_at > datetime("now")'
-      ).bind(cookieToken).first();
+      ).bind(activeToken).first();
 
       if (session) {
         return { authorized: true, user: session.username };

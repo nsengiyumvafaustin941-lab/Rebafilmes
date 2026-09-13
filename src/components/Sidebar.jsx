@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useVIP } from '../hooks/useVIP';
-import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
+import { useVIPEnabled } from '../hooks/useMonetizationEnabled';
 import { useVIPModal } from '../contexts/VIPModalContext';
 import { useAuth } from '../contexts/AuthContext';
 import SearchAutocomplete from './SearchAutocomplete';
@@ -16,7 +16,7 @@ import './Sidebar.css';
 const Sidebar = ({ onOpenInstallModal }) => {
   const { t, setIsModalOpen } = useLanguage();
   const { isVip } = useVIP();
-  const vipVisible = useMonetizationEnabled();
+  const vipVisible = useVIPEnabled();
   const { openVIPModal } = useVIPModal();
   const { user, isLoggedIn } = useAuth();
   const navigate = useNavigate();

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { VIP_KEY, LAST_POP_KEY, POP_INDEX_KEY, SETTINGS_KEY } from '../utils/constants';
-import { getSettings, DEFAULT_SETTINGS, parsePriceAmount, getContentLockerUrl } from '../utils/settings';
+import { getSettings, DEFAULT_SETTINGS, parsePriceAmount, getContentLockerUrl, isVipEnabled } from '../utils/settings';
 import { parseSmartLinks, pickSmartLink } from '../hooks/useSmartLinks';
 
 describe('Monetization & Settings', () => {
@@ -287,6 +287,25 @@ describe('SmartLinks Load Balancer & Weight Engine', () => {
     sessionStorage.setItem('rebafilme_session_pop_count', (currentCount + 1).toString());
     currentCount = parseInt(sessionStorage.getItem('rebafilme_session_pop_count') || '0', 10);
     expect(currentCount >= maxPerSession).toBe(true);
+  });
+
+  it('correctly toggles VIP visibility independently from the master monetization kill switch', () => {
+    // 1. Default: VIP enabled, Master Kill Switch disabled
+    expect(isVipEnabled(DEFAULT_SETTINGS)).toBe(true);
+
+    // 2. VIP Membership toggle turned off (MTN MoMo & Airtel VIP toggle disabled)
+    const vipOffSettings = { ...DEFAULT_SETTINGS, vipEnabled: false };
+    expect(isVipEnabled(vipOffSettings)).toBe(false);
+    // General monetization (ads) should still remain enabled!
+    expect(vipOffSettings.disableMonetization).toBe(false);
+
+    // 3. Master kill switch enabled: VIP must be disabled even if vipEnabled is true
+    const masterKillSwitchSettings = { ...DEFAULT_SETTINGS, vipEnabled: true, disableMonetization: true };
+    expect(isVipEnabled(masterKillSwitchSettings)).toBe(false);
+
+    // 4. Both disabled
+    const bothDisabled = { ...DEFAULT_SETTINGS, vipEnabled: false, disableMonetization: true };
+    expect(isVipEnabled(bothDisabled)).toBe(false);
   });
 });
 

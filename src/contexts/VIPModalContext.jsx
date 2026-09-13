@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import VIPModal from '../components/VIPModal';
-import { getSettings } from '../utils/settings';
+import { getSettings, isVipEnabled } from '../utils/settings';
 
 /**
  * VIPModalContext — single global modal instance.
@@ -27,7 +27,7 @@ export const VIPModalProvider = ({ children }) => {
   });
 
   const openVIPModal = useCallback((planId = null) => {
-    if (getSettings().disableMonetization) return;
+    if (!isVipEnabled()) return;
 
     let targetPlan = planId;
     if (!targetPlan || typeof targetPlan !== 'string') {
@@ -54,7 +54,7 @@ export const VIPModalProvider = ({ children }) => {
   // Listen to custom event to open modal from anywhere
   useEffect(() => {
     const handleOpen = (e) => {
-      if (getSettings().disableMonetization) return;
+      if (!isVipEnabled()) return;
       const plan = e?.detail?.plan || sessionStorage.getItem('rebafilme_pending_plan') || 'monthly';
       if (plan) setInitialPlanId(plan);
       setIsOpen(true);
@@ -67,6 +67,7 @@ export const VIPModalProvider = ({ children }) => {
   useEffect(() => {
     const checkAutoOpen = () => {
       try {
+        if (!isVipEnabled()) return;
         const params = new URLSearchParams(window.location.search);
         const isVipParam = params.get('vip') === '1' || params.get('open_vip') === '1';
         const urlPlan = params.get('plan');

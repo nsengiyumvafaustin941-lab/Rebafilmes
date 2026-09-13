@@ -8,7 +8,7 @@ import {
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useVIP } from '../hooks/useVIP';
-import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
+import { useVIPEnabled } from '../hooks/useMonetizationEnabled';
 import { useVIPModal } from '../contexts/VIPModalContext';
 import { getDynamicVipPlans } from '../utils/settings';
 import logo from '../assets/logo.jpg';
@@ -193,7 +193,7 @@ const SubscriptionPanel = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { isVip, daysRemaining, expiresAt, serverVip } = useVIP();
-  const vipVisible = useMonetizationEnabled();
+  const vipVisible = useVIPEnabled();
   const { openVIPModal } = useVIPModal();
 
   return (
@@ -302,7 +302,7 @@ const NotificationsPanel = () => {
 const BuyPlanPanel = () => {
   const { t } = useLanguage();
   const { openVIPModal } = useVIPModal();
-  const vipVisible = useMonetizationEnabled();
+  const vipVisible = useVIPEnabled();
   const dynamicPlans = getDynamicVipPlans();
 
   if (!vipVisible) return null;
@@ -367,7 +367,7 @@ const AccountPage = () => {
   const { t } = useLanguage();
   const { user, isLoggedIn, logout } = useAuth();
   const { isVip, daysRemaining } = useVIP();
-  const vipVisible = useMonetizationEnabled();
+  const vipVisible = useVIPEnabled();
   const [activeTab, setActiveTab] = useState('subscription');
 
   if (!isLoggedIn) {

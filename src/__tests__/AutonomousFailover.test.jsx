@@ -29,6 +29,8 @@ vi.mock('../contexts/AdminContext', () => ({
 
 vi.mock('../hooks/useMonetizationEnabled', () => ({
   useMonetizationEnabled: () => false,
+  useVIPEnabled: () => false,
+  default: () => false,
 }));
 
 vi.mock('../contexts/VIPModalContext', () => ({

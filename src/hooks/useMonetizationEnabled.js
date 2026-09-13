@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getSettings } from '../utils/settings';
+import { getSettings, isVipEnabled } from '../utils/settings';
 
 export function useMonetizationEnabled() {
   const [enabled, setEnabled] = useState(() => {
@@ -12,6 +12,27 @@ export function useMonetizationEnabled() {
     };
 
     // Update on storage / window focus / custom event
+    window.addEventListener('storage', update);
+    window.addEventListener('rebafilme_settings_updated', update);
+    return () => {
+      window.removeEventListener('storage', update);
+      window.removeEventListener('rebafilme_settings_updated', update);
+    };
+  }, []);
+
+  return enabled;
+}
+
+export function useVIPEnabled() {
+  const [enabled, setEnabled] = useState(() => {
+    return isVipEnabled();
+  });
+
+  useEffect(() => {
+    const update = () => {
+      setEnabled(isVipEnabled());
+    };
+
     window.addEventListener('storage', update);
     window.addEventListener('rebafilme_settings_updated', update);
     return () => {

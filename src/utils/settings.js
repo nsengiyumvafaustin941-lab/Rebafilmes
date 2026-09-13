@@ -68,6 +68,17 @@ export function getSettings() {
 }
 
 /**
+ * Returns true if VIP features and promotions are allowed to be displayed.
+ * VIP is enabled ONLY when:
+ * 1. Global master kill switch (disableMonetization) is false, AND
+ * 2. VIP Membership toggle (vipEnabled) is not turned off.
+ */
+export function isVipEnabled(overrideSettings = null) {
+  const s = overrideSettings || getSettings();
+  return s.disableMonetization !== true && s.vipEnabled !== false;
+}
+
+/**
  * Asynchronously synchronizes the latest admin settings from Cloudflare KV
  * to localStorage and dispatches a notification event for all active UI listeners.
  */
@@ -79,7 +90,35 @@ export async function fetchServerSettings() {
     if (res.ok) {
       const serverData = await res.json();
       if (serverData && typeof serverData === 'object') {
-        const merged = { ...DEFAULT_SETTINGS, ...serverData };
+        let localData = null;
+        try {
+          const rawLocal = localStorage.getItem(CONSTANTS_SETTINGS_KEY);
+          if (rawLocal) localData = JSON.parse(rawLocal);
+        } catch {}
+
+        // If local settings were modified more recently than server data, preserve local
+        if (
+          localData &&
+          typeof localData === 'object' &&
+          localData.updatedAt &&
+          (!serverData.updatedAt || localData.updatedAt > serverData.updatedAt)
+        ) {
+          return { ...DEFAULT_SETTINGS, ...localData };
+        }
+
+        // Merge: respect serverData.smartlinksList if provided (even if empty string "")
+        const smartlinksList = typeof serverData.smartlinksList === 'string'
+          ? serverData.smartlinksList
+          : (localData && typeof localData.smartlinksList === 'string'
+            ? localData.smartlinksList
+            : DEFAULT_SETTINGS.smartlinksList);
+
+        const merged = {
+          ...DEFAULT_SETTINGS,
+          ...(localData || {}),
+          ...serverData,
+          smartlinksList,
+        };
         localStorage.setItem(CONSTANTS_SETTINGS_KEY, JSON.stringify(merged));
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('rebafilme_settings_updated', { detail: merged }));

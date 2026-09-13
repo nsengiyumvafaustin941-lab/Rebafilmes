@@ -3,7 +3,7 @@ import MovieCard from './MovieCard';
 import NativeAdCard from './NativeAdCard';
 import { useVIP } from '../hooks/useVIP';
 import { useAdmin } from '../contexts/AdminContext';
-import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
+import { useMonetizationEnabled, useVIPEnabled } from '../hooks/useMonetizationEnabled';
 import { useVIPModal } from '../contexts/VIPModalContext';
 import { useAds } from '../contexts/AdsContext';
 import { getSettings } from '../utils/settings';
@@ -13,12 +13,14 @@ const ContentGrid = ({ title, items }) => {
   const { isVip } = useVIP();
   const { isAdmin } = useAdmin();
   const monetizationEnabled = useMonetizationEnabled();
+  const vipEnabled = useVIPEnabled();
   const { openVIPModal } = useVIPModal();
   const { ads } = useAds();
   const settings = getSettings();
   const interval = Number(settings.nativeAdsInterval) || 8;
 
   const activeAds = ads.filter((a) => a.active);
+  const hasAdOrVip = activeAds.length > 0 || vipEnabled;
 
   return (
     <section className="content-grid-section">
@@ -29,7 +31,7 @@ const ContentGrid = ({ title, items }) => {
       )}
       <div className="content-grid">
         {items.map((item, idx) => {
-          const showAdAfter = !isVip && !isAdmin && monetizationEnabled && idx > 0 && (idx + 1) % interval === 0;
+          const showAdAfter = !isVip && !isAdmin && monetizationEnabled && hasAdOrVip && idx > 0 && (idx + 1) % interval === 0;
           const adIndex = Math.floor(idx / interval) % (activeAds.length || 1);
           const currentAd = activeAds.length > 0 ? activeAds[adIndex] : null;
 

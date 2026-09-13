@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { ExternalLink, Sparkles, Megaphone } from 'lucide-react';
 import { useAds } from '../contexts/AdsContext';
-import { useMonetizationEnabled } from '../hooks/useMonetizationEnabled';
+import { useMonetizationEnabled, useVIPEnabled } from '../hooks/useMonetizationEnabled';
 import { getSettings } from '../utils/settings';
 import './NativeAdCard.css';
 
 const NativeAdCard = ({ ad, onOpenVIP }) => {
   const monetizationEnabled = useMonetizationEnabled();
+  const vipEnabled = useVIPEnabled();
   const { trackClick, trackImpression } = useAds();
   const tracked = useRef(new Set());
   const cardRef = useRef(null);
@@ -47,6 +48,7 @@ const NativeAdCard = ({ ad, onOpenVIP }) => {
   if (!monetizationEnabled) return null;
 
   if (!ad) {
+    if (!vipEnabled) return null;
     return (
       <div 
         className="card native-ad-card vip-promo-card"

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useContentLocker } from '../contexts/ContentLockerContext';
 import { useVIPModal } from '../contexts/VIPModalContext';
+import { useVIPEnabled } from '../hooks/useMonetizationEnabled';
 import { getSettings, getContentLockerUrl } from '../utils/settings';
 import { fireSmartLink } from '../hooks/useSmartLinks';
 import './ContentLockerModal.css';
@@ -12,12 +13,25 @@ import './ContentLockerModal.css';
 export const ContentLockerModal = () => {
   const { isOpen, activeItem, closeContentLocker } = useContentLocker();
   const { openVIPModal } = useVIPModal();
+  const vipEnabled = useVIPEnabled();
 
   const [stage, setStage] = useState('locked'); // 'locked' | 'verifying' | 'unlocked'
   const [secondsLeft, setSecondsLeft] = useState(10);
   const [progressPercent, setProgressPercent] = useState(0);
+  const [settings, setSettings] = useState(() => getSettings());
 
-  const settings = getSettings();
+  useEffect(() => {
+    const onSettingsUpdate = (e) => {
+      setSettings(e?.detail || getSettings());
+    };
+    window.addEventListener('rebafilme_settings_updated', onSettingsUpdate);
+    window.addEventListener('storage', onSettingsUpdate);
+    return () => {
+      window.removeEventListener('rebafilme_settings_updated', onSettingsUpdate);
+      window.removeEventListener('storage', onSettingsUpdate);
+    };
+  }, []);
+
   const countdownDuration = Math.max(5, Number(settings.contentLockerTimer) || 10);
   const ppdUrl = getContentLockerUrl();
 
@@ -248,22 +262,24 @@ export const ContentLockerModal = () => {
         </div>
 
         {/* VIP Instant Bypass Option (Monetization Upsell) */}
-        <div className="locker-vip-banner">
-          <div className="locker-vip-info">
-            <Crown size={18} color="#ffd700" />
-            <div>
-              <strong>Skip All Lockers with VIP Pass</strong>
-              <small>Unlimited 1-click downloads with zero ads &amp; zero waiting</small>
+        {vipEnabled && (
+          <div className="locker-vip-banner">
+            <div className="locker-vip-info">
+              <Crown size={18} color="#ffd700" />
+              <div>
+                <strong>Skip All Lockers with VIP Pass</strong>
+                <small>Unlimited 1-click downloads with zero ads &amp; zero waiting</small>
+              </div>
             </div>
+            <button 
+              className="btn-locker-vip-action"
+              onClick={handleUpgradeToVIP}
+            >
+              <Zap size={14} />
+              <span>Get VIP</span>
+            </button>
           </div>
-          <button 
-            className="btn-locker-vip-action"
-            onClick={handleUpgradeToVIP}
-          >
-            <Zap size={14} />
-            <span>Get VIP</span>
-          </button>
-        </div>
+        )}
 
       </div>
     </div>

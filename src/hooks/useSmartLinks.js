@@ -35,6 +35,25 @@ const TRIGGER_SELECTORS = [
 export const SMARTLINKS_RR_KEY = 'rebafilme_sl_rr_idx';
 
 /**
+ * Serializes an array of smartlink objects back into the newline-separated string format.
+ * Format: `URL | weight%`
+ */
+export function serializeSmartLinks(items) {
+  if (!Array.isArray(items)) return '';
+  return items
+    .filter((item) => item && typeof item.url === 'string' && item.url.trim().length > 0)
+    .map((item) => {
+      let url = item.url.trim();
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = `https://${url}`;
+      }
+      const weight = Number(item.weight) > 0 ? Number(item.weight) : 1;
+      return `${url} | ${weight}%`;
+    })
+    .join('\n');
+}
+
+/**
  * Parses raw newline-separated SmartLinks text into structured items with weights & percentages.
  * Supports syntax: `https://example.com/link | 70%` or `https://example.com/link | 70` or `https://example.com/link`
  */
@@ -63,6 +82,13 @@ export function parseSmartLinks(rawList) {
       } else {
         hasInvalidWeight = true;
         weight = 1; // Graceful fallback
+      }
+    }
+
+    // Auto-prefix https:// if protocol was omitted
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      if (url.includes('.') && !url.startsWith('/')) {
+        url = `https://${url}`;
       }
     }
 
@@ -156,12 +182,18 @@ export function useSmartLinks() {
   }, [isVip, isAdmin, monetizationEnabled]);
 
   useEffect(() => {
-    // Cache settings for the session (re-read at most once per mount)
-    let cachedSettings = null;
-    const loadSettings = () => {
-      if (!cachedSettings) cachedSettings = getSettings();
-      return cachedSettings;
+    let currentSettings = getSettings();
+
+    const onSettingsUpdate = (e) => {
+      if (e && e.detail) {
+        currentSettings = e.detail;
+      } else {
+        currentSettings = getSettings();
+      }
     };
+
+    window.addEventListener('rebafilme_settings_updated', onSettingsUpdate);
+    window.addEventListener('storage', onSettingsUpdate);
 
     const handleClick = (e) => {
       const { isVip: vip, isAdmin: admin, monetizationEnabled: isMonetized } = stateRef.current;
@@ -179,8 +211,8 @@ export function useSmartLinks() {
       // Only fire on meaningful navigation targets
       if (!target.closest(TRIGGER_SELECTORS)) return;
 
-      // 3. Settings guard
-      const settings = loadSettings();
+      // 3. Settings guard - always fresh
+      const settings = currentSettings || getSettings();
       if (!settings.smartlinksEnabled || settings.disableMonetization) return;
 
       const rawList = settings.smartlinksList || '';
@@ -246,8 +278,12 @@ export function useSmartLinks() {
 
     // Bubble phase ({ capture: false }) — fires after child element click handlers complete
     document.addEventListener('click', handleClick, { capture: false });
-    return () => document.removeEventListener('click', handleClick, { capture: false });
-  }, []); // runs once; reads current VIP/admin from ref on every click
+    return () => {
+      document.removeEventListener('click', handleClick, { capture: false });
+      window.removeEventListener('rebafilme_settings_updated', onSettingsUpdate);
+      window.removeEventListener('storage', onSettingsUpdate);
+    };
+  }, []); // reads current VIP/admin from ref and stays reactive to settings updates
 }
 
 /**
