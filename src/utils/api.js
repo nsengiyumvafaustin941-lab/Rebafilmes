@@ -34,30 +34,39 @@ export const api = {
       return data;
     };
     
+    // Check if local data exists and is newer
+    const localData = localStorage.getItem(key);
+    let parsedLocal = null;
+    if (localData) {
+      try {
+        parsedLocal = JSON.parse(localData);
+      } catch {
+        parsedLocal = localData;
+      }
+    }
+
     if (apiSuccess && apiData !== null && apiData !== undefined) {
       const sanitized = sanitizeResult(apiData);
       if (sanitized !== fallback || apiData === fallback) {
+        // If local data has an updatedAt timestamp strictly newer than server data, prefer local.
+        // This handles the window between a successful localStorage write and KV propagation.
+        if (
+          parsedLocal &&
+          typeof parsedLocal === 'object' &&
+          parsedLocal.updatedAt &&
+          typeof sanitized === 'object' &&
+          sanitized !== null &&
+          (!sanitized.updatedAt || parsedLocal.updatedAt > sanitized.updatedAt)
+        ) {
+          return sanitizeResult(parsedLocal);
+        }
         return sanitized;
       }
     }
     
     // Fallback to localStorage if API failed or returned null (empty KV)
-    const localData = localStorage.getItem(key);
-    if (localData) {
-      try {
-        const parsed = JSON.parse(localData);
-        // If the API succeeded but was empty, only sync if logged in as admin
-        if (apiSuccess) {
-          const adminData = JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || '{}');
-          if (adminData && adminData.token) {
-            console.log(`Migrating local data for ${key} to Cloudflare KV...`);
-            api.set(key, parsed, true);
-          }
-        }
-        return sanitizeResult(parsed);
-      } catch {
-        return sanitizeResult(localData);
-      }
+    if (parsedLocal) {
+      return sanitizeResult(parsedLocal);
     }
     
     return fallback;

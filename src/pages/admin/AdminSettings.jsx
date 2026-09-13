@@ -1,15 +1,25 @@
 import React, { useState, useMemo } from 'react';
-import { Save, RefreshCw, BarChart2 } from 'lucide-react';
+import { 
+  Save, RefreshCw, BarChart2, Plus, Trash2, Pencil, Check, X, 
+  ExternalLink, Code, LayoutList, RotateCcw, AlertTriangle 
+} from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import './AdminLayout.css';
 import './AdminSettings.css';
 import { api } from '../../utils/api';
 import { DEFAULT_SETTINGS, SETTINGS_KEY, parsePriceAmount, parseUsdPrice } from '../../utils/settings';
-import { parseSmartLinks } from '../../hooks/useSmartLinks';
+import { parseSmartLinks, serializeSmartLinks } from '../../hooks/useSmartLinks';
 
 const AdminSettings = () => {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
+
+  // SmartLinks interactive management state
+  const [editingLinkIdx, setEditingLinkIdx] = useState(null);
+  const [editLinkData, setEditLinkData] = useState({ url: '', weight: '50' });
+  const [newLinkUrl, setNewLinkUrl] = useState('');
+  const [newLinkWeight, setNewLinkWeight] = useState('50');
+  const [rawTextMode, setRawTextMode] = useState(false);
 
   const parsedSmartLinks = useMemo(
     () => parseSmartLinks(settings.smartlinksList || ''),
@@ -18,7 +28,15 @@ const AdminSettings = () => {
 
   React.useEffect(() => {
     api.get(SETTINGS_KEY, DEFAULT_SETTINGS).then((s) => {
-      setSettings({ ...DEFAULT_SETTINGS, ...s });
+      if (!s || typeof s !== 'object') return;
+      setSettings({
+        ...DEFAULT_SETTINGS,
+        ...s,
+        // Respect empty string from server (intentional clear), but fall back to default if key is missing entirely
+        smartlinksList: typeof s.smartlinksList === 'string'
+          ? s.smartlinksList
+          : DEFAULT_SETTINGS.smartlinksList,
+      });
     });
   }, []);
 
@@ -27,15 +45,96 @@ const AdminSettings = () => {
     setSettings((p) => ({ ...p, [field]: val }));
   };
 
+  // Interactive SmartLink actions
+  const handleAddSmartLink = () => {
+    if (!newLinkUrl || !newLinkUrl.trim()) return;
+    let url = newLinkUrl.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = `https://${url}`;
+    }
+    const weight = Number(newLinkWeight) > 0 ? Number(newLinkWeight) : 50;
+    const current = [...parsedSmartLinks, { url, weight }];
+    const serialized = serializeSmartLinks(current);
+    setSettings((p) => ({ ...p, smartlinksList: serialized }));
+    setNewLinkUrl('');
+    setNewLinkWeight('50');
+  };
+
+  const handleRemoveSmartLink = (index) => {
+    const updated = parsedSmartLinks.filter((_, idx) => idx !== index);
+    const serialized = serializeSmartLinks(updated);
+    setSettings((p) => ({ ...p, smartlinksList: serialized }));
+    if (editingLinkIdx === index) {
+      setEditingLinkIdx(null);
+    }
+  };
+
+  const handleStartEdit = (index) => {
+    setEditingLinkIdx(index);
+    setEditLinkData({
+      url: parsedSmartLinks[index].url,
+      weight: String(parsedSmartLinks[index].weight),
+    });
+  };
+
+  const handleSaveEdit = (index) => {
+    let url = (editLinkData.url || '').trim();
+    if (!url) return;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = `https://${url}`;
+    }
+    const weight = Number(editLinkData.weight) > 0 ? Number(editLinkData.weight) : 1;
+    const updated = parsedSmartLinks.map((item, idx) =>
+      idx === index ? { ...item, url, weight } : item
+    );
+    const serialized = serializeSmartLinks(updated);
+    setSettings((p) => ({ ...p, smartlinksList: serialized }));
+    setEditingLinkIdx(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingLinkIdx(null);
+  };
+
+  const handleEqualize = () => {
+    if (parsedSmartLinks.length === 0) return;
+    const equalPct = Math.floor(100 / parsedSmartLinks.length);
+    const normalized = parsedSmartLinks.map((item, idx) => {
+      const pct = idx === parsedSmartLinks.length - 1 ? 100 - equalPct * (parsedSmartLinks.length - 1) : equalPct;
+      return `${item.url} | ${pct}%`;
+    }).join('\n');
+    setSettings((p) => ({ ...p, smartlinksList: normalized }));
+  };
+
+  const handleClearAllSmartLinks = () => {
+    if (window.confirm('Remove all rotating SmartLinks? Popunders and ad redirects will be completely disabled.')) {
+      setSettings((p) => ({ ...p, smartlinksList: '' }));
+      setEditingLinkIdx(null);
+    }
+  };
+
+  const handleResetDefaultSmartLinks = () => {
+    setSettings((p) => ({ ...p, smartlinksList: DEFAULT_SETTINGS.smartlinksList }));
+    setEditingLinkIdx(null);
+  };
+
+  const handleTestSmartLink = (url) => {
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   const handleSave = async () => {
     const cleanSettings = {
       ...settings,
+      smartlinksList: typeof settings.smartlinksList === 'string' ? settings.smartlinksList.trim() : '',
       vipPriceDaily: parsePriceAmount(settings.vipPriceDaily, 1000),
       vipPriceMonthly: parsePriceAmount(settings.vipPriceMonthly, 5000),
       vipPriceYearly: parsePriceAmount(settings.vipPriceYearly, 45000),
       vipPriceUsdDaily: parseUsdPrice(settings.vipPriceUsdDaily, 0.99),
       vipPriceUsdMonthly: parseUsdPrice(settings.vipPriceUsdMonthly, 3.99),
       vipPriceUsdYearly: parseUsdPrice(settings.vipPriceUsdYearly, 34.99),
+      updatedAt: Date.now(),
     };
     await api.set(SETTINGS_KEY, cleanSettings, true);
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(cleanSettings));
@@ -297,107 +396,263 @@ const AdminSettings = () => {
               </small>
             </div>
 
+            {/* ── Rotating SmartLinks Manager ── */}
             <div className="adm-form-group full">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.35rem', flexWrap: 'wrap', gap: '.5rem' }}>
-                <label className="adm-form-label" style={{ margin: 0 }}>
-                  Rotating SmartLink URLs &amp; Weights (one per line)
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.75rem', flexWrap: 'wrap', gap: '.5rem' }}>
+                <div>
+                  <label className="adm-form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                    <BarChart2 size={16} color="#ffd700" />
+                    Active SmartLinks ({parsedSmartLinks.length})
+                  </label>
+                  <small style={{ color: '#888', fontSize: '.75rem' }}>
+                    Distribution Mode: <strong style={{ color: '#fff' }}>{settings.smartlinksStrategy === 'round_robin' ? 'Round-Robin (1:1)' : settings.smartlinksStrategy === 'random' ? 'Random' : 'Weighted'}</strong>
+                  </small>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     className="adm-btn adm-btn-ghost adm-btn-sm"
-                    style={{ fontSize: '.72rem', padding: '.2rem .5rem', height: 'auto' }}
-                    onClick={() => {
-                      if (parsedSmartLinks.length === 0) return;
-                      const equalPct = Math.floor(100 / parsedSmartLinks.length);
-                      const normalized = parsedSmartLinks.map((item, idx) => {
-                        const pct = idx === parsedSmartLinks.length - 1 ? 100 - equalPct * (parsedSmartLinks.length - 1) : equalPct;
-                        return `${item.url} | ${pct}%`;
-                      }).join('\n');
-                      setSettings((p) => ({ ...p, smartlinksList: normalized }));
-                    }}
+                    style={{ fontSize: '.72rem', padding: '.25rem .55rem' }}
+                    onClick={handleEqualize}
+                    title="Distribute traffic equally across all active links"
                   >
-                    ⚖️ Equalize Weights (50/50)
+                    ⚖️ Equalize (50/50)
                   </button>
-                  <span style={{ fontSize: '.75rem', color: '#3b82f6', fontWeight: 600 }}>
-                    Syntax: <code>URL | weight%</code>
-                  </span>
+                  <button
+                    type="button"
+                    className="adm-btn adm-btn-ghost adm-btn-sm"
+                    style={{ fontSize: '.72rem', padding: '.25rem .55rem' }}
+                    onClick={handleResetDefaultSmartLinks}
+                    title="Reset to recommended default networks"
+                  >
+                    <RotateCcw size={12} /> Defaults
+                  </button>
+                  {parsedSmartLinks.length > 0 && (
+                    <button
+                      type="button"
+                      className="adm-btn adm-btn-ghost adm-btn-sm"
+                      style={{ fontSize: '.72rem', padding: '.25rem .55rem', color: '#f87171' }}
+                      onClick={handleClearAllSmartLinks}
+                      title="Clear all smartlinks"
+                    >
+                      <Trash2 size={12} /> Clear All
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="adm-btn adm-btn-ghost adm-btn-sm"
+                    style={{ fontSize: '.72rem', padding: '.25rem .55rem' }}
+                    onClick={() => setRawTextMode((p) => !p)}
+                    title="Toggle raw syntax editor"
+                  >
+                    {rawTextMode ? <LayoutList size={12} /> : <Code size={12} />} {rawTextMode ? 'Visual Cards' : 'Raw Text'}
+                  </button>
                 </div>
               </div>
-              <textarea
-                className="adm-input"
-                rows={5}
-                value={settings.smartlinksList || ''}
-                onChange={set('smartlinksList')}
-                placeholder={`https://nickeldefiancepriest.com/your-adsterra-key | 60%\nhttps://omg10.com/4/your-monetag-key | 30%\nhttps://clickadu.com/your-clickadu-key | 10%`}
-                style={{ fontFamily: 'monospace', fontSize: '0.82rem', resize: 'vertical' }}
-              />
-              <small style={{ color: '#777', fontSize: '.75rem', marginTop: '.25rem' }}>
-                Paste direct links from Adsterra, Monetag, PopAds, or ClickAdu. Add <code>| 60%</code> to assign custom traffic weights.
-              </small>
+
+              {/* Raw Text View (for power users / bulk copy-paste) */}
+              {rawTextMode ? (
+                <div>
+                  <textarea
+                    className="adm-input"
+                    rows={6}
+                    value={settings.smartlinksList || ''}
+                    onChange={set('smartlinksList')}
+                    placeholder={`https://nickeldefiancepriest.com/your-adsterra-key | 60%\nhttps://omg10.com/4/your-monetag-key | 30%\nhttps://clickadu.com/your-clickadu-key | 10%`}
+                    style={{ fontFamily: 'monospace', fontSize: '0.82rem', resize: 'vertical' }}
+                  />
+                  <small style={{ color: '#777', fontSize: '.75rem', marginTop: '.25rem', display: 'block' }}>
+                    Syntax: <code>URL | weight%</code> (one URL per line). Leave empty to disable all smartlink popunders.
+                  </small>
+                </div>
+              ) : (
+                /* Visual Card Manager (Remove, Edit, Test, Add) */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '.65rem' }}>
+                  {parsedSmartLinks.length === 0 ? (
+                    <div className="adm-sl-empty-state">
+                      <p style={{ margin: '0 0 .5rem', color: '#94a3b8' }}>
+                        🚫 No SmartLinks configured. Popunders and direct-link redirects are currently <strong>inactive</strong>.
+                      </p>
+                      <button
+                        type="button"
+                        className="adm-btn adm-btn-ghost adm-btn-sm"
+                        style={{ fontSize: '.75rem', margin: '0 auto', color: '#38bdf8' }}
+                        onClick={handleResetDefaultSmartLinks}
+                      >
+                        <RotateCcw size={13} /> Load Recommended Networks (Adsterra, Monetag, ClickAdu)
+                      </button>
+                    </div>
+                  ) : (
+                    parsedSmartLinks.map((item, idx) => {
+                      const isEditing = editingLinkIdx === idx;
+                      const effectivePct = settings.smartlinksStrategy === 'round_robin' || settings.smartlinksStrategy === 'random'
+                        ? Math.round(100 / parsedSmartLinks.length)
+                        : item.percentage;
+                      const dotColor = idx === 0 ? '#3b82f6' : idx === 1 ? '#22c55e' : idx === 2 ? '#f59e0b' : '#ec4899';
+
+                      return (
+                        <div key={idx} className={`adm-sl-card ${isEditing ? 'adm-sl-card-editing' : ''}`}>
+                          <div className="adm-sl-header">
+                            <span className="adm-sl-domain">
+                              <span className="adm-sl-dot" style={{ background: dotColor }} />
+                              {item.domain}
+                            </span>
+                            <span className="adm-sl-pct">
+                              {settings.smartlinksStrategy === 'round_robin'
+                                ? `${effectivePct}% (1:1 Cycle)`
+                                : settings.smartlinksStrategy === 'random'
+                                ? `${effectivePct}% (Random)`
+                                : `${effectivePct}% traffic (${item.weight} pts)`}
+                            </span>
+                          </div>
+
+                          <div className="adm-sl-bar-track">
+                            <div
+                              className="adm-sl-bar-fill"
+                              style={{
+                                width: `${effectivePct}%`,
+                                background: idx === 0
+                                  ? 'linear-gradient(90deg, #2563eb, #3b82f6)'
+                                  : idx === 1
+                                  ? 'linear-gradient(90deg, #16a34a, #22c55e)'
+                                  : idx === 2
+                                  ? 'linear-gradient(90deg, #d97706, #f59e0b)'
+                                  : 'linear-gradient(90deg, #db2777, #ec4899)',
+                              }}
+                            />
+                          </div>
+
+                          {isEditing ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '.45rem', marginTop: '.4rem' }}>
+                              <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                                <input
+                                  className="adm-input"
+                                  style={{ flex: 1, minWidth: 200, fontSize: '.78rem' }}
+                                  value={editLinkData.url}
+                                  onChange={(e) => setEditLinkData((p) => ({ ...p, url: e.target.value }))}
+                                  placeholder="https://..."
+                                  autoFocus
+                                />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+                                  <span style={{ fontSize: '.75rem', color: '#888' }}>Weight:</span>
+                                  <input
+                                    className="adm-input"
+                                    type="number"
+                                    min="1"
+                                    max="1000"
+                                    style={{ width: 70, fontSize: '.78rem' }}
+                                    value={editLinkData.weight}
+                                    onChange={(e) => setEditLinkData((p) => ({ ...p, weight: e.target.value }))}
+                                  />
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', gap: '.4rem', justifyContent: 'flex-end' }}>
+                                <button
+                                  type="button"
+                                  className="adm-sl-action-btn"
+                                  onClick={handleCancelEdit}
+                                >
+                                  <X size={12} /> Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  className="adm-sl-action-btn adm-sl-btn-save"
+                                  onClick={() => handleSaveEdit(idx)}
+                                >
+                                  <Check size={12} /> Update Link
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="adm-sl-url-row">
+                              <span className="adm-sl-url-text" title={item.url}>
+                                {item.url}
+                              </span>
+                              <div className="adm-sl-actions">
+                                <button
+                                  type="button"
+                                  className="adm-sl-action-btn adm-sl-btn-test"
+                                  onClick={() => handleTestSmartLink(item.url)}
+                                  title="Test link in new tab"
+                                >
+                                  <ExternalLink size={12} /> Test
+                                </button>
+                                <button
+                                  type="button"
+                                  className="adm-sl-action-btn"
+                                  onClick={() => handleStartEdit(idx)}
+                                  title="Edit link URL or weight"
+                                >
+                                  <Pencil size={12} /> Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  className="adm-sl-action-btn adm-sl-btn-delete"
+                                  onClick={() => handleRemoveSmartLink(idx)}
+                                  title="Remove this smartlink from rotation"
+                                >
+                                  <Trash2 size={12} /> Remove
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+
+                  {/* Quick Add New SmartLink Panel */}
+                  <div className="adm-sl-add-panel">
+                    <div style={{ fontSize: '.78rem', fontWeight: 700, color: '#38bdf8', marginBottom: '.4rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+                      <Plus size={14} /> Add New Direct Link / SmartLink
+                    </div>
+                    <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <input
+                        className="adm-input"
+                        style={{ flex: 1, minWidth: 220, fontSize: '.78rem' }}
+                        value={newLinkUrl}
+                        onChange={(e) => setNewLinkUrl(e.target.value)}
+                        placeholder="https://ad-network.com/direct-link or smartlink URL"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddSmartLink();
+                          }
+                        }}
+                      />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+                        <span style={{ fontSize: '.75rem', color: '#888' }}>Weight:</span>
+                        <input
+                          className="adm-input"
+                          type="number"
+                          min="1"
+                          max="1000"
+                          style={{ width: 70, fontSize: '.78rem' }}
+                          value={newLinkWeight}
+                          onChange={(e) => setNewLinkWeight(e.target.value)}
+                          placeholder="50"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="adm-btn adm-btn-primary adm-btn-sm"
+                        style={{ fontSize: '.78rem', padding: '.45rem .85rem', height: 'auto' }}
+                        onClick={handleAddSmartLink}
+                        disabled={!newLinkUrl.trim()}
+                      >
+                        <Plus size={14} /> Add Link
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {parsedSmartLinks.some((item) => item.hasInvalidWeight) && (
                 <div style={{ color: '#f59e0b', fontSize: '.78rem', marginTop: '.4rem', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
-                  ⚠️ Some links have unparseable weights and are defaulting to equal weight (1).
+                  <AlertTriangle size={13} /> Some links had invalid weights and were defaulted to weight 1.
                 </div>
               )}
             </div>
-
-            {/* ── Live Traffic Share Visualizer Widget ── */}
-            {parsedSmartLinks.length > 0 && (
-              <div className="adm-form-group full" style={{ background: '#0e0e14', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.75rem' }}>
-                  <span style={{ fontSize: '.82rem', fontWeight: 700, color: '#ffd700', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
-                    <BarChart2 size={15} /> Live Traffic Allocation Preview ({parsedSmartLinks.length} networks)
-                  </span>
-                  <span style={{ fontSize: '.72rem', color: '#888' }}>
-                    Mode: <strong>{settings.smartlinksStrategy === 'round_robin' ? 'Round-Robin' : settings.smartlinksStrategy === 'random' ? 'Random' : 'Weighted'}</strong>
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '.65rem' }}>
-                  {parsedSmartLinks.map((item, idx) => {
-                    const effectivePct = settings.smartlinksStrategy === 'round_robin' || settings.smartlinksStrategy === 'random'
-                      ? Math.round(100 / parsedSmartLinks.length)
-                      : item.percentage;
-
-                    return (
-                      <div key={idx} style={{ background: '#161622', padding: '.65rem .85rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.35rem', fontSize: '.8rem' }}>
-                          <span style={{ fontWeight: 600, color: '#fff', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: idx === 0 ? '#3b82f6' : idx === 1 ? '#22c55e' : idx === 2 ? '#f59e0b' : '#ec4899', display: 'inline-block' }} />
-                            {item.domain}
-                          </span>
-                          <span style={{ color: '#ffd700', fontWeight: 700 }}>
-                            {settings.smartlinksStrategy === 'round_robin'
-                              ? `${effectivePct}% (Equal 1:1)`
-                              : settings.smartlinksStrategy === 'random'
-                              ? `${effectivePct}% (Uniform Random)`
-                              : `${effectivePct}% of traffic (${item.weight} pts)`}
-                          </span>
-                        </div>
-
-                        <div style={{ width: '100%', height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
-                          <div
-                            style={{
-                              width: `${effectivePct}%`,
-                              height: '100%',
-                              background: idx === 0 ? 'linear-gradient(90deg, #2563eb, #3b82f6)' : idx === 1 ? 'linear-gradient(90deg, #16a34a, #22c55e)' : idx === 2 ? 'linear-gradient(90deg, #d97706, #f59e0b)' : 'linear-gradient(90deg, #db2777, #ec4899)',
-                              borderRadius: 3,
-                              transition: 'width 0.3s ease',
-                            }}
-                          />
-                        </div>
-
-                        <div style={{ fontSize: '.7rem', color: '#666', marginTop: '.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {item.url}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
