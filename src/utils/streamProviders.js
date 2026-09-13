@@ -10,7 +10,7 @@ export const STREAM_PROVIDERS = [
     id: 'vidlink',
     name: 'VidLink Pro',
     domain: 'vidlink.pro',
-    badge: '1080p Ultra',
+    badge: '1080p · TV Ready',
     tier: 1,
     description: 'High-speed Next.js player with custom subtitles & playback persistence',
     buildUrl: (tmdbId, type = 'movie', season = 1, episode = 1) => {

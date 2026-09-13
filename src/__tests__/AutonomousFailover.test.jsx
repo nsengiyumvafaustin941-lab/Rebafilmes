@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { STREAM_PROVIDERS, buildStreamUrl, getProviderById } from '../utils/streamProviders';
 import { StreamPlayer } from '../components/StreamPlayer';
 import { MoviesProvider, useMovies } from '../contexts/MoviesContext';
@@ -97,6 +97,46 @@ describe('Autonomous Server Engine & Stream Providers', () => {
 
     expect(screen.getByText('Active')).toBeDefined();
     expect(screen.getByText('14 Servers Available')).toBeDefined();
+  });
+
+  it('renders Smart TV seek controls (-10s / +10s) and triggers seek feedback HUD on click or remote keys', () => {
+    const mockItem = {
+      id: 550,
+      tmdbId: 550,
+      title: 'Fight Club',
+      type: 'movie',
+    };
+
+    render(<StreamPlayer item={mockItem} />);
+
+    // Check seek buttons exist
+    const rewindBtn = screen.getByRole('button', { name: /Rewind 10 seconds/i });
+    const forwardBtn = screen.getByRole('button', { name: /Fast forward 10 seconds/i });
+    expect(rewindBtn).toBeDefined();
+    expect(forwardBtn).toBeDefined();
+    expect(screen.getByText('TV Remote')).toBeDefined();
+
+    // Click forward (+10s) and check HUD appears
+    fireEvent.click(forwardBtn);
+    expect(screen.getAllByText('+10s').length).toBeGreaterThanOrEqual(2);
+    expect(document.querySelector('.stream-seek-hud.forward')).not.toBeNull();
+
+    // Click rewind (-10s) and check HUD appears
+    fireEvent.click(rewindBtn);
+    expect(screen.getAllByText('-10s').length).toBeGreaterThanOrEqual(2);
+    expect(document.querySelector('.stream-seek-hud.backward')).not.toBeNull();
+
+    // Test Smart TV Remote Arrow keys
+    const playBtn = screen.getByRole('button', { name: /Start Video Playback/i });
+    fireEvent.click(playBtn);
+
+    // Press ArrowRight (Remote: FastForward)
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(screen.getAllByText('+10s').length).toBeGreaterThanOrEqual(2);
+
+    // Press ArrowLeft (Remote: Rewind)
+    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    expect(screen.getAllByText('-10s').length).toBeGreaterThanOrEqual(2);
   });
 });
 

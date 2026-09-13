@@ -14,6 +14,9 @@ import {
   Zap,
   X,
   ChevronDown,
+  Rewind,
+  FastForward,
+  Tv,
 } from 'lucide-react';
 
 import { STREAM_PROVIDERS, buildStreamUrl } from '../utils/streamProviders';
@@ -58,7 +61,12 @@ export const StreamPlayer = ({
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [reloadNonce, setReloadNonce] = useState(0);
   const [tvDetail, setTvDetail] = useState(null);
-  const [serversOpen, setServersOpen] = useState(false);
+  const [serversOpen, setServersOpen] = useState(true);
+
+  // ⏩ / ⏪ Seek Control Engine (Smart TV Remote & On-Screen Buttons)
+  const [seekFeedback, setSeekFeedback] = useState(null);
+  const seekFeedbackTimerRef = useRef(null);
+  const videoRef = useRef(null);
 
   // ⚡ Autonomous Server Failover Engine State
   const [autoFailover] = useState(() => {
@@ -429,17 +437,115 @@ export const StreamPlayer = ({
     return () => window.removeEventListener('message', handleMessage);
   }, [isSeries, handleNextEpisode, autoFailover, triggerAutonomousFailover]);
 
-  // Keyboard shortcut listener (F = Focus)
+  // ⏩ / ⏪ Seek Control Engine (Smart TV Remote & On-Screen Buttons)
+  const handleSeek = useCallback((seconds) => {
+    // 1. Show visual HUD feedback on TV screen
+    const dir = seconds > 0 ? 'forward' : 'backward';
+    const label = seconds > 0 ? `+${seconds}s` : `${seconds}s`;
+
+    if (seekFeedbackTimerRef.current) clearTimeout(seekFeedbackTimerRef.current);
+    setSeekFeedback({ direction: dir, label, id: Date.now() });
+    seekFeedbackTimerRef.current = setTimeout(() => {
+      setSeekFeedback(null);
+    }, 950);
+
+    // 2. Direct HTML5 video element seeking
+    if (videoRef.current && typeof videoRef.current.currentTime === 'number') {
+      try {
+        const curr = videoRef.current.currentTime || 0;
+        const dur = videoRef.current.duration || 0;
+        const target = Math.max(0, dur ? Math.min(curr + seconds, dur) : curr + seconds);
+        videoRef.current.currentTime = target;
+      } catch {}
+    }
+
+    // 3. Multi-protocol postMessage to streaming iframe for 3rd-party providers
+    if (iframeRef.current?.contentWindow) {
+      const msgs = [
+        { type: 'SEEK_BY', value: seconds, offset: seconds },
+        { type: 'SEEK', offset: seconds },
+        { action: 'seek', seconds: seconds },
+        { action: 'seekBy', value: seconds },
+        { event: 'seek', value: seconds },
+        { method: 'forward', value: seconds },
+      ];
+
+      msgs.forEach((msg) => {
+        try {
+          iframeRef.current.contentWindow.postMessage(msg, '*');
+          iframeRef.current.contentWindow.postMessage(JSON.stringify(msg), '*');
+        } catch {}
+      });
+    }
+  }, []);
+
+  // 📺 Smart TV Remote & Keyboard Navigation Event Listener
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      // Don't intercept when user is typing in forms or search
+      if (
+        e.target?.tagName === 'INPUT' ||
+        e.target?.tagName === 'TEXTAREA' ||
+        e.target?.isContentEditable
+      ) {
+        return;
+      }
+
+      // Shortcut: F for Theater / Focus Mode
       if (e.key === 'f' || e.key === 'F') {
         setFocusMode((prev) => !prev);
+        return;
+      }
+
+      // Fast Forward: Right Arrow, MediaFastForward, FastForward
+      if (
+        e.key === 'ArrowRight' ||
+        e.key === 'MediaFastForward' ||
+        e.key === 'FastForward' ||
+        e.keyCode === 228
+      ) {
+        if (isPlaying && !playingVideoAd) {
+          e.preventDefault();
+          handleSeek(10);
+        }
+        return;
+      }
+
+      // Rewind: Left Arrow, MediaRewind, Rewind
+      if (
+        e.key === 'ArrowLeft' ||
+        e.key === 'MediaRewind' ||
+        e.key === 'Rewind' ||
+        e.keyCode === 227
+      ) {
+        if (isPlaying && !playingVideoAd) {
+          e.preventDefault();
+          handleSeek(-10);
+        }
+        return;
+      }
+
+      // Play / Pause media keys on Smart TV remotes
+      if (
+        e.key === 'MediaPlayPause' ||
+        e.key === 'MediaPlay' ||
+        e.key === 'MediaPause' ||
+        e.keyCode === 179
+      ) {
+        if (videoRef.current) {
+          e.preventDefault();
+          if (videoRef.current.paused) {
+            videoRef.current.play().catch(() => {});
+          } else {
+            videoRef.current.pause();
+          }
+        }
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isPlaying, playingVideoAd, handleSeek]);
 
   const downloadUrl = item?.videoUrl
     ? `/api/download?url=${encodeURIComponent(item.videoUrl)}&title=${encodeURIComponent(item.title)}`
@@ -491,6 +597,20 @@ export const StreamPlayer = ({
               >
                 <X size={13} />
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Smart TV / Remote Seek Feedback Overlay */}
+        {seekFeedback && (
+          <div className={`stream-seek-hud ${seekFeedback.direction}`}>
+            <div className="stream-seek-hud-badge">
+              {seekFeedback.direction === 'forward' ? (
+                <FastForward size={26} />
+              ) : (
+                <Rewind size={26} />
+              )}
+              <span>{seekFeedback.label}</span>
             </div>
           </div>
         )}
@@ -594,6 +714,15 @@ export const StreamPlayer = ({
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
           />
+        ) : !tmdbId && item?.videoUrl ? (
+          <video
+            ref={videoRef}
+            src={item.videoUrl}
+            controls
+            autoPlay
+            playsInline
+            className="stream-video-native"
+          />
         ) : (
           <iframe
             key={`${currentProvider.id}-${tmdbId}-${currentSeason}-${currentEpisode}-${reloadNonce}`}
@@ -614,6 +743,29 @@ export const StreamPlayer = ({
             <span className="stream-status-dot" />
             <span>{isTrailerMode ? 'Official Trailer' : currentProvider.name}</span>
           </div>
+
+          {/* Smart TV / Remote Seek Buttons (-10s / +10s) */}
+          <button
+            type="button"
+            className="stream-tool-btn stream-seek-btn"
+            onClick={() => handleSeek(-10)}
+            title="Subiza inyuma 10s (Remote: ◀ Left Arrow)"
+            aria-label="Rewind 10 seconds"
+          >
+            <Rewind size={14} />
+            <span>-10s</span>
+          </button>
+
+          <button
+            type="button"
+            className="stream-tool-btn stream-seek-btn"
+            onClick={() => handleSeek(10)}
+            title="Ihutisha imbere 10s (Remote: ▶ Right Arrow)"
+            aria-label="Fast forward 10 seconds"
+          >
+            <FastForward size={14} />
+            <span>+10s</span>
+          </button>
 
           <button
             className="stream-tool-btn"
@@ -704,6 +856,14 @@ export const StreamPlayer = ({
             <Download size={14} />
             <span>Download</span>
           </button>
+
+          <div
+            className="stream-tv-pill"
+            title="Smart TV: Kanda ◀ cyangwa ▶ kuri Remote kugira ngo wihutishe / usubize inyuma"
+          >
+            <Tv size={13} />
+            <span>TV Remote</span>
+          </div>
 
           <button
             className={`stream-tool-btn ${focusMode ? 'active' : ''}`}
