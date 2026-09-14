@@ -26,13 +26,20 @@ export async function verifyAdminRequest(request, env) {
 
   // 1. KV token lookup (primary) — fastest and most reliable path.
   //    Token is stored as admin_token_{64-char-hex} during Google login.
+  //    Rolling session: every successful verification extends the TTL by 7 days,
+  //    so an active admin is never logged out due to expiry.
+  const ROLLING_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
   if (activeToken && env.KV) {
     try {
       const raw = await env.KV.get(`admin_token_${activeToken}`);
       if (raw) {
         const session = JSON.parse(raw);
-        // Verify expiry as double-check (KV TTL should handle it, but be safe)
         if (session?.email && new Date(session.expiresAt) > new Date()) {
+          // Rolling renewal: extend expiry non-blockingly
+          const newExpiry = new Date(Date.now() + ROLLING_TTL_SECONDS * 1000).toISOString();
+          const renewed = JSON.stringify({ ...session, expiresAt: newExpiry });
+          env.KV.put(`admin_token_${activeToken}`, renewed, { expirationTtl: ROLLING_TTL_SECONDS })
+            .catch(() => {}); // fire-and-forget, never blocks the response
           return { authorized: true, user: session.email };
         }
       }

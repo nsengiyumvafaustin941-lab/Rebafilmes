@@ -104,6 +104,15 @@ export const api = {
       });
       
       if (!res.ok) {
+        // 403 = session expired or invalid token. Clear the stale session
+        // and redirect to login so the admin can re-authenticate with Google.
+        if (res.status === 403 && isAdmin && typeof window !== 'undefined') {
+          localStorage.removeItem(ADMIN_SESSION_KEY);
+          // Small delay so any in-progress state updates can finish
+          setTimeout(() => {
+            window.location.href = '/admin/login?reason=session_expired';
+          }, 300);
+        }
         console.warn("API SET failed with status:", res.status, res.statusText);
         return false;
       }

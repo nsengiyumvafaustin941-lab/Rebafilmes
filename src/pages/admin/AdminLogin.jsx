@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Shield, AlertCircle, Loader2 } from 'lucide-react';
 import { useAdmin } from '../../contexts/AdminContext';
 import { GOOGLE_CLIENT_ID } from '../../utils/constants';
@@ -9,6 +9,8 @@ import './AdminLogin.css';
 const AdminLogin = () => {
   const { adminLoginWithGoogle, isAdmin, loginError, setLoginError } = useAdmin();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isSessionExpired = searchParams.get('reason') === 'session_expired';
   const googleBtnRef = useRef(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [sdkLoaded, setSdkLoaded] = useState(false);
@@ -87,10 +89,10 @@ const AdminLogin = () => {
         <h1 className="adm-login-title">Admin Portal</h1>
         <p className="adm-login-sub">RebaFilme — Authorized Access Only</p>
 
-        {loginError && (
+        {(loginError || isSessionExpired) && (
           <div className="adm-login-error">
             <AlertCircle size={16} />
-            <span>{loginError}</span>
+            <span>{loginError || 'Your admin session has expired or was reset. Please sign in with Google.'}</span>
           </div>
         )}
 

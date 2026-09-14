@@ -3,8 +3,8 @@
 
 import { setAdminCookie, GOOGLE_CLIENT_ID, DEFAULT_ADMIN_EMAILS } from '../../_lib/adminAuth.js';
 
-const SESSION_HOURS = 8;
-const SESSION_SECONDS = SESSION_HOURS * 60 * 60;
+const SESSION_DAYS = 7;
+const SESSION_SECONDS = SESSION_DAYS * 24 * 60 * 60; // 7 days
 
 export async function onRequestPost({ request, env }) {
   // KV is the primary session store; D1 is optional extra persistence.
