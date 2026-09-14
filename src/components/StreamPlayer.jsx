@@ -38,6 +38,7 @@ export const StreamPlayer = ({
   initialSeason = 1,
   initialEpisode = 1,
   initialServer = 0,
+  initialServersOpen = false,
   onEpisodeChange,
   onServerChange,
 }) => {
@@ -74,7 +75,7 @@ export const StreamPlayer = ({
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [reloadNonce, setReloadNonce] = useState(0);
   const [tvDetail, setTvDetail] = useState(null);
-  const [serversOpen, setServersOpen] = useState(true);
+  const [serversOpen, setServersOpen] = useState(initialServersOpen);
 
   // ⏩ / ⏪ Seek Control Engine (Smart TV Remote & On-Screen Buttons)
   const [seekFeedback, setSeekFeedback] = useState(null);

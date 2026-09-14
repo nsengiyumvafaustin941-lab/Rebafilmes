@@ -90,7 +90,7 @@ describe('Autonomous Server Engine & Stream Providers', () => {
       poster: 'https://image.tmdb.org/t/p/w500/test.jpg',
     };
 
-    render(<StreamPlayer item={mockItem} />);
+    render(<StreamPlayer item={mockItem} initialServersOpen={true} />);
 
     STREAM_PROVIDERS.forEach((provider) => {
       const els = screen.getAllByText(provider.name);
