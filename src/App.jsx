@@ -30,6 +30,7 @@ import useSmartLinks from './hooks/useSmartLinks';
 import { VIPModalProvider } from './contexts/VIPModalContext';
 import { ContentLockerProvider } from './contexts/ContentLockerContext';
 import ContentLockerModal from './components/ContentLockerModal';
+import PwaInstallBanner from './components/PwaInstallBanner';
 import './index.css';
 
 // ── SmartLinks & Popunder Engine ──────────────────────────────
@@ -170,6 +171,7 @@ function App() {
                                   <div className="bg-logo-pattern" />
                                   <Sidebar onOpenInstallModal={() => setIsInstallModalOpen(true)} />
                                   <AIAssistant />
+                                  <PwaInstallBanner onOpenFullModal={() => setIsInstallModalOpen(true)} />
                                   <main className="main-content">
                                     <AnnouncementBar />
                                     <Routes>

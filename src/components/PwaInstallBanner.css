@@ -1,0 +1,160 @@
+/* ── PWA Install Floating Banner (RemoWorkers Layout Style) ── */
+
+.pwa-banner-wrapper {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  animation: pwaSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: auto;
+}
+
+@keyframes pwaSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 28px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.pwa-banner-card {
+  background: rgba(18, 18, 24, 0.96);
+  background-color: #14141c;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 14px 16px 14px;
+  box-shadow: 
+    0 16px 40px rgba(0, 0, 0, 0.65), 
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pwa-banner-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+}
+
+.pwa-banner-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.pwa-banner-text {
+  flex: 1;
+  min-width: 0;
+  padding-right: 20px;
+}
+
+.pwa-banner-title {
+  margin: 0 0 3px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.pwa-banner-desc {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #9ca3af;
+}
+
+.pwa-banner-close {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.pwa-banner-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pwa-banner-btn {
+  width: 100%;
+  background: #e50914;
+  background: linear-gradient(135deg, #e50914 0%, #b20710 100%);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  transition: filter 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 14px rgba(229, 9, 20, 0.35);
+  user-select: none;
+}
+
+.pwa-banner-btn:hover {
+  filter: brightness(1.12);
+  box-shadow: 0 6px 18px rgba(229, 9, 20, 0.5);
+}
+
+.pwa-banner-btn:active {
+  transform: scale(0.98);
+}
+
+/* ── Mobile Layout Adjustments ── */
+@media (max-width: 768px) {
+  .pwa-banner-wrapper {
+    /* Sit cleanly above the mobile bottom navigation bar */
+    bottom: 76px;
+    width: calc(100vw - 28px);
+    max-width: 380px;
+  }
+
+  .pwa-banner-card {
+    padding: 12px 14px 12px;
+    gap: 10px;
+  }
+
+  .pwa-banner-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .pwa-banner-title {
+    font-size: 0.88rem;
+  }
+
+  .pwa-banner-desc {
+    font-size: 0.75rem;
+  }
+
+  .pwa-banner-btn {
+    padding: 8px 14px;
+    font-size: 0.84rem;
+  }
+}
