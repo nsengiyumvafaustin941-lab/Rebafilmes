@@ -23,9 +23,13 @@ export const AdminProvider = ({ children }) => {
         setLoginError(data.error || 'Google admin sign-in failed');
         return false;
       }
+      if (!data.token) {
+        setLoginError('Login succeeded but no session token was returned. Please try again.');
+        return false;
+      }
       localStorage.setItem(
         ADMIN_SESSION_KEY,
-        JSON.stringify({ username: data.user || 'admin', token: data.token || 'google_session', at: Date.now() })
+        JSON.stringify({ username: data.user || 'admin', token: data.token, at: Date.now() })
       );
       setIsAdmin(true);
       return true;

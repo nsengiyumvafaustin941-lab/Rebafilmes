@@ -20,16 +20,13 @@ export function getAdminSessionToken(request) {
 }
 
 export async function verifyAdminRequest(request, env) {
-  // 1. Header token check against ADMIN_PASSWORD
   const headerToken = request.headers.get('x-admin-token');
-  if (headerToken && env.ADMIN_PASSWORD && headerToken === env.ADMIN_PASSWORD) {
-    return { authorized: true, user: 'admin' };
-  }
-
-  // 2. Cookie session check (admin_session HttpOnly cookie in D1)
   const cookieToken = getAdminSessionToken(request);
-  const activeToken = cookieToken || headerToken;
 
+  // 1. D1 session lookup — check both cookie and header token against the DB.
+  //    This is the primary auth path: the login flow stores a 64-char token in
+  //    localStorage and sends it as x-admin-token on every admin POST.
+  const activeToken = cookieToken || headerToken;
   if (activeToken && env.DB) {
     try {
       const session = await env.DB.prepare(
@@ -42,6 +39,12 @@ export async function verifyAdminRequest(request, env) {
     } catch (e) {
       console.warn('Admin session verification error:', e);
     }
+  }
+
+  // 2. Static ADMIN_PASSWORD fallback (legacy / CLI usage).
+  //    Allows a pre-shared password set in Cloudflare env vars to bypass D1.
+  if (headerToken && env.ADMIN_PASSWORD && headerToken === env.ADMIN_PASSWORD) {
+    return { authorized: true, user: 'admin' };
   }
 
   // 3. Fallback: check regular user session cookie / header against admin whitelist
