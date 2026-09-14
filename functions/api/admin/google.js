@@ -7,7 +7,8 @@ const SESSION_HOURS = 8;
 const SESSION_SECONDS = SESSION_HOURS * 60 * 60;
 
 export async function onRequestPost({ request, env }) {
-  if (!env.DB) return jsonError('Database not configured', 503);
+  // KV is the primary session store; D1 is optional extra persistence.
+  if (!env.KV) return jsonError('KV storage not configured', 503);
 
   let body;
   try {
@@ -83,29 +84,38 @@ export async function onRequestPost({ request, env }) {
     return jsonError(`Access Denied: ${email} is not an authorized administrator.`, 403);
   }
 
-  // 3. Create Admin Session in D1
+  // 3. Create Admin Session — stored in KV (primary) and D1 (optional)
   try {
-    // Ensure table exists
-    await env.DB.prepare(
-      `CREATE TABLE IF NOT EXISTS admin_sessions (
-        token TEXT PRIMARY KEY,
-        username TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        expires_at TEXT NOT NULL
-      )`
-    ).run().catch(() => {});
-
     const bytes = crypto.getRandomValues(new Uint8Array(32));
     const token = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
     const expiresAt = new Date(Date.now() + SESSION_SECONDS * 1000).toISOString();
+    const sessionData = JSON.stringify({ email, expiresAt, createdAt: new Date().toISOString() });
 
-    await env.DB.prepare(
-      `INSERT INTO admin_sessions (token, username, expires_at) VALUES (?, ?, ?)`
-    ).bind(token, email, expiresAt).run();
+    // Primary: store in KV with native TTL (auto-expires)
+    await env.KV.put(`admin_token_${token}`, sessionData, { expirationTtl: SESSION_SECONDS });
 
-    // Probabilistic cleanup of expired sessions
-    if (Math.random() < 0.1) {
-      env.DB.prepare(`DELETE FROM admin_sessions WHERE expires_at < datetime('now')`).run().catch(() => {});
+    // Optional: also store in D1 if available
+    if (env.DB) {
+      try {
+        await env.DB.prepare(
+          `CREATE TABLE IF NOT EXISTS admin_sessions (
+            token TEXT PRIMARY KEY,
+            username TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            expires_at TEXT NOT NULL
+          )`
+        ).run().catch(() => {});
+
+        await env.DB.prepare(
+          `INSERT INTO admin_sessions (token, username, expires_at) VALUES (?, ?, ?)`
+        ).bind(token, email, expiresAt).run();
+
+        if (Math.random() < 0.1) {
+          env.DB.prepare(`DELETE FROM admin_sessions WHERE expires_at < datetime('now')`).run().catch(() => {});
+        }
+      } catch (d1Err) {
+        console.warn('D1 session store skipped (non-fatal):', d1Err.message);
+      }
     }
 
     return new Response(

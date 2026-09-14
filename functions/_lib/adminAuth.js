@@ -22,11 +22,26 @@ export function getAdminSessionToken(request) {
 export async function verifyAdminRequest(request, env) {
   const headerToken = request.headers.get('x-admin-token');
   const cookieToken = getAdminSessionToken(request);
-
-  // 1. D1 session lookup — check both cookie and header token against the DB.
-  //    This is the primary auth path: the login flow stores a 64-char token in
-  //    localStorage and sends it as x-admin-token on every admin POST.
   const activeToken = cookieToken || headerToken;
+
+  // 1. KV token lookup (primary) — fastest and most reliable path.
+  //    Token is stored as admin_token_{64-char-hex} during Google login.
+  if (activeToken && env.KV) {
+    try {
+      const raw = await env.KV.get(`admin_token_${activeToken}`);
+      if (raw) {
+        const session = JSON.parse(raw);
+        // Verify expiry as double-check (KV TTL should handle it, but be safe)
+        if (session?.email && new Date(session.expiresAt) > new Date()) {
+          return { authorized: true, user: session.email };
+        }
+      }
+    } catch (e) {
+      console.warn('KV token verification error:', e);
+    }
+  }
+
+  // 2. D1 session lookup (secondary) — for backwards compatibility.
   if (activeToken && env.DB) {
     try {
       const session = await env.DB.prepare(
@@ -41,13 +56,12 @@ export async function verifyAdminRequest(request, env) {
     }
   }
 
-  // 2. Static ADMIN_PASSWORD fallback (legacy / CLI usage).
-  //    Allows a pre-shared password set in Cloudflare env vars to bypass D1.
+  // 3. Static ADMIN_PASSWORD fallback (legacy / CLI usage).
   if (headerToken && env.ADMIN_PASSWORD && headerToken === env.ADMIN_PASSWORD) {
     return { authorized: true, user: 'admin' };
   }
 
-  // 3. Fallback: check regular user session cookie / header against admin whitelist
+  // 4. Fallback: check regular user session cookie / header against admin whitelist
   const userSessionToken = request.headers.get('x-user-session') ||
     (request.headers.get('Cookie') || '').match(/(?:^|;\s*)session=([^;]+)/)?.[1];
 
@@ -82,6 +96,7 @@ export async function verifyAdminRequest(request, env) {
 
   return { authorized: false, user: null };
 }
+
 
 /**
  * Pages Function middleware helper.
