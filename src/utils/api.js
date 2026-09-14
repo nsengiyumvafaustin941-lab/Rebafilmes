@@ -77,6 +77,13 @@ export const api = {
     localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
     if (typeof window !== 'undefined' && key === 'rebafilme_settings') {
       window.dispatchEvent(new CustomEvent('rebafilme_settings_updated', { detail: value }));
+      try {
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('rebafilme_settings_channel');
+          bc.postMessage({ key, value, at: Date.now() });
+          bc.close();
+        }
+      } catch {}
     }
     
     try {
@@ -97,10 +104,13 @@ export const api = {
       });
       
       if (!res.ok) {
-        console.warn("API SET failed", res.statusText);
+        console.warn("API SET failed with status:", res.status, res.statusText);
+        return false;
       }
+      return true;
     } catch (e) {
       console.warn("API SET failed, relying on localStorage", e);
+      return false;
     }
   }
 };

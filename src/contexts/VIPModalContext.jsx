@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import VIPModal from '../components/VIPModal';
-import { getSettings, isVipEnabled } from '../utils/settings';
+import { isVipEnabled } from '../utils/settings';
 
 /**
  * VIPModalContext — single global modal instance.

@@ -25,7 +25,7 @@ export const AdminProvider = ({ children }) => {
       }
       localStorage.setItem(
         ADMIN_SESSION_KEY,
-        JSON.stringify({ username: data.user || 'admin', token: 'google_session', at: Date.now() })
+        JSON.stringify({ username: data.user || 'admin', token: data.token || 'google_session', at: Date.now() })
       );
       setIsAdmin(true);
       return true;

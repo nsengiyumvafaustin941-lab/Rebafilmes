@@ -68,14 +68,34 @@ export function getSettings() {
 }
 
 /**
+ * Returns true if general monetization (ads, banners, popunders) is enabled.
+ * Returns false when the master kill switch (disableMonetization) is turned on.
+ */
+export function isMonetizationEnabled(overrideSettings = null) {
+  const s = overrideSettings || getSettings();
+  const isKillSwitchActive =
+    s.disableMonetization === true ||
+    s.disableMonetization === 'true' ||
+    s.disableMonetization === 1 ||
+    s.disableMonetization === '1';
+  return !isKillSwitchActive;
+}
+
+/**
  * Returns true if VIP features and promotions are allowed to be displayed.
  * VIP is enabled ONLY when:
- * 1. Global master kill switch (disableMonetization) is false, AND
- * 2. VIP Membership toggle (vipEnabled) is not turned off.
+ * 1. Global master kill switch (disableMonetization) is NOT active, AND
+ * 2. VIP Membership toggle (vipEnabled) is NOT turned off.
  */
 export function isVipEnabled(overrideSettings = null) {
   const s = overrideSettings || getSettings();
-  return s.disableMonetization !== true && s.vipEnabled !== false;
+  if (!isMonetizationEnabled(s)) return false;
+
+  const vip = s.vipEnabled;
+  if (vip === false || vip === 'false' || vip === 0 || vip === '0') {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -122,6 +142,13 @@ export async function fetchServerSettings() {
         localStorage.setItem(CONSTANTS_SETTINGS_KEY, JSON.stringify(merged));
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('rebafilme_settings_updated', { detail: merged }));
+          try {
+            if ('BroadcastChannel' in window) {
+              const bc = new BroadcastChannel('rebafilme_settings_channel');
+              bc.postMessage({ key: CONSTANTS_SETTINGS_KEY, value: merged, at: Date.now() });
+              bc.close();
+            }
+          } catch {}
         }
         return merged;
       }

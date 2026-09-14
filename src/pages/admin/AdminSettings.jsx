@@ -12,7 +12,7 @@ import { parseSmartLinks, serializeSmartLinks } from '../../hooks/useSmartLinks'
 
 const AdminSettings = () => {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [saved, setSaved] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // null | 'success' | 'warn'
 
   // SmartLinks interactive management state
   const [editingLinkIdx, setEditingLinkIdx] = useState(null);
@@ -136,14 +136,21 @@ const AdminSettings = () => {
       vipPriceUsdYearly: parseUsdPrice(settings.vipPriceUsdYearly, 34.99),
       updatedAt: Date.now(),
     };
-    await api.set(SETTINGS_KEY, cleanSettings, true);
+    const serverSaved = await api.set(SETTINGS_KEY, cleanSettings, true);
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(cleanSettings));
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('rebafilme_settings_updated', { detail: cleanSettings }));
+      try {
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('rebafilme_settings_channel');
+          bc.postMessage({ key: SETTINGS_KEY, value: cleanSettings, at: Date.now() });
+          bc.close();
+        }
+      } catch {}
     }
     setSettings(cleanSettings);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    setSaveStatus(serverSaved ? 'success' : 'warn');
+    setTimeout(() => setSaveStatus(null), 3500);
   };
 
   const handleReset = async () => {
@@ -165,7 +172,7 @@ const AdminSettings = () => {
             <RefreshCw size={15} /> Reset
           </button>
           <button className="adm-btn adm-btn-primary" onClick={handleSave}>
-            <Save size={15} /> {saved ? 'Saved!' : 'Save Changes'}
+            <Save size={15} /> {saveStatus === 'success' ? 'Saved & Synced!' : saveStatus === 'warn' ? 'Saved (Local Only)' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -240,6 +247,26 @@ const AdminSettings = () => {
           </div>
         </div>
 
+        {/* Master Kill Switch Active Warning Banner */}
+        {settings.disableMonetization && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid #ef4444',
+            borderRadius: 8,
+            padding: '0.85rem 1.1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            color: '#fca5a5',
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.1)'
+          }}>
+            <AlertTriangle size={22} color="#ef4444" style={{ flexShrink: 0 }} />
+            <div style={{ fontSize: '.84rem', lineHeight: 1.45 }}>
+              <strong style={{ color: '#fff' }}>Master Kill Switch is Active:</strong> All ads, popunders, video pre-rolls, and VIP icons are completely silenced site-wide regardless of the individual toggles below.
+            </div>
+          </div>
+        )}
+
         {/* ── 🔒 Pillar 5: Content Locker & Pay-Per-Download (PPD) ── */}
         <div className="adm-settings-section">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
@@ -257,61 +284,67 @@ const AdminSettings = () => {
             </label>
           </div>
 
-          <div className="adm-form-grid">
-            <div className="adm-form-group full">
-              <label className="adm-form-label">Content Locker / PPD Sponsor URL</label>
-              <input 
-                className="adm-input" 
-                value={settings.contentLockerUrl || ''} 
-                onChange={set('contentLockerUrl')} 
-                placeholder="https://linkvertise.com/your-locker-link (Leave blank to use SmartLink balancer)" 
-              />
-              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>
-                Paste your Linkvertise, CPAGrip, or Monetag Direct Link. If left blank, it automatically defaults to your highest-weight SmartLink.
-              </small>
-            </div>
+          {settings.contentLockerEnabled ? (
+            <div className="adm-form-grid">
+              <div className="adm-form-group full">
+                <label className="adm-form-label">Content Locker / PPD Sponsor URL</label>
+                <input 
+                  className="adm-input" 
+                  value={settings.contentLockerUrl || ''} 
+                  onChange={set('contentLockerUrl')} 
+                  placeholder="https://linkvertise.com/your-locker-link (Leave blank to use SmartLink balancer)" 
+                />
+                <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>
+                  Paste your Linkvertise, CPAGrip, or Monetag Direct Link. If left blank, it automatically defaults to your highest-weight SmartLink.
+                </small>
+              </div>
 
-            <div className="adm-form-group">
-              <label className="adm-form-label">Verification Timer (seconds)</label>
-              <input
-                className="adm-input"
-                type="number"
-                min="5"
-                max="60"
-                value={settings.contentLockerTimer ?? 10}
-                onChange={set('contentLockerTimer')}
-                placeholder="10"
-              />
-              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>
-                Countdown duration displayed to visitors while completing the sponsor task (10s recommended).
-              </small>
-            </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">Verification Timer (seconds)</label>
+                <input
+                  className="adm-input"
+                  type="number"
+                  min="5"
+                  max="60"
+                  value={settings.contentLockerTimer ?? 10}
+                  onChange={set('contentLockerTimer')}
+                  placeholder="10"
+                />
+                <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>
+                  Countdown duration displayed to visitors while completing the sponsor task (10s recommended).
+                </small>
+              </div>
 
-            <div className="adm-form-group">
-              <label className="adm-form-label">Locker Network</label>
-              <select
-                className="adm-select"
-                value={settings.contentLockerNetwork || 'auto'}
-                onChange={set('contentLockerNetwork')}
-              >
-                <option value="auto">🌐 Auto / SmartLink Fallback</option>
-                <option value="linkvertise">🔗 Linkvertise</option>
-                <option value="cpagrip">🔒 CPAGrip</option>
-                <option value="monetag">⚡ Monetag Direct</option>
-                <option value="custom">🛠️ Custom PPD Provider</option>
-              </select>
-            </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">Locker Network</label>
+                <select
+                  className="adm-select"
+                  value={settings.contentLockerNetwork || 'auto'}
+                  onChange={set('contentLockerNetwork')}
+                >
+                  <option value="auto">🌐 Auto / SmartLink Fallback</option>
+                  <option value="linkvertise">🔗 Linkvertise</option>
+                  <option value="cpagrip">🔒 CPAGrip</option>
+                  <option value="monetag">⚡ Monetag Direct</option>
+                  <option value="custom">🛠️ Custom PPD Provider</option>
+                </select>
+              </div>
 
-            <div className="adm-form-group">
-              <label className="adm-form-label">Locker Modal Title</label>
-              <input
-                className="adm-input"
-                value={settings.contentLockerTitle || 'Unlock High-Speed HD Download'}
-                onChange={set('contentLockerTitle')}
-                placeholder="Unlock High-Speed HD Download"
-              />
+              <div className="adm-form-group">
+                <label className="adm-form-label">Locker Modal Title</label>
+                <input
+                  className="adm-input"
+                  value={settings.contentLockerTitle || 'Unlock High-Speed HD Download'}
+                  onChange={set('contentLockerTitle')}
+                  placeholder="Unlock High-Speed HD Download"
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ padding: '0.75rem 0.9rem', background: 'rgba(255,255,255,0.03)', borderRadius: 6, color: '#888', fontSize: '.82rem' }}>
+              Content Locker is disabled. Visitors can download directly without completing sponsor tasks.
+            </div>
+          )}
         </div>
 
         {/* ── 💰 Pillar 1: SmartLinks & Load Balancing ── */}
@@ -331,7 +364,8 @@ const AdminSettings = () => {
             </label>
           </div>
 
-          <div className="adm-form-grid">
+          {settings.smartlinksEnabled ? (
+            <div className="adm-form-grid">
             <div className="adm-form-group">
               <label className="adm-form-label">Balancing Strategy</label>
               <select
@@ -652,8 +686,13 @@ const AdminSettings = () => {
                   <AlertTriangle size={13} /> Some links had invalid weights and were defaulted to weight 1.
                 </div>
               )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ padding: '0.75rem 0.9rem', background: 'rgba(255,255,255,0.03)', borderRadius: 6, color: '#888', fontSize: '.82rem' }}>
+              SmartLinks &amp; Popunders are disabled. No ad popups or direct-link redirects will fire on click.
+            </div>
+          )}
         </div>
 
         {/* ── 🎬 Pillar 2: In-Stream Video Ads ── */}
@@ -673,38 +712,44 @@ const AdminSettings = () => {
             </label>
           </div>
 
-          <div className="adm-form-grid">
-            <div className="adm-form-group full">
-              <label className="adm-form-label">Video Ad Source URL (.mp4 / direct stream)</label>
-              <input
-                className="adm-input"
-                value={settings.videoAdUrl || ''}
-                onChange={set('videoAdUrl')}
-                placeholder="https://cdn.rebafilme.com/ad_bumper.mp4"
-              />
+          {settings.videoAdsEnabled ? (
+            <div className="adm-form-grid">
+              <div className="adm-form-group full">
+                <label className="adm-form-label">Video Ad Source URL (.mp4 / direct stream)</label>
+                <input
+                  className="adm-input"
+                  value={settings.videoAdUrl || ''}
+                  onChange={set('videoAdUrl')}
+                  placeholder="https://cdn.rebafilme.com/ad_bumper.mp4"
+                />
+              </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">Click-through SmartLink / Sponsor Link</label>
+                <input
+                  className="adm-input"
+                  value={settings.videoAdLink || ''}
+                  onChange={set('videoAdLink')}
+                  placeholder="https://nickeldefiancepriest.com/your-smartlink"
+                />
+              </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">Ad Duration / Skip Time (seconds)</label>
+                <input
+                  className="adm-input"
+                  type="number"
+                  min="3"
+                  max="60"
+                  value={settings.videoAdDuration ?? 10}
+                  onChange={set('videoAdDuration')}
+                  placeholder="10"
+                />
+              </div>
             </div>
-            <div className="adm-form-group">
-              <label className="adm-form-label">Click-through SmartLink / Sponsor Link</label>
-              <input
-                className="adm-input"
-                value={settings.videoAdLink || ''}
-                onChange={set('videoAdLink')}
-                placeholder="https://nickeldefiancepriest.com/your-smartlink"
-              />
+          ) : (
+            <div style={{ padding: '0.75rem 0.9rem', background: 'rgba(255,255,255,0.03)', borderRadius: 6, color: '#888', fontSize: '.82rem' }}>
+              In-Stream Video Ads are disabled. No pre-roll bumper videos will play in the stream player.
             </div>
-            <div className="adm-form-group">
-              <label className="adm-form-label">Ad Duration / Skip Time (seconds)</label>
-              <input
-                className="adm-input"
-                type="number"
-                min="3"
-                max="60"
-                value={settings.videoAdDuration ?? 10}
-                onChange={set('videoAdDuration')}
-                placeholder="10"
-              />
-            </div>
-          </div>
+          )}
         </div>
 
         {/* ── Pillar 4: Direct MTN MoMo & Airtel VIP Pass ── */}
@@ -724,114 +769,120 @@ const AdminSettings = () => {
             </label>
           </div>
 
-          <div className="adm-form-grid">
-            <div className="adm-form-group">
-              <label className="adm-form-label">VIP Daily Price (RWF)</label>
-              <input
-                className="adm-input"
-                type="number"
-                min="50"
-                max="500000"
-                value={settings.vipPriceDaily ?? ''}
-                onChange={set('vipPriceDaily')}
-                placeholder="1000"
-              />
-              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>1 Day Access</small>
-            </div>
-            <div className="adm-form-group">
-              <label className="adm-form-label">VIP Monthly Price (RWF)</label>
-              <input
-                className="adm-input"
-                type="number"
-                min="50"
-                max="500000"
-                value={settings.vipPriceMonthly ?? ''}
-                onChange={set('vipPriceMonthly')}
-                placeholder="5000"
-              />
-              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>30 Days Access (Standard)</small>
-            </div>
-            <div className="adm-form-group">
-              <label className="adm-form-label">VIP Yearly Price (RWF)</label>
-              <input
-                className="adm-input"
-                type="number"
-                min="50"
-                max="5000000"
-                value={settings.vipPriceYearly ?? ''}
-                onChange={set('vipPriceYearly')}
-                placeholder="45000"
-              />
-              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>365 Days Access (Best Value)</small>
-            </div>
+          {settings.vipEnabled ? (
+            <div className="adm-form-grid">
+              <div className="adm-form-group">
+                <label className="adm-form-label">VIP Daily Price (RWF)</label>
+                <input
+                  className="adm-input"
+                  type="number"
+                  min="50"
+                  max="500000"
+                  value={settings.vipPriceDaily ?? ''}
+                  onChange={set('vipPriceDaily')}
+                  placeholder="1000"
+                />
+                <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>1 Day Access</small>
+              </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">VIP Monthly Price (RWF)</label>
+                <input
+                  className="adm-input"
+                  type="number"
+                  min="50"
+                  max="500000"
+                  value={settings.vipPriceMonthly ?? ''}
+                  onChange={set('vipPriceMonthly')}
+                  placeholder="5000"
+                />
+                <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>30 Days Access (Standard)</small>
+              </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">VIP Yearly Price (RWF)</label>
+                <input
+                  className="adm-input"
+                  type="number"
+                  min="50"
+                  max="5000000"
+                  value={settings.vipPriceYearly ?? ''}
+                  onChange={set('vipPriceYearly')}
+                  placeholder="45000"
+                />
+                <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>365 Days Access (Best Value)</small>
+              </div>
 
-            {/* 💳 Global Card & Crypto Prices (USD) */}
-            <div className="adm-form-group">
-              <label className="adm-form-label">VIP Daily Price (USD — Cards &amp; Crypto)</label>
-              <input
-                className="adm-input"
-                type="number"
-                step="0.01"
-                min="0.01"
-                max="500"
-                value={settings.vipPriceUsdDaily ?? ''}
-                onChange={set('vipPriceUsdDaily')}
-                placeholder="0.99"
-              />
-              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>Visa, Mastercard &amp; USDT</small>
+              {/* 💳 Global Card & Crypto Prices (USD) */}
+              <div className="adm-form-group">
+                <label className="adm-form-label">VIP Daily Price (USD — Cards &amp; Crypto)</label>
+                <input
+                  className="adm-input"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max="500"
+                  value={settings.vipPriceUsdDaily ?? ''}
+                  onChange={set('vipPriceUsdDaily')}
+                  placeholder="0.99"
+                />
+                <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>Visa, Mastercard &amp; USDT</small>
+              </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">VIP Monthly Price (USD — Cards &amp; Crypto)</label>
+                <input
+                  className="adm-input"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max="1000"
+                  value={settings.vipPriceUsdMonthly ?? ''}
+                  onChange={set('vipPriceUsdMonthly')}
+                  placeholder="3.99"
+                />
+                <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>Standard Monthly Pass in USD</small>
+              </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">VIP Yearly Price (USD — Cards &amp; Crypto)</label>
+                <input
+                  className="adm-input"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max="5000"
+                  value={settings.vipPriceUsdYearly ?? ''}
+                  onChange={set('vipPriceUsdYearly')}
+                  placeholder="34.99"
+                />
+                <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>Annual Pass in USD</small>
+              </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">VIP Support WhatsApp</label>
+                <input className="adm-input" value={settings.vipWhatsApp || '250786934081'} onChange={set('vipWhatsApp')} placeholder="250786934081" />
+              </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">MTN MoMo Number</label>
+                <input className="adm-input" value={settings.vipMomoNumber || '0786934081'} onChange={set('vipMomoNumber')} placeholder="0786934081" />
+              </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">MTN MoMo Account Name</label>
+                <input className="adm-input" value={settings.vipMomoName || 'RebaFilme Media'} onChange={set('vipMomoName')} placeholder="RebaFilme Media" />
+              </div>
+              <div className="adm-form-group">
+                <label className="adm-form-label">Airtel Money Number</label>
+                <input className="adm-input" value={settings.vipAirtelNumber || '0738000000'} onChange={set('vipAirtelNumber')} placeholder="0738000000" />
+              </div>
+              <div className="adm-form-group full">
+                <label className="adm-form-label">Active VIP Passcodes (comma-separated)</label>
+                <input className="adm-input" value={settings.vipPasscodes || ''} onChange={set('vipPasscodes')} placeholder="REBAVIP,MOMO2026,VIPPASS" />
+                <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>
+                  Visitors can type these codes into the VIP modal for instant 30-day activation.
+                </small>
+              </div>
             </div>
-            <div className="adm-form-group">
-              <label className="adm-form-label">VIP Monthly Price (USD — Cards &amp; Crypto)</label>
-              <input
-                className="adm-input"
-                type="number"
-                step="0.01"
-                min="0.01"
-                max="1000"
-                value={settings.vipPriceUsdMonthly ?? ''}
-                onChange={set('vipPriceUsdMonthly')}
-                placeholder="3.99"
-              />
-              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>Standard Monthly Pass in USD</small>
+          ) : (
+            <div style={{ padding: '0.75rem 0.9rem', background: 'rgba(255,255,255,0.03)', borderRadius: 6, color: '#888', fontSize: '.82rem' }}>
+              MTN MoMo &amp; Airtel VIP Membership System is disabled. All VIP buttons, mobile navigation icons, and promo banners are hidden site-wide.
             </div>
-            <div className="adm-form-group">
-              <label className="adm-form-label">VIP Yearly Price (USD — Cards &amp; Crypto)</label>
-              <input
-                className="adm-input"
-                type="number"
-                step="0.01"
-                min="0.01"
-                max="5000"
-                value={settings.vipPriceUsdYearly ?? ''}
-                onChange={set('vipPriceUsdYearly')}
-                placeholder="34.99"
-              />
-              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>Annual Pass in USD</small>
-            </div>
-            <div className="adm-form-group">
-              <label className="adm-form-label">VIP Support WhatsApp</label>
-              <input className="adm-input" value={settings.vipWhatsApp || '250786934081'} onChange={set('vipWhatsApp')} placeholder="250786934081" />
-            </div>
-            <div className="adm-form-group">
-              <label className="adm-form-label">MTN MoMo Number</label>
-              <input className="adm-input" value={settings.vipMomoNumber || '0786934081'} onChange={set('vipMomoNumber')} placeholder="0786934081" />
-            </div>
-            <div className="adm-form-group">
-              <label className="adm-form-label">MTN MoMo Account Name</label>
-              <input className="adm-input" value={settings.vipMomoName || 'RebaFilme Media'} onChange={set('vipMomoName')} placeholder="RebaFilme Media" />
-            </div>
-            <div className="adm-form-group">
-              <label className="adm-form-label">Airtel Money Number</label>
-              <input className="adm-input" value={settings.vipAirtelNumber || '0738000000'} onChange={set('vipAirtelNumber')} placeholder="0738000000" />
-            </div>
-            <div className="adm-form-group full">
-              <label className="adm-form-label">Active VIP Passcodes (comma-separated)</label>
-              <input className="adm-input" value={settings.vipPasscodes || ''} onChange={set('vipPasscodes')} placeholder="REBAVIP,MOMO2026,VIPPASS" />
-              <small style={{ color: '#666', fontSize: '.75rem', marginTop: '.25rem' }}>
-                Visitors can type these codes into the VIP modal for instant 30-day activation.
-              </small>
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="adm-settings-section">
@@ -956,7 +1007,14 @@ const AdminSettings = () => {
         </div>
       </div>
 
-      {saved && <div className="adm-toast">Settings saved successfully!</div>}
+      {saveStatus === 'success' && (
+        <div className="adm-toast">Settings saved &amp; synced across all devices!</div>
+      )}
+      {saveStatus === 'warn' && (
+        <div className="adm-toast adm-toast-warn" style={{ background: '#d97706', borderColor: '#f59e0b', color: '#fff' }}>
+          Settings saved locally, but Cloudflare server sync failed. Check your admin login.
+        </div>
+      )}
     </AdminLayout>
   );
 };

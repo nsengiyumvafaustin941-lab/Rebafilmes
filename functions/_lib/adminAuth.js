@@ -44,6 +44,39 @@ export async function verifyAdminRequest(request, env) {
     }
   }
 
+  // 3. Fallback: check regular user session cookie / header against admin whitelist
+  const userSessionToken = request.headers.get('x-user-session') ||
+    (request.headers.get('Cookie') || '').match(/(?:^|;\s*)session=([^;]+)/)?.[1];
+
+  if (userSessionToken && env.DB) {
+    try {
+      const user = await env.DB.prepare(
+        `SELECT u.email FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token = ? AND s.expires_at > datetime('now')`
+      ).bind(userSessionToken).first();
+
+      if (user && user.email) {
+        const email = user.email.toLowerCase().trim();
+        const adminEmails = [
+          env.ADMIN_EMAILS,
+          env.ADMIN_EMAIL,
+          ...(DEFAULT_ADMIN_EMAILS || []),
+        ]
+          .filter(Boolean)
+          .join(',')
+          .toLowerCase()
+          .split(',')
+          .map((e) => e.trim())
+          .filter(Boolean);
+
+        if (adminEmails.includes(email)) {
+          return { authorized: true, user: email };
+        }
+      }
+    } catch (e) {
+      console.warn('Fallback admin session error:', e);
+    }
+  }
+
   return { authorized: false, user: null };
 }
 

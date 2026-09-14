@@ -1,22 +1,31 @@
 import { useState, useEffect } from 'react';
-import { getSettings, isVipEnabled } from '../utils/settings';
+import { isVipEnabled, isMonetizationEnabled } from '../utils/settings';
 
 export function useMonetizationEnabled() {
   const [enabled, setEnabled] = useState(() => {
-    return getSettings().disableMonetization !== true;
+    return isMonetizationEnabled();
   });
 
   useEffect(() => {
     const update = () => {
-      setEnabled(getSettings().disableMonetization !== true);
+      setEnabled(isMonetizationEnabled());
     };
 
-    // Update on storage / window focus / custom event
     window.addEventListener('storage', update);
     window.addEventListener('rebafilme_settings_updated', update);
+
+    let bc = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('rebafilme_settings_channel');
+        bc.onmessage = () => update();
+      }
+    } catch {}
+
     return () => {
       window.removeEventListener('storage', update);
       window.removeEventListener('rebafilme_settings_updated', update);
+      if (bc) bc.close();
     };
   }, []);
 
@@ -35,9 +44,19 @@ export function useVIPEnabled() {
 
     window.addEventListener('storage', update);
     window.addEventListener('rebafilme_settings_updated', update);
+
+    let bc = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('rebafilme_settings_channel');
+        bc.onmessage = () => update();
+      }
+    } catch {}
+
     return () => {
       window.removeEventListener('storage', update);
       window.removeEventListener('rebafilme_settings_updated', update);
+      if (bc) bc.close();
     };
   }, []);
 

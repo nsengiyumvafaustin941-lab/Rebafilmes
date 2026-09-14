@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { moviePath, parseMovieId, parseMovieSlugTitle, getMovieOrTv } from '../utils/tmdb';
 
 describe('Search and Media Type Disambiguation Engine', () => {
